@@ -1,0 +1,8 @@
+def contextual_bandit_runner(algos, data, \
+            num_sim, update_freq, test_freq, verbose, debug, normalize, save_path=None):
+    """Run an offline contextual bandit problem on a set of algorithms in the same dataset. 
+
+    Args:
+        data: A tuple of (contexts, actions, mean_rewards, test_contexts, test_mean_rewards).
+        algos: A list of algorithms to run on the bandit instance.  
+    """

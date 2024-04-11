@@ -1,0 +1,15 @@
+On my windows PC, the python 3.7/3.8 conda cannot install jax properly, there are always dependencies missing.
+Use python 3.9, it can install the jax sommothly with 'pip install jax jaxlib optax' only   
+
+
+pip install torchvision
+pip install pasty pyod xgboost
+pip install --upgrade --no-deps statsmodels
+pip install scikit-learn
+pip install tqdm
+
+
+
+
+
+
