@@ -86,7 +86,7 @@ help_text: string describes the flag
     # }
 
 # flags.DEFINE_string('data_type', 'mnist', 'Dataset to sample from')
-flags.DEFINE_string('data_type', 'statlog', 'Dataset to sample from')
+flags.DEFINE_string('data_type', 'covertype', 'Dataset to sample from')
 
 flags.DEFINE_string('policy', 'eps-greedy', 'Offline policy, eps-greedy/subset')
 flags.DEFINE_float('eps', 0.1, 'Probability of selecting a random action in eps-greedy')
@@ -302,7 +302,7 @@ def main(unused_argv):
     
     # this is the core function that run all the experiments
     print(f'starting contextual_bandit_runner() ......')
-    regrets, errs = contextual_bandit_runner(algos, data, FLAGS.num_sim, 
+    regrets, errs = (algos, data, FLAGS.num_sim, 
         FLAGS.update_freq, FLAGS.test_freq, FLAGS.verbose, FLAGS.debug, FLAGS.normalize, file_name)
 
     np.savez(file_name, regrets, errs)
