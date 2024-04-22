@@ -1,6 +1,6 @@
 import sys
 # neruallcb_path = r'C:\Users\98328\Desktop\phd thesis ideas\offline_neural_bandits-main'
-neruallcb_path = r'E:\phd thesis ideas\neurallcb_conformal'
+neruallcb_path = r'E:\phd thesis ideas\NeuralLCB_C'
 if neruallcb_path not in sys.path:
     sys.path.append(neruallcb_path)
 import numpy as np 
@@ -20,8 +20,96 @@ def one_hot(df, cols):
     return df
 ## analyze this one as example
 
-# class SepsisData(object):
-#     def __init__()
+class SepsisData(object):
+    def __init__(self,
+                 num_contexts,
+                 num_test_contexts,
+                 context_dim = 13,
+                 num_actions = 2, # septic or non septic
+                 noise_std = 0,
+                 pi = 'eps-greedy', 
+                 eps = 0.1, 
+                 subset_r = 0.5,
+                 remove_underrepresented=True,
+                 ):
+        self.name = 'sepsis'
+        file_name = 'data/SepsisData/fully_imputed_8windowed_max48_updated.csv'
+        with open(file_name,'r') as f:
+            df = pd.read_csv(f, header = 0)
+        df = df.drop(columns=['hours2sepsis','HospAdmTime', 'pat_id'])
+
+        df = df.head(10)
+
+        name = 'sepsis'
+        self.num_contexts = num_contexts 
+        self.num_test_contexts = num_test_contexts
+        # self.context_dim = context_dim
+        self.num_actions = num_actions
+        self.pi = pi 
+        self.eps = eps 
+        self.subset_r = subset_r
+        self.noise_std = noise_std
+
+        labels = df['SepsisLabel'].to_numpy()
+        df = df.drop(columns=['SepsisLabel'], axis=1)
+        contexts = df.to_numpy()
+        self.context_dim = contexts.shape[1]
+        self.contexts, self.rewards = classification_to_bandit_problem(contexts, labels, num_actions)
+        print('Sepsis: num_samples: {}'.format(self.contexts.shape[0]))
+
+    def reset_data(self, sim_id = 0):
+
+        # Load meta-data to generate dataset
+        # there will be no repeated indices
+        indices = np.load('data/meta/indices_{}.npy'.format(sim_id)) # random permutation of np.arange(100000)
+        test_indices = np.load('data/meta/test_indices_{}.npy'.format(sim_id)) # random permutation of np.arange(100000)
+
+        # Generate inds
+        # to ensure the indices and test_indices are smaller than self.num_samples
+        indices = indices % self.num_samples
+        test_indices = test_indices % self.num_samples
+
+        print(f'indices: {indices}')
+        print(f'test_indices: {test_indices}')
+        # the user input contexts are more than that of the dataset
+        if self.num_contexts > self.num_samples:
+            print(f'self.num_samples:{self.num_samples}')
+            print(f'self.num_contexts:{self.num_contexts}')
+            print(f'num_contexts > self.num_samples')
+            ind = indices[:self.num_contexts]
+            
+        else: # the user input data is less than that of the dataset
+            print(f'self.num_samples:{self.num_samples}')
+            print(f'self.num_contexts:{self.num_contexts}')
+            print(f'num_contexts <= self.num_samples')
+
+            # then select self.num_contexts first distinct elements of indices
+            i = np.unique(indices,return_index=True)[1]
+            i.sort()
+            ind = indices[i[:self.num_contexts]]
+        print(f'ind: {ind}')
+
+        if self.num_test_contexts > self.num_samples:
+            test_ind = test_indices[:self.num_test_contexts]
+        else:
+            i = np.unique(test_indices,return_index=True)[1]
+            i.sort()
+            test_ind = test_indices[i[:self.num_test_contexts]]
+
+        print(f'test_ind: {test_ind}')
+        contexts = self.contexts[ind,:] 
+        mean_rewards = self.rewards[ind,:] 
+        test_contexts = self.contexts[test_ind,:]
+        mean_test_rewards = self.rewards[test_ind,:]
+        actions = sample_offline_policy(mean_rewards, self.num_contexts, self.num_actions, self.pi, self.eps, self.subset_r)
+        #create rewards
+        rewards = mean_rewards + self.noise_std * np.random.normal(size=mean_rewards.shape)
+        dataset = (contexts, actions, rewards, test_contexts, mean_test_rewards) 
+        return dataset 
+
+    @property 
+    def num_samples(self):
+        return self.contexts.shape[0]
 
 class MnistData(object):
     def __init__(self,
@@ -405,7 +493,8 @@ class StatlogData(object):
 
         dataset = (contexts, actions, rewards, test_contexts, mean_test_rewards) 
         return dataset 
-
+# Classification of pixels into 7 forest cover types based on attributes 
+# such as elevation, aspect, slope, hillshade, soil-type, and more.
 class CoverTypeData(object): 
     def __init__(self,
             num_contexts, 
@@ -786,28 +875,29 @@ from ucimlrepo import fetch_ucirepo
 if __name__ == '__main__':
      
     # Generate meta data, do not run it
-    # print('WARNING: This is to generate meta data for dataset generation, and should only be performed once. Quit now if you are not sure what you are doing!!!')
-    # s = input('Type yesimnotstupid to proceed: ')
-    # if s == 'yesimnotstupid':
-    #     for sim_id in range(10):
-    #         np.random.seed(sim_id)
-    #         indices = np.random.permutation(100000)
-    #         np.save('data/meta/indices_{}.npy'.format(sim_id), indices)
+    print('WARNING: This is to generate meta data for dataset generation, and should only be performed once. Quit now if you are not sure what you are doing!!!')
+    s = input('Type yesimnotstupid to proceed: ')
+    if s == 'yesimnotstupid':
+        for sim_id in range(10):
+            np.random.seed(sim_id)
+            # there will not be repeated numbers
+            indices = np.random.permutation(100000)
+            np.save('data/meta/indices_{}.npy'.format(sim_id), indices)
 
-    #         np.random.seed(sim_id)
-    #         test_indices = np.random.permutation(100000)
-    #         np.save('data/meta/test_indices_{}.npy'.format(sim_id), test_indices)
+            np.random.seed(sim_id)
+            test_indices = np.random.permutation(100000)
+            np.save('data/meta/test_indices_{}.npy'.format(sim_id), test_indices)
 
 
-    #         ### not sure what betas are doing...????
-    #         np.random.seed(sim_id)
-    #         context_dim = 21
-    #         num_actions = 8
-    #         # betas are uniformly distributed over the half-open interval [-1, 1)
-    #         # size: context_dim X num_actions
-    #         betas = np.random.uniform(-1, 1, (context_dim, num_actions))
-    #         betas /= np.linalg.norm(betas, axis=0)
-    #         np.save('data/meta/betas_{}.npy'.format(sim_id), betas)
+            ### not sure what betas are doing...????
+            np.random.seed(sim_id)
+            context_dim = 21
+            num_actions = 8
+            # betas are uniformly distributed over the half-open interval [-1, 1)
+            # size: context_dim X num_actions
+            betas = np.random.uniform(-1, 1, (context_dim, num_actions))
+            betas /= np.linalg.norm(betas, axis=0)
+            np.save('data/meta/betas_{}.npy'.format(sim_id), betas)
 
 
             # fetch dataset 

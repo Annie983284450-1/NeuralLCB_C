@@ -86,7 +86,8 @@ help_text: string describes the flag
     # }
 
 # flags.DEFINE_string('data_type', 'mnist', 'Dataset to sample from')
-flags.DEFINE_string('data_type', 'covertype', 'Dataset to sample from')
+# flags.DEFINE_string('data_type', 'covertype', 'Dataset to sample from')
+flags.DEFINE_string('data_type', 'sepsis', 'Dataset to sample from')
 
 flags.DEFINE_string('policy', 'eps-greedy', 'Offline policy, eps-greedy/subset')
 flags.DEFINE_float('eps', 0.1, 'Probability of selecting a random action in eps-greedy')
@@ -148,7 +149,7 @@ def main(unused_argv):
 
 # different datasets
     dataclasses = {'mushroom':MushroomData, 'jester':JesterData, 'statlog':StatlogData, 'covertype':CoverTypeData, 'stock': StockData,
-            'adult': AdultData, 'census': CensusData, 'mnist': MnistData
+            'adult': AdultData, 'census': CensusData, 'mnist': MnistData, 'sepsis': SepsisData
     }
     
     if FLAGS.data_type in dataclasses:
@@ -161,12 +162,13 @@ def main(unused_argv):
                     subset_r = FLAGS.subset_r) 
     else:
         raise NotImplementedError
+    # sys.exit()
 
     if FLAGS.data_type == 'mnist': # Use 1000 test points for mnist 
         FLAGS.num_test_contexts = 1000  
         FLAGS.test_freq = 100
         FLAGS.chunk_size = 1
-
+    
     # returned dataset = (contexts, actions, rewards, test_contexts, mean_test_rewards) 
     # rewards are added with noise, while mean_(test_)rewards are pure rewards
     dataset = data.reset_data()
@@ -302,9 +304,8 @@ def main(unused_argv):
     
     # this is the core function that run all the experiments
     print(f'starting contextual_bandit_runner() ......')
-    regrets, errs = (algos, data, FLAGS.num_sim, 
-        FLAGS.update_freq, FLAGS.test_freq, FLAGS.verbose, FLAGS.debug, FLAGS.normalize, file_name)
-
+    regrets, errs = contextual_bandit_runner(algos, data, FLAGS.num_sim, FLAGS.update_freq, FLAGS.test_freq, FLAGS.verbose, FLAGS.debug, FLAGS.normalize, file_name)
+ 
     np.savez(file_name, regrets, errs)
 
 # thissetup is only executed only if the script is run directly from the command line, not when imported as a module in another python project scrpit.
