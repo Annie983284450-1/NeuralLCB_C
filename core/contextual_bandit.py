@@ -52,7 +52,7 @@ def contextual_bandit_runner(algos, data, \
         # reset_data() will return a form of (contexts, actions, rewards, test_contexts, mean_test_rewards) 
 
         cmab = OfflineContextualBandit(*data.reset_data(sim))
-        sys.exit()
+        # sys.exit()
      # algo: BanditAlgortihm class
         for algo in algos:
             

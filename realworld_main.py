@@ -179,10 +179,11 @@ def main(unused_argv):
     print(f'rewards: {dataset[2]}')
     print(f'test_contexts: {dataset[3]}')
     print(f'mean_test_rewards: {dataset[4]}')
-
     # sys.exit()
     context_dim = dataset[0].shape[1] 
     num_actions = data.num_actions 
+   
+
     
     hparams = edict({
         # 'layer_sizes': [100,100], 

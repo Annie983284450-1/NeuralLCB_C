@@ -1,6 +1,14 @@
 import sys
-# neruallcb_path = r'C:\Users\98328\Desktop\phd thesis ideas\offline_neural_bandits-main'
-neruallcb_path = r'E:\phd thesis ideas\NeuralLCB_C'
+import os 
+if os.name == 'nt':
+    # windows
+    neruallcb_path = r'E:\phd thesis ideas\NeuralLCB_C'
+elif os.name == 'posix':
+    if sys.platform == 'darwin':
+        # neruallcb_path = r'C:\Users\98328\Desktop\phd thesis ideas\offline_neural_bandits-main'
+        # macOS
+        neruallcb_path = '/Users/anniezhou/Desktop/NeuralLCB_C'
+
 if neruallcb_path not in sys.path:
     sys.path.append(neruallcb_path)
 import numpy as np 
@@ -95,7 +103,7 @@ class SepsisData(object):
             i = np.unique(test_indices,return_index=True)[1]
             i.sort()
             test_ind = test_indices[i[:self.num_test_contexts]]
-
+        # for sepsis dataset, we cannot do this, there will be data leakage
         print(f'test_ind: {test_ind}')
         contexts = self.contexts[ind,:] 
         mean_rewards = self.rewards[ind,:] 
