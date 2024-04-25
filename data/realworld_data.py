@@ -69,6 +69,26 @@ class SepsisData(object):
 
         # Load meta-data to generate dataset
         # there will be no repeated indices
+        win_size = 8
+        # abandon the 0-1-0 patients and treat as error
+        sepsis_full = pd.read_csv(f'./Data/fully_imputed_8windowed_max48_updated.csv')
+        sepsis_train_wins = np.load('./Data/sepsis_train_wins.npy')
+        sepsis_train_wins = sepsis_train_wins.tolist()
+        nosepsis_train_wins = np.load('./Data/nosepsis_train_wins.npy')
+        nosepsis_train_wins = nosepsis_train_wins.tolist()
+        train_wins = sepsis_train_wins+nosepsis_train_wins
+
+        
+        test_septic_wins = np.load('./Data/test_septic_wins.npy')
+        test_septic_wins = test_septic_wins.tolist()
+        test_noseptic_wins = np.load('./Data/test_noseptic_wins.npy')
+        test_noseptic_wins = test_noseptic_wins.tolist()
+        # num_test_pat_noseptic_win = math.floor(self.num_test_pat_win*12)
+        test_wins = test_septic_wins+test_noseptic_wins
+        indices =  sepsis_full[sepsis_full['pat_id'].isin(train_wins)].index
+        test_indices = sepsis_full[sepsis_full['pat_id'].isin(test_wins)].index
+
+
         indices = np.load('data/meta/indices_{}.npy'.format(sim_id)) # random permutation of np.arange(100000)
         test_indices = np.load('data/meta/test_indices_{}.npy'.format(sim_id)) # random permutation of np.arange(100000)
 
