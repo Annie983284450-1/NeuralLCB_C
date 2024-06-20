@@ -50,7 +50,7 @@ def contextual_bandit_runner(algos, data, \
         # reset_data() is defined in realworld_data.py in the dataclass
         # Note: data is a class not sth as a numpy array !!
         # reset_data() will return a form of (contexts, actions, rewards, test_contexts, mean_test_rewards) 
-
+        
         cmab = OfflineContextualBandit(*data.reset_data(sim))
         # sys.exit()
      # algo: BanditAlgortihm class
@@ -71,6 +71,8 @@ def contextual_bandit_runner(algos, data, \
         # Compute test values and opt actions 
         #rewards : (num_contexts, num_actions) 
         # find the highest reward in each row(i.e., each contexr)
+
+        # i.e., the ground truth
         opt_vals = np.max(cmab.test_mean_rewards, axis=1) 
         # find the index that leads to this optimal reward for each context (i.e., each row)
         opt_actions = np.argmax(cmab.test_mean_rewards, axis=1) 
@@ -84,7 +86,7 @@ def contextual_bandit_runner(algos, data, \
 
             # start_time = timeit()
             start_time = time.time()
-            # return the current state,action,reward & next state,action, reward
+            # return the current state(i.e., context),action,reward & next state(i.e., ontext),action, reward
             # return self.contexts[ind:ind+1], self.actions[ind:ind+1], self.rewards[ind:ind+1, a:a+1] 
             # this is the ground truth, not the predicted value
             c,a,r = cmab.get_data(i) 
@@ -178,6 +180,8 @@ class OfflineContextualBandit(object):
     shuffle the order in which contexts (and their associated rewards and actions) are presented
     to the bandit algorithms. simulte a more realistic scenario where the order of the encountering
     different conexts is not fixed but random. 
+
+    We cannot do this on Sepsis dataset, for there might be data leakage??
     '''
     def reset_order(self): 
         # np.permutation ensures that each interger is unique

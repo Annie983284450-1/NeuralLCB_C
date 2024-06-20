@@ -82,11 +82,22 @@ def sample_offline_policy(mean_rewards, num_contexts, num_actions, pi='eps-greed
         subset_mean_rewards = mean_rewards[np.arange(num_contexts), :subset_s]
         actions = np.argmax(subset_mean_rewards, axis=1)
         return actions 
+    # focus on this case
     elif pi == 'eps-greedy':
+        # This line generates a random action for each context. 
+        # The actions are uniformly distributed integers between 0 and num_actions - 1.
         uniform_actions = np.random.randint(low=0, high=num_actions, size=(num_contexts,)) 
         opt_actions = np.argmax(mean_rewards, axis=1)
+        # This generates random values between 0 and 1 for each context. 
         delta = np.random.uniform(size=(num_contexts,))
+        # This creates a binary selector array where each element is 1 
+        # if the corresponding delta is less than or equal to eps (indicating exploration) 
+        # and 0 otherwise (indicating exploitation).
         selector = np.array(delta <= eps).astype('float32') 
+        '''
+        This line combines the exploration and exploitation actions. If selector is 1 (exploration), 
+        the action is taken from uniform_actions; otherwise (exploitation), the action is taken from opt_actions.
+        '''
         actions = selector.ravel() * uniform_actions + (1 - selector.ravel()) * opt_actions 
         actions = actions.astype('int')
         return actions

@@ -1,5 +1,7 @@
 """Mini main for testing algorithms. """ 
-
+'''
+adapted from realworld_main.py
+'''
 import numpy as np 
 import jax  
 import jax.numpy as jnp 
@@ -80,15 +82,23 @@ help_text: string describes the flag
 # flags.DEFINE_string('data_type', 'mushroom', 'Dataset to sample from')
 
 # let's test on mnistm cuz this is the only dataset available/opened
-flags.DEFINE_string('data_type', 'mnist', 'Dataset to sample from')
+
+    # dataclasses = {'mushroom':MushroomData, 'jester':JesterData, 'statlog':StatlogData, 'covertype':CoverTypeData, 'stock': StockData,
+    #         'adult': AdultData, 'census': CensusData, 'mnist': MnistData
+    # }
+
+# flags.DEFINE_string('data_type', 'mnist', 'Dataset to sample from')
+# flags.DEFINE_string('data_type', 'covertype', 'Dataset to sample from')
+flags.DEFINE_string('data_type', 'sepsis', 'Dataset to sample from')
+
 flags.DEFINE_string('policy', 'eps-greedy', 'Offline policy, eps-greedy/subset')
 flags.DEFINE_float('eps', 0.1, 'Probability of selecting a random action in eps-greedy')
 flags.DEFINE_float('subset_r', 0.5, 'The ratio of the action spaces to be selected in offline data')
 # flags.DEFINE_integer('num_contexts', 15000, 'Number of contexts for training.') 
 # flags.DEFINE_integer('num_test_contexts', 10000, 'Number of contexts for test.') 
 
-flags.DEFINE_integer('num_contexts', 150, 'Number of contexts for training.') 
-flags.DEFINE_integer('num_test_contexts', 100, 'Number of contexts for test.') 
+flags.DEFINE_integer('num_contexts', 5, 'Number of contexts for training.') 
+flags.DEFINE_integer('num_test_contexts', 2, 'Number of contexts for test.') 
 
 flags.DEFINE_boolean('verbose', True, 'verbose') 
 flags.DEFINE_boolean('debug', True, 'debug') 
@@ -108,7 +118,7 @@ flags.DEFINE_integer('chunk_size', 5, 'Chunk size')
 # flags.DEFINE_integer('batch_size', 32, 'Batch size')
 flags.DEFINE_integer('batch_size', 2, 'Batch size')
 # flags.DEFINE_integer('num_steps', 100, 'Number of steps to train NN.') 
-flags.DEFINE_integer('num_steps', 10, 'Number of steps to train NN.') 
+flags.DEFINE_integer('num_steps', 1, 'Number of steps to train NN.') 
 
  
 flags.DEFINE_integer('buffer_s', -1, 'Size in the train data buffer.')
@@ -141,7 +151,7 @@ def main(unused_argv):
 
 # different datasets
     dataclasses = {'mushroom':MushroomData, 'jester':JesterData, 'statlog':StatlogData, 'covertype':CoverTypeData, 'stock': StockData,
-            'adult': AdultData, 'census': CensusData, 'mnist': MnistData
+            'adult': AdultData, 'census': CensusData, 'mnist': MnistData, 'sepsis': SepsisData
     }
     
     if FLAGS.data_type in dataclasses:
@@ -154,17 +164,28 @@ def main(unused_argv):
                     subset_r = FLAGS.subset_r) 
     else:
         raise NotImplementedError
+    # sys.exit()
 
     if FLAGS.data_type == 'mnist': # Use 1000 test points for mnist 
         FLAGS.num_test_contexts = 1000  
         FLAGS.test_freq = 100
         FLAGS.chunk_size = 1
-
+    
     # returned dataset = (contexts, actions, rewards, test_contexts, mean_test_rewards) 
     # rewards are added with noise, while mean_(test_)rewards are pure rewards
     dataset = data.reset_data()
+    print(f'Contexts: {dataset[0]}')
+    context_dim = dataset[0].shape[1] 
+    print(f'context_dim: {context_dim}')
+    print(f'Actions: {dataset[1]}')
+    print(f'rewards: {dataset[2]}')
+    print(f'test_contexts: {dataset[3]}')
+    print(f'mean_test_rewards: {dataset[4]}')
+    # sys.exit()
     context_dim = dataset[0].shape[1] 
     num_actions = data.num_actions 
+   
+
     
     hparams = edict({
         # 'layer_sizes': [100,100], 
@@ -286,9 +307,8 @@ def main(unused_argv):
     
     # this is the core function that run all the experiments
     print(f'starting contextual_bandit_runner() ......')
-    regrets, errs = contextual_bandit_runner(algos, data, FLAGS.num_sim, 
-        FLAGS.update_freq, FLAGS.test_freq, FLAGS.verbose, FLAGS.debug, FLAGS.normalize, file_name)
-
+    regrets, errs = contextual_bandit_runner(algos, data, FLAGS.num_sim, FLAGS.update_freq, FLAGS.test_freq, FLAGS.verbose, FLAGS.debug, FLAGS.normalize, file_name)
+ 
     np.savez(file_name, regrets, errs)
 
 # thissetup is only executed only if the script is run directly from the command line, not when imported as a module in another python project scrpit.

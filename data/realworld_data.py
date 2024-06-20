@@ -62,6 +62,7 @@ class SepsisData(object):
         df = df.drop(columns=['SepsisLabel'], axis=1)
         contexts = df.to_numpy()
         self.context_dim = contexts.shape[1]
+        """Normalize contexts and encode deterministic rewards."""
         self.contexts, self.rewards = classification_to_bandit_problem(contexts, labels, num_actions)
         print('Sepsis: num_samples: {}'.format(self.contexts.shape[0]))
 
@@ -71,10 +72,10 @@ class SepsisData(object):
         # there will be no repeated indices
         win_size = 8
         # abandon the 0-1-0 patients and treat as error
-        sepsis_full = pd.read_csv(f'./Data/fully_imputed_8windowed_max48_updated.csv')
-        sepsis_train_wins = np.load('./Data/sepsis_train_wins.npy')
+        sepsis_full = pd.read_csv(f'./data/SepsisData/fully_imputed_8windowed_max48_updated.csv')
+        sepsis_train_wins = np.load('./data/SepsisData/sepsis_train_wins.npy')
         sepsis_train_wins = sepsis_train_wins.tolist()
-        nosepsis_train_wins = np.load('./Data/nosepsis_train_wins.npy')
+        nosepsis_train_wins = np.load('./data/SepsisData/nosepsis_train_wins.npy')
         nosepsis_train_wins = nosepsis_train_wins.tolist()
         train_wins = sepsis_train_wins+nosepsis_train_wins
 
@@ -97,25 +98,25 @@ class SepsisData(object):
         indices = indices % self.num_samples
         test_indices = test_indices % self.num_samples
 
-        print(f'indices: {indices}')
-        print(f'test_indices: {test_indices}')
+        # print(f'indices: {indices}')
+        # print(f'test_indices: {test_indices}')
         # the user input contexts are more than that of the dataset
         if self.num_contexts > self.num_samples:
-            print(f'self.num_samples:{self.num_samples}')
-            print(f'self.num_contexts:{self.num_contexts}')
-            print(f'num_contexts > self.num_samples')
+            # print(f'self.num_samples:{self.num_samples}')
+            # print(f'self.num_contexts:{self.num_contexts}')
+            # print(f'num_contexts > self.num_samples')
             ind = indices[:self.num_contexts]
             
         else: # the user input data is less than that of the dataset
-            print(f'self.num_samples:{self.num_samples}')
-            print(f'self.num_contexts:{self.num_contexts}')
-            print(f'num_contexts <= self.num_samples')
+            # print(f'self.num_samples:{self.num_samples}')
+            # print(f'self.num_contexts:{self.num_contexts}')
+            # print(f'num_contexts <= self.num_samples')
 
             # then select self.num_contexts first distinct elements of indices
             i = np.unique(indices,return_index=True)[1]
             i.sort()
             ind = indices[i[:self.num_contexts]]
-        print(f'ind: {ind}')
+        # print(f'ind: {ind}')
 
         if self.num_test_contexts > self.num_samples:
             test_ind = test_indices[:self.num_test_contexts]
@@ -124,13 +125,14 @@ class SepsisData(object):
             i.sort()
             test_ind = test_indices[i[:self.num_test_contexts]]
         # for sepsis dataset, we cannot do this, there will be data leakage
-        print(f'test_ind: {test_ind}')
+        # print(f'test_ind: {test_ind}')
         contexts = self.contexts[ind,:] 
         mean_rewards = self.rewards[ind,:] 
         test_contexts = self.contexts[test_ind,:]
         mean_test_rewards = self.rewards[test_ind,:]
         actions = sample_offline_policy(mean_rewards, self.num_contexts, self.num_actions, self.pi, self.eps, self.subset_r)
-        #create rewards
+        #create rewards 
+        # based on the paper, the gaussian noise is a standard in stochastic bandit literature
         rewards = mean_rewards + self.noise_std * np.random.normal(size=mean_rewards.shape)
         dataset = (contexts, actions, rewards, test_contexts, mean_test_rewards) 
         return dataset 
@@ -290,6 +292,7 @@ class MushroomData(object):
 
         self.name = 'mushroom'
         filename = 'data/mushroom.data'
+        filename = 'data/mushroom/agaricus-lepiota.data' 
         self.num_contexts = num_contexts 
         self.num_test_contexts = num_test_contexts
         self.num_actions = num_actions 
