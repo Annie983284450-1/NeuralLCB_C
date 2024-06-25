@@ -89,6 +89,8 @@ def contextual_bandit_runner(algos, data, \
             # return the current state(i.e., context),action,reward & next state(i.e., ontext),action, reward
             # return self.contexts[ind:ind+1], self.actions[ind:ind+1], self.rewards[ind:ind+1, a:a+1] 
             # this is the ground truth, not the predicted value
+            # Each iteration extracts a single data sample (context, action, reward) from the dataset.
+            # as in pseudo code line 3
             c,a,r = cmab.get_data(i) 
 
             for j,algo in enumerate(algos): 
@@ -138,6 +140,7 @@ def contextual_bandit_runner(algos, data, \
                                 opt_stats = action_stats(opt_actions.ravel(), cmab.num_actions)
                                 print('     opt_rate: {} | pred_rate: {}'.format(opt_stats, sel_stats))
                                 ### @@@@ bugs came from here: IndexError: list index out of range
+                                # monitor(context, action, reward)
                                 algo.monitor(c, a, r)
 
                     subopts[j].append(test_subopt) 

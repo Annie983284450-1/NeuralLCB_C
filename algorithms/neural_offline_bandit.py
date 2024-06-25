@@ -315,6 +315,7 @@ class ApproxNeuraLCBV2(BanditAlgorithm):
         print(f"contexts.shape:{contexts.shape}")
         print(f"preds.shape:{preds.shape}")
 
+
         cnfs = []
         for a in range(self.hparams.num_actions):
             # ??? what is this actions_tmp???
