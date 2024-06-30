@@ -82,6 +82,7 @@ def contextual_bandit_runner(algos, data, \
         # it wraps around any iterable including range()
         # ncols = 75 defines the width of the bar rto 75 characters in the terminal
         # the width of the progeress bar in tdqm() is measured by characters
+        # update the neural network each time there is a new context
         for i in tqdm(range(cmab.num_contexts),ncols=75):
 
             # start_time = timeit()
