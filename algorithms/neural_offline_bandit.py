@@ -11,6 +11,8 @@ from core.bandit_dataset import BanditDataset
 from core.utils import inv_sherman_morrison, inv_sherman_morrison_single_sample, vectorize_tree
 from algorithms.neural_bandit_model import NeuralBanditModel, NeuralBanditModelV2
 import sys
+import utils_Sepsysolcp as util
+
 
 class ExactNeuraLCBV2(BanditAlgorithm):
     """NeuraLCB using exact confidence matrix and NeuralBanditModelV2. """
@@ -273,6 +275,9 @@ class ApproxNeuraLCBV2(BanditAlgorithm):
             # print(f'actions[i]:{actions[i]}')
             # print(f'type(self.diag_Lambda):{type(self.diag_Lambda)}')
             # print(f'len(self.diag_Lambda):{len(self.diag_Lambda)}')
+    
+    def calculate_loo_residuals(self):
+        n = len(self.X_train)
 
     def monitor(self, contexts=None, actions=None, rewards=None):
         print(f'running monitor() of algo ApproxNeuraLCBV2 .......')
@@ -311,7 +316,7 @@ class ApproxNeuraLCBV2(BanditAlgorithm):
 
 
         # this is the predictions from the neural networks????
-        preds = self.nn.out(self.nn.params, contexts, actions) # (num_samples,)
+        05# (num_samples,)
         print(f"contexts.shape:{contexts.shape}")
         print(f"preds.shape:{preds.shape}")
 

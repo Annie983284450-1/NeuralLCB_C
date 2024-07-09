@@ -102,7 +102,64 @@ class prediction_interval():
         np.save(saved_model_path+'/in_boot_sample.npy', in_boot_sample)            
             # print('type of boot_precitions[b]:', type(boot_predictions[b]))
         # return boot_predictions, in_boot_sample
-   
+
+
+
+    def fit_bootstrap_sequential_online_parallel(self, Isrefit, B, n, n1, boot_samples_idx, saved_model_path, max_hours):
+        boot_predictions = np.zeros((B, (n+n1)), dtype=float)
+        in_boot_sample = np.zeros((B, n), dtype=bool)
+        strategy = tf.distribute.MirroredStrategy()
+        num_gpus = strategy.num_replicas_in_sync
+        bootstraps_per_gpu = B // num_gpus
+        remainder = B % num_gpus
+
+        # with strategy.scope():
+        # for b in range(B):
+        for gpu_id in range(num_gpus):
+            start_idx = gpu_id * bootstraps_per_gpu
+            end_idx = start_idx + bootstraps_per_gpu if gpu_id < num_gpus - 1 else start_idx + bootstraps_per_gpu + remainder
+            # gpu_id = b % num_gpus  # Assigning a GPU based on the bootstrap index
+            for b in range(start_idx, end_idx):
+                with tf.device(f'/gpu:{gpu_id}'):
+                    # model creation and compliation
+                    if Isrefit:
+                        # model = self.regressor
+                        if self.regressor == 'nnet':
+                            with strategy.scope():
+                                model = util.keras_mod(seed=12345)
+                                opt = Adam(0.0005)
+                                model.compile(loss='mean_squared_error', optimizer=opt)
+                            callback = keras.callbacks.EarlyStopping(monitor='loss', patience=10)
+                            # bsize = int(0.1*len(np.unique(boot_samples_idx[b])))   
+                            bsize = int(0.05*len(np.unique(boot_samples_idx[b]))) # lower the batch size to avoid OOM error            
+                            if model.name == 'NeuralNet':
+                                # verbose definition here: https://keras.io/api/models/model_training_apis/#fit-method. 0 means silent
+                                # NOTE: I do NOT want epoches to be too large, as we then tend to be too close to the actual Y_t, NOT f(X_t).
+                                # Originally, epochs=1000, batch=100
+                                model.fit(self.X_train[boot_samples_idx[b], :], self.Y_train[boot_samples_idx[b], ],
+                                        epochs=250, batch_size=bsize, callbacks=[callback], verbose=0)
+                        
+                        else: # 'rnet'
+                            with strategy.scope():
+                            # This is RNN, mainly have different shape and decrease epochs for faster computation
+                                model.fit(self.X_train[boot_samples_idx[b], :], self.Y_train[boot_samples_idx[b], ],
+                                        epochs=10, batch_size=bsize, callbacks=[callback], verbose=0)
+                        filename = 'No_'+str(b)+'th_boot'+'.h5'
+                        saved_model_file_name = os.path.join(saved_model_path, filename)
+                        model.save(saved_model_file_name)  
+                                    
+                    else: #Isrefit = False
+                        saved_filename = 'No_'+str(b)+'th_boot'+'.h5'
+                        saved_model_file_name = os.path.join(saved_model_path, saved_filename)
+                        model = load_model(saved_model_file_name)       
+                boot_predictions[b] = model.predict(np.r_[self.X_train, self.X_predict]).flatten() # to one dimension
+                boot_predictions[b] = np.clip(boot_predictions[b], 0, max_hours+1)
+                in_boot_sample[b, boot_samples_idx[b]] = True  
+
+        np.save(saved_model_path+'/boot_predictions.npy', boot_predictions)
+        np.save(saved_model_path+'/in_boot_sample.npy', in_boot_sample)        
+
+     
     def fit_bootstrap_models_online_single(self, args):
         b, boot_samples_idx_b, model_name, n, n1, Isrefit, saved_model_path, max_hours= args  
         saved_model_path = self.final_result_path+'/saved_models/'+ model_name
