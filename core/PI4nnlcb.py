@@ -31,7 +31,7 @@ warnings.filterwarnings("ignore")
 import multiprocessing 
 import dill
 import utils_Sepsysolcp as util
-
+from core.bandit_dataset import BanditDataset
 
 
 class prediction_interval():
@@ -56,7 +56,8 @@ class prediction_interval():
 
         for b in range(B):
             model = self.nn_model
-            
+            data = BanditDataset(model.hparams.context_dim, model.hparams.num_action, len(self.X_train), 'fit_data')
+            data.add(self.X_train[boot_samples_idx[b],:], np.zeros)
            
             
         
