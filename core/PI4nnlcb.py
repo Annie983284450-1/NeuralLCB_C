@@ -56,12 +56,22 @@ class prediction_interval():
 
         for b in range(B):
             model = self.nn_model
-            data = BanditDataset(model.hparams.context_dim, model.hparams.num_action, len(self.X_train), 'fit_data')
-            data.add(self.X_train[boot_samples_idx[b],:], np.zeros)
-           
-            
-        
-
+            data = BanditDataset(model.hparams.context_dim, model.hparams.num_actions, len(self.X_train), 'fit-data')
+            # BanditDataset.add(context, action, reward)
+            # maybe actions are not used herein??????????
+            data.add(self.X_train[boot_samples_idx[b], :], np.zeros(len(boot_samples_idx[b])), self.Y_train[boot_samples_idx[b]])
+            model.train(data, model.hparams.num_steps)
+            boot_predictions[b] = model.out(model.params, np.r_[self.X_train, self.X_predict], np.zeros((n + n1,))).flatten()
+            self.Ensemble_fitted_func.append(model)
+            in_boot_sample[b, boot_samples_idx[b]] = True
+        # leave one out aggregation method
+        # loop over n training samples
+        for i in range(n):
+            b_keep = np.argwhere(~(in_boot_sample[:,i])).reshape(-1)
+            if len(b_keep)>0:
+                # aggregate the bootstraps that do not include sample i, use the mean as the predicted Y
+                resid_LOO = np.abs(self.Y_train[i] - boot_predictions[b_keep,i].mean())
+                self.Ensemble_online_resid = np.append(self.Ensemble_online_resid, resid_LOO)
 
 
    
