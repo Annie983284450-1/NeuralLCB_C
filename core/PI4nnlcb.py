@@ -72,9 +72,124 @@ class prediction_interval():
                 # aggregate the bootstraps that do not include sample i, use the mean as the predicted Y
                 resid_LOO = np.abs(self.Y_train[i] - boot_predictions[b_keep,i].mean())
                 self.Ensemble_online_resid = np.append(self.Ensemble_online_resid, resid_LOO)
+                # leave the i-th sample out based predictions of Y_predict
+                out_sample_predict[i] = boot_predictions[b_keep, n:].mean(0)
 
+            else: # len(b_keep)=0:
+                resid_LOO = np.abs(self.Y_train[i])
+                self.Ensemble_online_resid = np.append(self.Ensemble_online_resid, resid_LOO)
+                out_sample_predict[i] = np.zeros(n1)
 
+        sorted_out_sample_predict = np.sort(out_sample_predict, axis=0)[ind_q]
+        resid_out_sample = np.abs(sorted_out_sample_predict - self.Y_predict)
    
 
+        if len(miss_test_idx) > 0:
+            for l in range(len(miss_test_idx)):
+                i = miss_test_idx[l]
+                if i > 0:
+                    j = i - 1
+                    while j in miss_test_idx[:l]:
+                        j -= 1
+                    resid_out_sample[i] = resid_out_sample[j]
+                else:
+                    resid_out_sample[0] = self.Ensemble_online_resid[-1]
+        self.Ensemble_online_resid = np.append(self.Ensemble_online_resid, resid_out_sample)
+        return sorted_out_sample_predict
+    
+
+    def compute_PIs_Ensemble_online(self, alpha, stride):
+        n = len(self.X_train)
+        n1 = len(self.Y_predict)
+        # Now f^b and LOO residuals have been constructed from earlier using fit_bootstrap_models_online(B, miss_test_idx)
+        out_sample_predict = self.Ensemble_pred_interval_centers
+        start = time.time()
+        resid_strided = util.strided_app(self.Ensemble_online_resid[:-1], n, stride)
+        num_unique_resid = resid_strided.shape[0]
+        print('num_unique_resid:', num_unique_resid)
+        print(f'size of resid_strided: {resid_strided.shape}')
+
+        width_left = np.zeros(num_unique_resid)
+        width_right = np.zeros(num_unique_resid)
+        for i in range(num_unique_resid):
+            # past_resid = ri, r_{i+1},..., r_{i+n-1}
+            # traverse each row
+            past_resid = resid_strided[i, :]
+            # The number of bins will be determined INSIDE binning, i.e., 5
+
+            # util.binning will minimize the width 
+            beta_hat_bin = util.binning(past_resid, alpha)
+            self.beta_hat_bins.append(beta_hat_bin)
+            width_left[i] = np.percentile(past_resid, math.ceil(100*beta_hat_bin))
+            width_right[i] = np.percentile(past_resid, math.ceil(100*(1-alpha+beta_hat_bin)))
+            # if i <= 5:
+            #     print(f'Beta hat bin at {i+1}th prediction index is {beta_hat_bin}')
+            #     print(f'Lower end is {width_left[i]} \n Upper end is {width_right[i]}')
+        print(
+            f'~~~~~~~~~~~~Finish Computing {num_unique_resid} UNIQUE Prediction Intervals, took {time.time()-start} secs.~~~~~~~~~~~~')
+        # repeat the nd array for stride times
+        # herein, we set stride = 1
+
+        width_left = np.repeat(width_left, stride)  # This is because |width|=T1/stride.
+        width_right = np.repeat(width_right, stride)  # This is because |width|=T1/stride.
+        print("size of width_left:", width_left.size)
+        # store the lower and upper bound of each entry (prediction set only)
+
+        # len(out_sample_predict) = n1 = len(Y_predict)
+        # and we have nrows = floor(n1//stride)+1 = n1/stride
+        # then len(width_left)  = len(width_right) = n1 = len(out_sample_predict)
+        # herein, we need to make sure that n1/stride ==0, so that len(width_left)  = len(width_right) = n1 = len(out_sample_predict) with 100%??? Added by Annie Zhou Feb 23rd, 2023
+        # width_left might be negative numbers, that's normal
+
+        # n1X2 data frame
+        PIs_Ensemble = pd.DataFrame(np.c_[out_sample_predict+width_left,
+                                          out_sample_predict+width_right], columns=['lower', 'upper'])
+        self.Ensemble_pred_interval_ends = PIs_Ensemble
+        # print(time.time()-start)
+        return PIs_Ensemble
 
 
+    def run_experiments(self, alpha, B, stride, data_name, itrial, miss_test_idx, true_Y_predict=[], density_est=False, get_plots=False, none_CP=False, methods=['Ensemble', 'ICP', 'Weighted_ICP']):
+        train_size = len(self.X_train)
+        np.random.seed(98765 + itrial)
+        if none_CP:
+            results = pd.DataFrame(columns=['itrial', 'dataname', 'method', 'train_size', 'coverage', 'width'])
+            print('Not using Conformal Prediction Methods')
+            print('Running ARIMA(10,1,10)')
+            PI_ARIMA = self.compute_PIs_ARIMA_online(alpha)
+            coverage_ARIMA = ((np.array(PI_ARIMA['lower']) <= self.Y_predict) & (np.array(PI_ARIMA['upper']) >= self.Y_predict)).mean()
+            print(f'Average Coverage is {coverage_ARIMA}')
+            width_ARIMA = (PI_ARIMA['upper'] - PI_ARIMA['lower']).mean()
+            print(f'Average Width is {width_ARIMA}')
+            results.loc[len(results)] = [itrial, data_name, 'ARIMA', train_size, coverage_ARIMA, width_ARIMA]
+        else:
+            results = pd.DataFrame(columns=['itrial', 'dataname', 'muh_fun', 'method', 'train_size', 'coverage', 'width'])
+            PIs = []
+            for method in methods:
+                print(f'Running {method}')
+                if method == 'JaB':
+                    B_ = B
+                    n = len(self.X_train)
+                    B = int(np.random.binomial(int(B_ / (1 - 1. / (1 + train_size)) ** n), (1 - 1. / (1 + train_size)) ** n, size=1))
+                    PI = self.compute_PIs_JaB(alpha, B)
+                elif method == 'Ensemble':
+                    PI = self.compute_PIs_Ensemble_online(alpha, B, stride, miss_test_idx, density_est)
+                else:
+                    l = int(0.5 * len(self.X_train))
+                    PI = eval(f'compute_PIs_{method}_online({alpha}, {l}, {density_est})', globals(), {k: getattr(self, k) for k in dir(self)})
+                PIs.append(PI)
+                coverage = ((np.array(PI['lower']) <= self.Y_predict) & (np.array(PI['upper']) >= self.Y_predict)).mean()
+                if len(true_Y_predict) > 0:
+                    coverage = ((np.array(PI['lower']) <= true_Y_predict) & (np.array(PI['upper']) >= true_Y_predict)).mean()
+                print(f'Average Coverage is {coverage}')
+                width = (PI['upper'] - PI['lower']).mean()
+                print(f'Average Width is {width}')
+                results.loc[len(results)] = [itrial, data_name, self.nn_model.__class__.__name__, method, train_size, coverage, width]
+        if get_plots:
+            if none_CP:
+                return [PI_ARIMA, results]
+            else:
+                PIs.append(results)
+                return PIs
+        else:
+            return results
