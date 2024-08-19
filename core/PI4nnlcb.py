@@ -149,47 +149,86 @@ class prediction_interval():
         return PIs_Ensemble
 
 
-    def run_experiments(self, alpha, B, stride, data_name, itrial, miss_test_idx, true_Y_predict=[], density_est=False, get_plots=False, none_CP=False, methods=['Ensemble', 'ICP', 'Weighted_ICP']):
+    def run_experiments(self, alpha, stride, data_name, itrial, true_Y_predict=[], get_plots=False, none_CP=False, methods=['Ensemble', 'ICP', 'Weighted_ICP'], max_hours=48):
+        '''
+        NOTE: I added a "true_Y_predict" option, which will be used for calibrating coverage under missing data
+            In particular, this is needed when the Y_predict we use for training is NOT the same as true Y_predict
+            Anni Zhou Feb 22, 2023: So, we do not need that true_Y_predict in "hours to sepsis prediction"
+        '''
         train_size = len(self.X_train)
-        np.random.seed(98765 + itrial)
-        if none_CP:
-            results = pd.DataFrame(columns=['itrial', 'dataname', 'method', 'train_size', 'coverage', 'width'])
+        np.random.seed(98765+itrial)
+        # this is for one dim case, skip for now
+        if none_CP: 
+            results = pd.DataFrame(columns=['itrial', 'dataname',
+                                            'method', 'train_size', 'coverage', 'width'])
             print('Not using Conformal Prediction Methods')
-            print('Running ARIMA(10,1,10)')
-            PI_ARIMA = self.compute_PIs_ARIMA_online(alpha)
-            coverage_ARIMA = ((np.array(PI_ARIMA['lower']) <= self.Y_predict) & (np.array(PI_ARIMA['upper']) >= self.Y_predict)).mean()
-            print(f'Average Coverage is {coverage_ARIMA}')
-            width_ARIMA = (PI_ARIMA['upper'] - PI_ARIMA['lower']).mean()
-            print(f'Average Width is {width_ARIMA}')
-            results.loc[len(results)] = [itrial, data_name, 'ARIMA', train_size, coverage_ARIMA, width_ARIMA]
-        else:
-            results = pd.DataFrame(columns=['itrial', 'dataname', 'muh_fun', 'method', 'train_size', 'coverage', 'width'])
+            save_name = {'ARIMA(10,1,10)': 'ARIMA',
+                         'ExpSmoothing': 'ExpSmoothing',
+                         'DynamicFactor': 'DynamicFactor'}
+            PIs = []
+             
+            for name in save_name.keys():
+                print(f'Running {name}')
+                ## only use Y to predict, one_dim  = true
+                PI_res = self.compute_PIs_tseries_online(alpha, name=name)
+                mean_coverage_res = ((np.array(PI_res['lower']) <= self.Y_predict) & (
+                    np.array(PI_res['upper']) >= self.Y_predict)).mean()
+                print(f'Average Coverage is {mean_coverage_res}')
+                mean_width_res = (PI_res['upper'] - PI_res['lower']).mean()
+                print(f'Average Width is {mean_width_res}')
+                results.loc[len(results)] = [itrial, data_name, save_name[name],
+                                             train_size, mean_coverage_res, mean_width_res]
+                PIs.append(PI_res)
+        else: # Conformal case
+            results = pd.DataFrame(columns=['itrial', 'dataname', 'muh_fun',
+                                   'method', 'train_size', 'mean_coverage', 'avg_width','mean_lower', 'mean_upper'])
             PIs = []
             for method in methods:
-                print(f'Running {method}')
-                if method == 'JaB':
-                    B_ = B
-                    n = len(self.X_train)
-                    B = int(np.random.binomial(int(B_ / (1 - 1. / (1 + train_size)) ** n), (1 - 1. / (1 + train_size)) ** n, size=1))
-                    PI = self.compute_PIs_JaB(alpha, B)
-                elif method == 'Ensemble':
-                    PI = self.compute_PIs_Ensemble_online(alpha, B, stride, miss_test_idx, density_est)
+                print(f'**********Runnning {method} ......')
+                if method == 'JaB':  
+                    PI = self.compute_PIs_JaB(alpha)
+                    PI['method'] = method
+                elif method == 'Ensemble': # focus on this one
+                    # methods = ['Ensemble', 'ICP', 'Weighted_ICP']s
+                    # PI: n1X2
+                    PI = eval(f'compute_PIs_{method}_online({alpha},{stride})',
+                              globals(), {k: getattr(self, k) for k in dir(self)})
                 else:
-                    l = int(0.5 * len(self.X_train))
-                    PI = eval(f'compute_PIs_{method}_online({alpha}, {l}, {density_est})', globals(), {k: getattr(self, k) for k in dir(self)})
+                    # for ICP and weighted ICP, we have 50% of the dataset as training dataset
+                    l = math.ceil(0.5*len(self.X_train))
+                    # compute_PIs_Ensemble_online(self, alpha, stride)
+                    # The globals() method returns a dictionary with all the global variables and symbols for the current program.
+                    # PI returns the lower and upper bound of each entry in the predeiction set
+                    # methods=['Ensemble', 'ICP', 'Weighted_ICP']
+                    PI = eval(f'compute_PIs_{method}({alpha},{l})',
+                              globals(), {k: getattr(self, k) for k in dir(self)})
+                # limit the interval to [0, 500]
+                PI['lower'] = [max_hours+1 if y > max_hours+1 else y for y in PI['lower']]
+                PI['lower'] = [0 if y<0 else y for y in PI['lower']]
+                PI['upper'] = [max_hours+1 if y > max_hours+1 else y for y in PI['upper']]
+                PI['upper'] = [0 if y<0 else y for y in PI['upper']] 
+                PI['method'] = method 
+                PI['alpha'] = alpha    
+                PI['itrial'] = itrial
+
                 PIs.append(PI)
-                coverage = ((np.array(PI['lower']) <= self.Y_predict) & (np.array(PI['upper']) >= self.Y_predict)).mean()
+                # evaluate the coverage of all testing dataset
+                mean_coverage = ((np.array(PI['lower']) <= self.Y_predict) & (
+                    np.array(PI['upper']) >= self.Y_predict)).mean()
+                # skip this case
                 if len(true_Y_predict) > 0:
-                    coverage = ((np.array(PI['lower']) <= true_Y_predict) & (np.array(PI['upper']) >= true_Y_predict)).mean()
-                print(f'Average Coverage is {coverage}')
-                width = (PI['upper'] - PI['lower']).mean()
-                print(f'Average Width is {width}')
-                results.loc[len(results)] = [itrial, data_name, self.nn_model.__class__.__name__, method, train_size, coverage, width]
-        if get_plots:
-            if none_CP:
-                return [PI_ARIMA, results]
-            else:
-                PIs.append(results)
-                return PIs
-        else:
-            return results
+                    mean_coverage = ((np.array(PI['lower']) <= true_Y_predict) & (
+                        np.array(PI['upper']) >= true_Y_predict)).mean()
+                print(f'Average Coverage is {mean_coverage}')
+                # width is based on the average value
+                mean_width = (PI['upper'] - PI['lower']).mean()
+                lower_mean = PI['lower'].mean()
+                upper_mean = PI['upper'].mean()
+                print(f'Average Width is {mean_width}')
+                print('-------------------------------------')
+                # add to the end of the dataframe
+                # the results contains the average value, but what I want might be the accurate confidence interval on an hourly basis?
+                results.loc[len(results)] = [itrial, data_name,
+                                             self.regressor.__class__.__name__, method, train_size, mean_coverage, mean_width, lower_mean, upper_mean]               
+            PIs_df = pd.concat(PIs, axis=1)
+        return PIs_df, results 
