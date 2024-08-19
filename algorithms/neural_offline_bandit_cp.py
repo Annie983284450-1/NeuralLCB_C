@@ -153,68 +153,9 @@ an example of hparams:
     })
 
 '''
-class ApproxNeuraLCBV2(BanditAlgorithm):
-    """NeuraLCB using exact confidence matrix and NeuralBanditModelV2. """
-    def __init__(self, hparams, update_freq=1, name='ApproxNeuraLCBV2'):
-        self.name = name 
-        self.hparams = hparams 
-        self.update_freq = update_freq
-        # optax: a library used in JAX ecosystem for optimization. 
-        # adam: refers to the adam optimization algorithm
-        # This optimizer will be used to update the parameters of NeuralBanditModelV2 
-        # based on the gradients computed during training
-        opt = optax.adam(hparams.lr)
-        # class NeuralBanditModelV2(NeuralBanditModel):
-        #    __init__(self, optimizer, hparams, name='NeuralBanditModelV2')
-        self.nn = NeuralBanditModelV2(opt, hparams, '{}-net'.format(name))
-        """BanditDataset(): sDefine a data buffer for contextual bandit algorithms. """
-
-        self.data = BanditDataset(hparams.context_dim, hparams.num_actions, hparams.buffer_s, '{}-data'.format(name))
-
-        self.diag_Lambda = [
-                jnp.ones(self.nn.num_params)* hparams.lambd0 for _ in range(hparams.num_actions)
-            ]
-         # (num_actions, p)
-
-    def reset(self, seed): 
-        self.diag_Lambda = [ # 'hparams.lambd0', 0.1
-                jnp.ones(self.nn.num_params) * self.hparams.lambd0 for _ in range(self.hparams.num_actions)
-            ]
-         # (num_actions, p)
-
-        self.nn.reset(seed) 
-        self.data.reset()
-                             
-    def sample_action(self, contexts):
-        """
-        Args:       
-            context: (None, self.hparams.context_dim)
-        """
-        cs = self.hparams.chunk_size
-        num_chunks = math.ceil(contexts.shape[0] / cs)
-        acts = []
-        for i in range(num_chunks):
-            ctxs = contexts[i * cs: (i+1) * cs,:] 
-            lcb = []
-            for a in range(self.hparams.num_actions):
-                actions = jnp.ones(shape=(ctxs.shape[0],)) * a 
-                # self.nn = NeuralBanditModelV2(opt, hparams, '{}-net'.format(name))
-                f = self.nn.out(self.nn.params, ctxs, actions) # (num_samples, 1)
-                # g = self.nn.grad_out(self.nn.params, convoluted_contexts) / jnp.sqrt(self.nn.m) # (num_samples, p)
-                g = self.nn.grad_out(self.nn.params, ctxs, actions) / jnp.sqrt(self.nn.m)
-                gAg = jnp.sum( jnp.square(g) / self.diag_Lambda[a][:], axis=-1) # (None, p) -> (None,)
-
-                cnf = jnp.sqrt(gAg) # (num_samples,)
-                lcb_a = f.ravel() - self.hparams.beta * cnf.ravel()  # (num_samples,)
-                lcb.append(lcb_a.reshape(-1,1)) 
-            lcb = jnp.hstack(lcb) 
-            # print(lcb)
-            acts.append( jnp.argmax(lcb, axis=1)) 
-        return jnp.hstack(acts)
-
 
 # the ApproxNeuraLCBV2 for conformal prediction
-class ApproxNeuraLCBV2_CP(BanditAlgorithm):
+class ApproxNeuraLCBV2(BanditAlgorithm):
     def __init__(self, hparams, update_freq=1, name='ApproxNeuraLCBV2'):
         self.name = name 
         self.hparams = hparams 
