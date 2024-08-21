@@ -32,114 +32,100 @@ class SepsisData(object):
     def __init__(self,
                  num_contexts,
                  num_test_contexts,
-                 context_dim = 13,
+                #  context_dim = 13,
                  num_actions = 2, # septic or non septic
                  noise_std = 0,
                  pi = 'eps-greedy', 
                  eps = 0.1, 
                  subset_r = 0.5,
-                 remove_underrepresented=True,
+                #  remove_underrepresented=True,
                  ):
         self.name = 'sepsis'
-        file_name = 'data/SepsisData/fully_imputed_8windowed_max48_updated.csv'
-        with open(file_name,'r') as f:
-            df = pd.read_csv(f, header = 0)
-        df = df.drop(columns=['hours2sepsis','HospAdmTime', 'pat_id'])
-
-        df = df.head(10)
-
-        name = 'sepsis'
+        # file_name = 'data/SepsisData/fully_imputed_8windowed_max48_updated.csv'
+        # with open(file_name,'r') as f:
+        #     df = pd.read_csv(f, header = 0)
+        sepsis_full = pd.read_csv(f'./data/SepsisData/fully_imputed_8windowed_max48_updated.csv')
+        
         self.num_contexts = num_contexts 
         self.num_test_contexts = num_test_contexts
         # self.context_dim = context_dim
         self.num_actions = num_actions
         self.pi = pi 
-        self.eps = eps 
+        self.eps = eps  
         self.subset_r = subset_r
         self.noise_std = noise_std
 
-        labels = df['SepsisLabel'].to_numpy()
-        df = df.drop(columns=['SepsisLabel'], axis=1)
-        contexts = df.to_numpy()
-        self.context_dim = contexts.shape[1]
-        """Normalize contexts and encode deterministic rewards."""
-        self.contexts, self.rewards = classification_to_bandit_problem(contexts, labels, num_actions)
-        print('Sepsis: num_samples: {}'.format(self.contexts.shape[0]))
 
-    def reset_data(self, sim_id = 0):
-
-        # Load meta-data to generate dataset
-        # there will be no repeated indices
-        win_size = 8
-        # abandon the 0-1-0 patients and treat as error
-        sepsis_full = pd.read_csv(f'./data/SepsisData/fully_imputed_8windowed_max48_updated.csv')
         sepsis_train_wins = np.load('./data/SepsisData/sepsis_train_wins.npy')
         sepsis_train_wins = sepsis_train_wins.tolist()
         nosepsis_train_wins = np.load('./data/SepsisData/nosepsis_train_wins.npy')
         nosepsis_train_wins = nosepsis_train_wins.tolist()
-        train_wins = sepsis_train_wins+nosepsis_train_wins
 
-        
+        train_wins = sepsis_train_wins[0:int(self.num_contexts/3)]+nosepsis_train_wins[0:int(self.num_contexts/3*2)]    
+        print(f'train_wins:{train_wins}')
+        print(f'length of train wins:{len(train_wins)}')
+
         test_septic_wins = np.load('./Data/test_septic_wins.npy')
         test_septic_wins = test_septic_wins.tolist()
         test_noseptic_wins = np.load('./Data/test_noseptic_wins.npy')
         test_noseptic_wins = test_noseptic_wins.tolist()
         # num_test_pat_noseptic_win = math.floor(self.num_test_pat_win*12)
-        test_wins = test_septic_wins+test_noseptic_wins
-        indices =  sepsis_full[sepsis_full['pat_id'].isin(train_wins)].index
-        test_indices = sepsis_full[sepsis_full['pat_id'].isin(test_wins)].index
+        test_wins = test_septic_wins[0:int(self.num_test_contexts/2)]+test_noseptic_wins[0:int(self.num_test_contexts/2)]
+        print(f'test_wins:{test_wins}')
+        print(f'length of test wins:{len(test_wins)}')
+
+         
+        train_df = sepsis_full[sepsis_full['pat_id'].isin(train_wins)]
+        labels = train_df['SepsisLabel'].to_numpy()
+
+       
+        train_df = train_df.drop(columns=['SepsisLabel','hours2sepsis','HospAdmTime', 'pat_id'])
+        contexts = train_df.to_numpy() 
 
 
-        indices = np.load('data/meta/indices_{}.npy'.format(sim_id)) # random permutation of np.arange(100000)
-        test_indices = np.load('data/meta/test_indices_{}.npy'.format(sim_id)) # random permutation of np.arange(100000)
+        test_df = sepsis_full[sepsis_full['pat_id'].isin(test_wins)]
+        test_labels = test_df['SepsisLabel'].to_numpy()  
+        test_df = test_df.drop(columns=['SepsisLabel','hours2sepsis','HospAdmTime', 'pat_id'])
+        test_contexts= test_df.to_numpy() 
 
-        # Generate inds
-        # to ensure the indices and test_indices are smaller than self.num_samples
-        indices = indices % self.num_samples
-        test_indices = test_indices % self.num_samples
 
-        # print(f'indices: {indices}')
-        # print(f'test_indices: {test_indices}')
-        # the user input contexts are more than that of the dataset
-        if self.num_contexts > self.num_samples:
-            # print(f'self.num_samples:{self.num_samples}')
-            # print(f'self.num_contexts:{self.num_contexts}')
-            # print(f'num_contexts > self.num_samples')
-            ind = indices[:self.num_contexts]
-            
-        else: # the user input data is less than that of the dataset
-            # print(f'self.num_samples:{self.num_samples}')
-            # print(f'self.num_contexts:{self.num_contexts}')
-            # print(f'num_contexts <= self.num_samples')
+        """Normalize contexts and encode deterministic rewards."""
+        self.contexts, self.mean_rewards = classification_to_bandit_problem(contexts, labels, num_actions)
+        print(f'contexts for sepsis:{self.contexts}')
+        print(f'mean rewards for sepsis:{self.mean_rewards}')
+        self.test_contexts, self.test_mean_rewards = classification_to_bandit_problem(test_contexts, test_labels, num_actions)
 
-            # then select self.num_contexts first distinct elements of indices
-            i = np.unique(indices,return_index=True)[1]
-            i.sort()
-            ind = indices[i[:self.num_contexts]]
-        # print(f'ind: {ind}')
+        self.context_dim = contexts.shape[1]
 
-        if self.num_test_contexts > self.num_samples:
-            test_ind = test_indices[:self.num_test_contexts]
-        else:
-            i = np.unique(test_indices,return_index=True)[1]
-            i.sort()
-            test_ind = test_indices[i[:self.num_test_contexts]]
-        # for sepsis dataset, we cannot do this, there will be data leakage
-        # print(f'test_ind: {test_ind}')
-        contexts = self.contexts[ind,:] 
-        mean_rewards = self.rewards[ind,:] 
-        test_contexts = self.contexts[test_ind,:]
-        mean_test_rewards = self.rewards[test_ind,:]
-        actions = sample_offline_policy(mean_rewards, self.num_contexts, self.num_actions, self.pi, self.eps, self.subset_r)
+
+    @property
+    def num_samples(self):
+        return self.contexts.shape[0]
+
+
+    @property 
+    def num_test_samples(self):
+        return self.test_contexts.shape[0]
+    
+
+
+    def reset_data(self, sim_id = 0):
+        contexts = self.contexts 
+        mean_rewards = self.mean_rewards 
+        test_contexts = self.test_contexts 
+        mean_test_rewards = self.test_mean_rewards
+
+         
+        
+        actions = sample_offline_policy(mean_rewards, self.num_samples, self.num_actions, self.pi, self.eps, self.subset_r)
         #create rewards 
         # based on the paper, the gaussian noise is a standard in stochastic bandit literature
         rewards = mean_rewards + self.noise_std * np.random.normal(size=mean_rewards.shape)
         dataset = (contexts, actions, rewards, test_contexts, mean_test_rewards) 
+        
         return dataset 
+    
 
-    @property 
-    def num_samples(self):
-        return self.contexts.shape[0]
 
 class MnistData(object):
     def __init__(self,

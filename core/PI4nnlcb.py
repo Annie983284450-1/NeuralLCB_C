@@ -35,7 +35,7 @@ from core.bandit_dataset import BanditDataset
 
 
 class prediction_interval():
-    def __init__(self, nn_model, X_train, X_predict, Y_train, Y_predict, precomputed_preds = None):
+    def __init__(self, nn_model, X_train, X_predict, Y_train, Y_predict):
         self.nn_model = nn_model
         self.X_train = X_train
         self.X_predict = X_predict
@@ -43,7 +43,7 @@ class prediction_interval():
         self.Y_predict = Y_predict
         self.Ensemble_fitted_func = []
         self.Ensemble_online_resid = np.array([])
-        self.precomputed_preds = precomputed_preds
+        # self.precomputed_preds = precomputed_preds
 
     def fit_bootstrap_models_online(self, alpha, B, miss_test_idx):
         n = len(self.X_train)

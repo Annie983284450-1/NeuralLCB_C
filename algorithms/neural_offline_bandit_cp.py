@@ -12,6 +12,7 @@ from core.utils import inv_sherman_morrison, inv_sherman_morrison_single_sample,
 from algorithms.neural_bandit_model import NeuralBanditModel, NeuralBanditModelV2
 import sys
 import utils_Sepsysolcp as util
+from core.PI4nnlcb import prediction_interval
 
 
 class ExactNeuraLCBV2(BanditAlgorithm):
@@ -344,8 +345,10 @@ class ApproxNeuraLCBV2(BanditAlgorithm):
 
 
         # this is the predictions from the neural networks????
-        05# (num_samples,)
+        # (num_samples,)
+
         print(f"contexts.shape:{contexts.shape}")
+        preds = self.nn.out(self.nn.params, contexts, actions)
         print(f"preds.shape:{preds.shape}")
 
 
@@ -378,7 +381,24 @@ class ApproxNeuraLCBV2(BanditAlgorithm):
             print('     r: {} | a: {} | f: {} | cnf: {} | loss: {} | param_mean: {}'.format(rewards.ravel()[0], \
                 a, preds.ravel(), \
                 cnf.ravel(), cost, jnp.mean(jnp.square(norm))))
-
+            
+        ## calculating conformal prediction intervals
+        # Extract training and prediction data from the bandit dataset
+        X_train, Y_train = self.data.contexts, self.data.rewards
+        X_predict, Y_predict = contexts, rewards
+        
+        # Initialize prediction_interval_model with precomputed predictions
+        self.prediction_interval_model = prediction_interval(
+            self.nn,  # NeuralBanditModelV2 instance
+            X_train, X_predict, Y_train, Y_predict
+            # precomputed_preds=preds.ravel()
+        )
+        
+        PIs_df, mean_coverage = self.prediction_interval_model.run_experiments(0.05, 10, 1, 'dataset_name', 0, [], get_plots=False)
+        Y_upper = PIs_df[0]['upper'].values
+        Y_lower = PIs_df[0]['lower'].values
+        print(f'Prediction Intervals: Lower: {Y_lower}, Upper: {Y_upper}')
+        print(f'Coverage: {mean_coverage}')
 
 class NeuralGreedyV2(BanditAlgorithm):
     def __init__(self, hparams, update_freq=1, name='NeuralGreedyV2'):

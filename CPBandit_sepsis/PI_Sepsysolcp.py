@@ -4,6 +4,7 @@ import warnings
 import utils_Sepsysolcp as util
 import time as time
 import math
+import statsmodels.api as sm
 import matplotlib.pyplot as plt
 from statsmodels.tsa.statespace.sarimax import SARIMAX
 from statsmodels.tsa.statespace.exponential_smoothing import ExponentialSmoothing
@@ -757,35 +758,32 @@ class prediction_interval():
         return PIs_ICP
 
     
+
+    def compute_PIs_ARIMA_online(self, alpha):
         '''
+            Fit ARIMA(10,1,10) to all models
             Use train_size to form model and the rest to be out-sample-prediction
+            return PI (in class, train_size would just be len(self.Y_train), data would be
+            pd.DataFrame(np.r[self.Y_train,self.Y_predict]))
+            Note, need to import statsmodels.api as sm
         '''
         # Concatenate training and testing together
         data = pd.DataFrame(np.r_[self.Y_train, self.Y_predict])
         # Train model
         train_size = len(self.Y_train)
-        if name == 'ARIMA(10,1,10)':
-            training_mod = SARIMAX(data[:train_size], order=(10, 1, 10))
-            mod = SARIMAX(data, order=(10, 1, 10))
-        if name == 'ExpSmoothing':
-            training_mod = ExponentialSmoothing(
-                data[:train_size], trend=True, damped_trend=True, seasonal=24)
-            mod = ExponentialSmoothing(
-                data, trend=True, damped_trend=True, seasonal=24)
-        if name == 'DynamicFactor':
-            training_mod = DynamicFactorMQ(data[:train_size])
-            mod = DynamicFactorMQ(data)
+        training_mod = sm.tsa.statespace.SARIMAX(data[:train_size], order=(10, 1, 10))
         print('training')
         training_res = training_mod.fit(disp=0)
         print('training done')
         # Use in full model
+        mod = sm.tsa.SARIMAX(data, order=(10, 1, 10))
         res = mod.filter(training_res.params)
         # Get the insample prediction interval (which is outsample prediction interval)
         pred = res.get_prediction(start=data.index[train_size], end=data.index[-1])
         pred_int = pred.conf_int(alpha=alpha)  # prediction interval
-        PIs_res = pd.DataFrame(
+        PIs_ARIMA = pd.DataFrame(
             np.c_[pred_int.iloc[:, 0], pred_int.iloc[:, 1]], columns=['lower', 'upper'])
-        return(PIs_res)
+        return(PIs_ARIMA)
 
     def Winkler_score(self, PIs_ls, data_name, methods_name, alpha):
         # Examine if each test point is in the intervals

@@ -90,13 +90,14 @@ help_text: string describes the flag
 flags.DEFINE_string('data_type', 'sepsis', 'Dataset to sample from')
 
 flags.DEFINE_string('policy', 'eps-greedy', 'Offline policy, eps-greedy/subset')
+# flags.DEFINE_string('policy', 'online', 'Offline policy, eps-greedy/subset')
 flags.DEFINE_float('eps', 0.1, 'Probability of selecting a random action in eps-greedy')
 flags.DEFINE_float('subset_r', 0.5, 'The ratio of the action spaces to be selected in offline data')
 # flags.DEFINE_integer('num_contexts', 15000, 'Number of contexts for training.') 
 # flags.DEFINE_integer('num_test_contexts', 10000, 'Number of contexts for test.') 
 
-flags.DEFINE_integer('num_contexts', 5, 'Number of contexts for training.') 
-flags.DEFINE_integer('num_test_contexts', 2, 'Number of contexts for test.') 
+flags.DEFINE_integer('num_contexts', 500, 'Number of contexts for training.') 
+flags.DEFINE_integer('num_test_contexts', 100, 'Number of contexts for test.') 
 
 flags.DEFINE_boolean('verbose', True, 'verbose') 
 flags.DEFINE_boolean('debug', True, 'debug') 
@@ -305,9 +306,12 @@ def main(unused_argv):
     
     # this is the core function that run all the experiments
     print(f'starting contextual_bandit_runner() ......')
+    start  =  time.time()
     regrets, errs = contextual_bandit_runner(algos, data, FLAGS.num_sim, FLAGS.update_freq, FLAGS.test_freq, FLAGS.verbose, FLAGS.debug, FLAGS.normalize, file_name)
  
-    np.savez(file_name, regrets, errs)
+    np.savez(file_name, regrets=regrets, errs=errs)
+    print(f'total time for contextual bandit runner: {time.time()-start} seconds')
+
 
 # thissetup is only executed only if the script is run directly from the command line, not when imported as a module in another python project scrpit.
 # app() ensures that all the command-line arguments are parsed
