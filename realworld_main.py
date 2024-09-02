@@ -9,7 +9,15 @@ import os
 from core.contextual_bandit import contextual_bandit_runner
 # the core code
 # from algorithms.neural_offline_bandit import ExactNeuraLCBV2, NeuralGreedyV2, ApproxNeuraLCBV2
-from algorithms.neural_offline_bandit_cp import ExactNeuraLCBV2, NeuralGreedyV2, ApproxNeuraLCBV2
+
+import importlib
+import algorithms.neural_offline_bandit_cp  # Import the entire module
+
+# Reload the module
+importlib.reload(algorithms.neural_offline_bandit_cp)
+from algorithms.neural_offline_bandit_cp import ExactNeuraLCBV2, NeuralGreedyV2, ApproxNeuraLCBV2_cp
+ 
+
 from algorithms.lin_lcb import LinLCB 
 from algorithms.kern_lcb import KernLCB 
 from algorithms.uniform_sampling import UniformSampling
@@ -238,10 +246,10 @@ def main(unused_argv):
     if FLAGS.algo_group == 'approx-neural':
         algos = [
             # class UniformSampling(BanditAlgorithm)
-                UniformSampling(lin_hparams),
+                # UniformSampling(lin_hparams),
                 # NeuralGreedyV2(hparams, update_freq = FLAGS.update_freq), 
                 # class ApproxNeuraLCBV2(BanditAlgorithm)
-                ApproxNeuraLCBV2(hparams, update_freq = FLAGS.update_freq)
+                ApproxNeuraLCBV2_cp(hparams, update_freq = FLAGS.update_freq)
             ]
 
         algo_prefix = 'approx-neural-gridsearch_epochs={}_m={}_layern={}_buffer={}_bs={}_lr={}_beta={}_lambda={}_lambda0={}'.format(

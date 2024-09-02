@@ -156,7 +156,8 @@ an example of hparams:
 '''
 
 # the ApproxNeuraLCBV2 for conformal prediction
-class ApproxNeuraLCBV2(BanditAlgorithm):
+class ApproxNeuraLCBV2_cp(BanditAlgorithm):
+
     def __init__(self, hparams, update_freq=1, name='ApproxNeuraLCBV2'):
         self.name = name 
         self.hparams = hparams 
@@ -171,6 +172,30 @@ class ApproxNeuraLCBV2(BanditAlgorithm):
         self.nn.reset(seed) 
         self.data.reset()
                              
+    def get_loo_params(self):
+        ## calculating conformal prediction intervals
+        # Extract training and prediction data from the bandit dataset
+        X_train, Y_train = self.data.contexts, self.data.rewards
+        X_predict, Y_predict = contexts, rewards
+        
+        # Initialize prediction_interval_model with precomputed predictions
+        self.prediction_interval_model = prediction_interval(
+            self.nn,  # NeuralBanditModelV2 instance
+            X_train, X_predict, Y_train, Y_predict
+            # precomputed_preds=preds.ravel()
+        )
+        miss_test_idx=[]
+        B = 10
+        alpha=0.1
+        self.prediction_interval_model.fit_bootstrap_models_online(alpha, B, miss_test_idx)
+        
+        # def run_experiments(self, alpha, stride, data_name, itrial, true_Y_predict=[], get_plots=False, none_CP=False, methods=['Ensemble', 'ICP', 'Weighted_ICP'], max_hours=48)
+        PIs_df, results_cp = self.prediction_interval_model.run_experiments(alpha=0.05, stride=10, data_name='sepsis', itrial=0, true_Y_predict=[],  none_CP=False, methods=['Ensemble'])
+        # PIs_df, mean_coverage = self.prediction_interval_model.run_experiments(0.05, 10, 1, 'dataset_name', 0, [], get_plots=False)
+        Y_upper = PIs_df[0]['upper'].values
+        Y_lower = PIs_df[0]['lower'].values
+        print(f'Prediction Intervals: [{Y_lower}, {Y_upper}], Y: {Y_predict}')
+
     def sample_action(self, contexts):
         cs = self.hparams.chunk_size
         num_chunks = math.ceil(contexts.shape[0] / cs)
@@ -341,26 +366,7 @@ class ApproxNeuraLCBV2(BanditAlgorithm):
         # sys.exit()
 
 
-        ## calculating conformal prediction intervals
-        # Extract training and prediction data from the bandit dataset
-        X_train, Y_train = self.data.contexts, self.data.rewards
-        X_predict, Y_predict = contexts, rewards
-        
-        # Initialize prediction_interval_model with precomputed predictions
-        self.prediction_interval_model = prediction_interval(
-            self.nn,  # NeuralBanditModelV2 instance
-            X_train, X_predict, Y_train, Y_predict
-            # precomputed_preds=preds.ravel()
-        )
-        
-        # def run_experiments(self, alpha, stride, data_name, itrial, true_Y_predict=[], get_plots=False, none_CP=False, methods=['Ensemble', 'ICP', 'Weighted_ICP'], max_hours=48)
-        PIs_df, results_cp = self.prediction_interval_model.run_experiments(alpha=0.05, stride=10, data_name='sepsis', itrial=0, true_Y_predict=[],  none_CP=False, methods=['Ensemble'])
-        # PIs_df, mean_coverage = self.prediction_interval_model.run_experiments(0.05, 10, 1, 'dataset_name', 0, [], get_plots=False)
-        Y_upper = PIs_df[0]['upper'].values
-        Y_lower = PIs_df[0]['lower'].values
-        print(f'Prediction Intervals: [{Y_lower}, {Y_upper}], Y: {Y_predict}')
 
-        
         '''
         The way jnp.hstack is called might be causing the issue. 
         When you use a generator expression with jnp.hstack, 
