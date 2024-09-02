@@ -5,7 +5,8 @@ from tqdm import tqdm
 from timeit import timeit 
 import time 
 import sys
-import PI_Sepsysolcp as EnbPI
+# import PI_Sepsysolcp as EnbPI
+from core.PI4nnlcb import prediction_interval
 
 def action_stats(actions, num_actions):
     """Compute the freq of each action.
@@ -33,13 +34,13 @@ def action_accuracy(pred_actions, opt_actions):
 #     # to be added
 #     pass
 
-def generate_dynamic_loo_intervals(self, X_train, Y_train, X_predict, Y_predict, expert, final_result_path, alpha, max_hours, B,Isrefit,stride, data_name, itrial):
-    cp_EnbPI = EnbPI.prediction_interval(locals()[f'{expert}_f'], X_train, X_predict, Y_train, Y_predict, final_result_path)
-    cp_EnbPI.fit_bootstrap_models_online_multi(B, self.boot_samples_idx, Isrefit, model_name=expert, max_hours=max_hours)
+# def generate_dynamic_loo_intervals(self, X_train, Y_train, X_predict, Y_predict, expert, final_result_path, alpha, max_hours, B,Isrefit,stride, data_name, itrial):
+#     cp_EnbPI = EnbPI.prediction_interval(locals()[f'{expert}_f'], X_train, X_predict, Y_train, Y_predict, final_result_path)
+#     cp_EnbPI.fit_bootstrap_models_online_multi(B, self.boot_samples_idx, Isrefit, model_name=expert, max_hours=max_hours)
     
-    # Perform leave-one-out bootstrap dynamically
-    PIs_df, results = cp_EnbPI.run_experiments(alpha, stride, data_name, itrial, true_Y_predict=[], get_plots=False, none_CP=False, methods=methods, max_hours=max_hours)
-    return PIs_df, results.mean_coverage.values[0]
+#     # Perform leave-one-out bootstrap dynamically
+#     PIs_df, results = cp_EnbPI.run_experiments(alpha, stride, data_name, itrial, true_Y_predict=[], get_plots=False, none_CP=False, methods=methods, max_hours=max_hours)
+#     return PIs_df, results.mean_coverage.values[0]
 
 
 
@@ -155,7 +156,8 @@ def contextual_bandit_runner(algos, data, \
                                 print('     opt_rate: {} | pred_rate: {}'.format(opt_stats, sel_stats))
                                 ### @@@@ bugs came from here: IndexError: list index out of range
                                 # monitor(context, action, reward)
-                                algo.monitor(c, a, r)
+                                results_cp = algo.monitor(c, a, r)
+                                print(f'results_cp:{results_cp}')
 
                     subopts[j].append(test_subopt) 
                     act_errs[j].append(1 - action_acc) 

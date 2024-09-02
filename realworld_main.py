@@ -8,7 +8,8 @@ import os
 
 from core.contextual_bandit import contextual_bandit_runner
 # the core code
-from algorithms.neural_offline_bandit import ExactNeuraLCBV2, NeuralGreedyV2, ApproxNeuraLCBV2
+# from algorithms.neural_offline_bandit import ExactNeuraLCBV2, NeuralGreedyV2, ApproxNeuraLCBV2
+from algorithms.neural_offline_bandit_cp import ExactNeuraLCBV2, NeuralGreedyV2, ApproxNeuraLCBV2
 from algorithms.lin_lcb import LinLCB 
 from algorithms.kern_lcb import KernLCB 
 from algorithms.uniform_sampling import UniformSampling

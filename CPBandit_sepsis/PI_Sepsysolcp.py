@@ -372,6 +372,7 @@ class prediction_interval():
         # self.Ensemble_pred_interval_centers is the predicted label using LOO techniques
         self.Ensemble_pred_interval_centers = sorted_out_sample_predict
 
+    # original function
     def fit_bootstrap_models_online(self, B, miss_test_idx, Isrefit, model_name, max_hours):
         '''
           Train B bootstrap estimators from subsets of (X_train, Y_train), compute aggregated predictors, and compute the residuals
@@ -498,8 +499,7 @@ class prediction_interval():
                 resid_LOO = self.Y_train[i] #-0
                 out_sample_predict[i] = np.zeros(n1) # let all Y_predict == 0 
                 num_null_bkeep = num_null_bkeep+1
-            self.Ensemble_online_resid = np.append(
-                self.Ensemble_online_resid, resid_LOO)
+            self.Ensemble_online_resid = np.append(self.Ensemble_online_resid, resid_LOO)
             keep = keep+[] 
         # print(f'###Max LOO training residual is {np.max(self.Ensemble_online_resid)}')
         # print(f'###Min LOO training residual is {np.min(self.Ensemble_online_resid)}')
@@ -519,6 +519,7 @@ class prediction_interval():
         # for resid_out_sample, we use the mean from n "bootstraps". The new n "bootstraps" are automatically generated when we are doing a n loop 
         # to find the bootstraps that did not contain i-th data point during training
         resid_out_sample = self.Y_predict-sorted_out_sample_predict
+        # resid_out_sample = np.abs(sorted_out_sample_predict-self.Y_predict)
         # usually miss_test_idx = [], skip for now
         if len(miss_test_idx) > 0:
             # Replace missing residuals with that from the immediate predecessor that is not missing, as
@@ -536,8 +537,7 @@ class prediction_interval():
                     # note, training data already takes out missing values, so doing it is fine
                     resid_out_sample[0] = self.Ensemble_online_resid[-1]
         # len(Ensemble_online_resid)  == n+n1
-        self.Ensemble_online_resid = np.append(
-            self.Ensemble_online_resid, resid_out_sample)
+        self.Ensemble_online_resid = np.append(self.Ensemble_online_resid, resid_out_sample)
         print(f'        ~~~~~~Finish Computing LOO residuals for "{model_name}", took {time.time()-start} secs.~~')
         # print(f'        ###Max LOO test residual is {np.max(self.Ensemble_online_resid[n:])}')
         # print(f'        ###Min LOO test residual is {np.min(self.Ensemble_online_resid[n:])}')

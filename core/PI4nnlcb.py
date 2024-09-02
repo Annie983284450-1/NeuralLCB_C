@@ -45,6 +45,9 @@ class prediction_interval():
         self.Ensemble_online_resid = np.array([])
         # self.precomputed_preds = precomputed_preds
 
+        # Predicted test data centers by EnbPI
+        self.Ensemble_pred_interval_centers = []
+
     def fit_bootstrap_models_online(self, alpha, B, miss_test_idx):
         n = len(self.X_train)
         n1 = len(self.X_predict)
@@ -71,17 +74,23 @@ class prediction_interval():
             if len(b_keep)>0:
                 # aggregate the bootstraps that do not include sample i, use the mean as the predicted Y
                 resid_LOO = np.abs(self.Y_train[i] - boot_predictions[b_keep,i].mean())
-                self.Ensemble_online_resid = np.append(self.Ensemble_online_resid, resid_LOO)
+                # self.Ensemble_online_resid = np.append(self.Ensemble_online_resid, resid_LOO)
                 # leave the i-th sample out based predictions of Y_predict
                 out_sample_predict[i] = boot_predictions[b_keep, n:].mean(0)
 
             else: # len(b_keep)=0:
                 resid_LOO = np.abs(self.Y_train[i])
-                self.Ensemble_online_resid = np.append(self.Ensemble_online_resid, resid_LOO)
                 out_sample_predict[i] = np.zeros(n1)
+            
 
-        sorted_out_sample_predict = np.sort(out_sample_predict, axis=0)[ind_q]
-        resid_out_sample = np.abs(sorted_out_sample_predict - self.Y_predict)
+            
+            self.Ensemble_online_resid = np.append(self.Ensemble_online_resid, resid_LOO)
+            keep = keep + []
+
+        # sorted_out_sample_predict = np.sort(out_sample_predict, axis=0)[ind_q]
+        # Then we calculate the means of Y_predict for each Y_predict 
+        sorted_out_sample_predict = out_sample_predict.mean(axis=0)  # length n1 
+        resid_out_sample = self.Y_predict-sorted_out_sample_predict
    
 
         if len(miss_test_idx) > 0:
@@ -95,6 +104,7 @@ class prediction_interval():
                 else:
                     resid_out_sample[0] = self.Ensemble_online_resid[-1]
         self.Ensemble_online_resid = np.append(self.Ensemble_online_resid, resid_out_sample)
+        self.Ensemble_pred_interval_centers = sorted_out_sample_predict
         return sorted_out_sample_predict
     
 
@@ -149,7 +159,7 @@ class prediction_interval():
         return PIs_Ensemble
 
 
-    def run_experiments(self, alpha, stride, data_name, itrial, true_Y_predict=[], get_plots=False, none_CP=False, methods=['Ensemble', 'ICP', 'Weighted_ICP'], max_hours=48):
+    def run_experiments(self, alpha, stride, data_name, itrial, true_Y_predict=[],   none_CP=False, methods=['Ensemble', 'ICP', 'Weighted_ICP']):
         '''
         NOTE: I added a "true_Y_predict" option, which will be used for calibrating coverage under missing data
             In particular, this is needed when the Y_predict we use for training is NOT the same as true Y_predict
@@ -202,11 +212,12 @@ class prediction_interval():
                     # methods=['Ensemble', 'ICP', 'Weighted_ICP']
                     PI = eval(f'compute_PIs_{method}({alpha},{l})',
                               globals(), {k: getattr(self, k) for k in dir(self)})
-                # limit the interval to [0, 500]
-                PI['lower'] = [max_hours+1 if y > max_hours+1 else y for y in PI['lower']]
-                PI['lower'] = [0 if y<0 else y for y in PI['lower']]
-                PI['upper'] = [max_hours+1 if y > max_hours+1 else y for y in PI['upper']]
-                PI['upper'] = [0 if y<0 else y for y in PI['upper']] 
+              
+
+                # PI['lower'] = [max_hours+1 if y > max_hours+1 else y for y in PI['lower']]
+                # PI['lower'] = [0 if y<0 else y for y in PI['lower']]
+                # PI['upper'] = [max_hours+1 if y > max_hours+1 else y for y in PI['upper']]
+                # PI['upper'] = [0 if y<0 else y for y in PI['upper']] 
                 PI['method'] = method 
                 PI['alpha'] = alpha    
                 PI['itrial'] = itrial
@@ -228,7 +239,9 @@ class prediction_interval():
                 print('-------------------------------------')
                 # add to the end of the dataframe
                 # the results contains the average value, but what I want might be the accurate confidence interval on an hourly basis?
+                # results.loc[len(results)] = [itrial, data_name,
+                #                              self.regressor.__class__.__name__, method, train_size, mean_coverage, mean_width, lower_mean, upper_mean]         
                 results.loc[len(results)] = [itrial, data_name,
-                                             self.regressor.__class__.__name__, method, train_size, mean_coverage, mean_width, lower_mean, upper_mean]               
+                                             self.regressor.__class__.__name__, method, train_size, mean_coverage, mean_width, lower_mean, upper_mean]          
             PIs_df = pd.concat(PIs, axis=1)
         return PIs_df, results 

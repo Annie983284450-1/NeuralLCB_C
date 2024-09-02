@@ -189,80 +189,7 @@ class ApproxNeuraLCBV2(BanditAlgorithm):
             lcb = jnp.hstack(lcb)
             acts.append(jnp.argmax(lcb, axis=1)) 
         return jnp.hstack(acts)
-
-    def update_buffer(self, contexts, actions, rewards): 
-        self.data.add(contexts, actions, rewards)
-    
-    def update(self, contexts, actions, rewards):
-        self.nn.train(self.data, self.hparams.num_steps)
-        u = self.nn.grad_out(self.nn.params, contexts, actions) / jnp.sqrt(self.nn.m)
-        for i in range(contexts.shape[0]):
-            self.diag_Lambda[actions[i]] = self.diag_Lambda[actions[i]] + jnp.square(u[i,:])
-
-    def monitor(self, contexts=None, actions=None, rewards=None):
-        print(f'running monitor() of algo ApproxNeuraLCBV2 .......')
-        norm = jnp.hstack([jnp.ravel(param) for param in jax.tree_leaves(self.nn.params)])
-        print(f'norm:{norm}')
-        print(f'norm.shape:{norm.shape}')
-        preds = self.nn.out(self.nn.params, contexts, actions)
-        print(f"contexts.shape:{contexts.shape}")
-        print(f"preds.shape:{preds.shape}")
-
-        cnfs = []
-        for a in range(self.hparams.num_actions):
-            actions_tmp = jnp.ones(shape=(contexts.shape[0],)) * a
-            f = self.nn.out(self.nn.params, contexts, actions_tmp)
-            g = self.nn.grad_out(self.nn.params, contexts, actions_tmp) / jnp.sqrt(self.nn.m)
-            gAg = jnp.sum(jnp.square(g) / self.diag_Lambda[a][:], axis=-1)
-            cnf = jnp.sqrt(gAg)
-            cnfs.append(cnf)
-        cnf = jnp.hstack(cnfs)
-        cost = self.nn.loss(self.nn.params, contexts, actions, rewards)
-        a = int(actions.ravel()[0])
-        if self.hparams.debug_mode == 'simple':
-            print('     r: {} | a: {} | f: {} | cnf: {} | loss: {} | param_mean: {}'.format(rewards.ravel()[0], a, preds.ravel()[0], cnf.ravel()[a], cost, jnp.mean(jnp.square(norm))))
-        else:
-            print('     r: {} | a: {} | f: {} | cnf: {} | loss: {} | param_mean: {}'.format(rewards.ravel()[0], a, preds.ravel(), cnf.ravel(), cost, jnp.mean(jnp.square(norm))))
-
-        # Extract training and prediction data from the bandit dataset
-        X_train, Y_train = self.data.contexts, self.data.rewards
-        X_predict, Y_predict = contexts, rewards
-        
-        # Initialize prediction_interval_model with precomputed predictions
-        self.prediction_interval_model = prediction_interval(
-            self.nn,  # NeuralBanditModelV2 instance
-            X_train, X_predict, Y_train, Y_predict,
-            precomputed_preds=preds.ravel()
-        )
-        
-        PIs_df, mean_coverage = self.prediction_interval_model.run_experiments(0.05, 10, 1, 'dataset_name', 0, [], get_plots=False)
-        Y_upper = PIs_df[0]['upper'].values
-        Y_lower = PIs_df[0]['lower'].values
-        print(f'Prediction Intervals: Lower: {Y_lower}, Upper: {Y_upper}')
-        print(f'Coverage: {mean_coverage}')
-
-
-        # def process(i):
-        #     ctxs = contexts[i * cs: (i+1) * cs,:] 
-        #     lcb = []
-        #     for a in range(self.hparams.num_actions):
-        #         actions = jnp.ones(shape=(ctxs.shape[0],)) * a 
-
-        #         f = self.nn.out(self.nn.params, ctxs, actions) # (num_samples, 1)
-        #         # g = self.nn.grad_out(self.nn.params, convoluted_contexts) / jnp.sqrt(self.nn.m) # (num_samples, p)
-        #         g = self.nn.grad_out(self.nn.params, ctxs, actions) / jnp.sqrt(self.nn.m)
-        #         gAg = jnp.sum( jnp.square(g) / self.diag_Lambda[a][:], axis=-1) # (None, p) -> (None,)
-
-        #         cnf = jnp.sqrt(gAg) # (num_samples,)
-        #         lcb_a = f.ravel() - self.hparams.beta * cnf.ravel()  # (num_samples,)
-        #         lcb.append(lcb_a.reshape(-1,1)) 
-        #     lcb = jnp.hstack(lcb) 
-        #     # print(lcb)
-        #     return jnp.argmax(lcb, axis=1)
-    
-        # acts = Parallel(n_jobs=50,prefer="threads")(delayed(process)(i) for i in range(num_chunks))
-        # return jnp.hstack(acts)
-    
+ 
 
     # see the definition in BanditDataset\
     # update contexts, actions and reward
@@ -304,9 +231,6 @@ class ApproxNeuraLCBV2(BanditAlgorithm):
             # print(f'actions[i]:{actions[i]}')
             # print(f'type(self.diag_Lambda):{type(self.diag_Lambda)}')
             # print(f'len(self.diag_Lambda):{len(self.diag_Lambda)}')
-    
-    def calculate_loo_residuals(self):
-        n = len(self.X_train)
 
     def monitor(self, contexts=None, actions=None, rewards=None):
         print(f'running monitor() of algo ApproxNeuraLCBV2 .......')
@@ -394,11 +318,13 @@ class ApproxNeuraLCBV2(BanditAlgorithm):
             # precomputed_preds=preds.ravel()
         )
         
-        PIs_df, mean_coverage = self.prediction_interval_model.run_experiments(0.05, 10, 1, 'dataset_name', 0, [], get_plots=False)
+        # def run_experiments(self, alpha, stride, data_name, itrial, true_Y_predict=[], get_plots=False, none_CP=False, methods=['Ensemble', 'ICP', 'Weighted_ICP'], max_hours=48)
+        PIs_df, results_cp = self.prediction_interval_model.run_experiments(alpha=0.05, stride=10, data_name='sepsis', itrial=0, true_Y_predict=[],  none_CP=False, methods=['Ensemble'])
+        # PIs_df, mean_coverage = self.prediction_interval_model.run_experiments(0.05, 10, 1, 'dataset_name', 0, [], get_plots=False)
         Y_upper = PIs_df[0]['upper'].values
         Y_lower = PIs_df[0]['lower'].values
-        print(f'Prediction Intervals: Lower: {Y_lower}, Upper: {Y_upper}')
-        print(f'Coverage: {mean_coverage}')
+        print(f'Prediction Intervals: [{Y_lower}, {Y_upper}], Y: {Y_predict}')
+        return results_cp
 
 class NeuralGreedyV2(BanditAlgorithm):
     def __init__(self, hparams, update_freq=1, name='NeuralGreedyV2'):
