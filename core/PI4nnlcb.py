@@ -242,6 +242,6 @@ class prediction_interval():
                 # results.loc[len(results)] = [itrial, data_name,
                 #                              self.regressor.__class__.__name__, method, train_size, mean_coverage, mean_width, lower_mean, upper_mean]         
                 results.loc[len(results)] = [itrial, data_name,
-                                             self.regressor.__class__.__name__, method, train_size, mean_coverage, mean_width, lower_mean, upper_mean]          
+                                             self.nn_model.__class__.__name__, method, train_size, mean_coverage, mean_width, lower_mean, upper_mean]          
             PIs_df = pd.concat(PIs, axis=1)
         return PIs_df, results 

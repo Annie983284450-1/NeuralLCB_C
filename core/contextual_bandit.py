@@ -156,7 +156,8 @@ def contextual_bandit_runner(algos, data, \
                                 print('     opt_rate: {} | pred_rate: {}'.format(opt_stats, sel_stats))
                                 ### @@@@ bugs came from here: IndexError: list index out of range
                                 # monitor(context, action, reward)
-                                results_cp = algo.monitor(c, a, r)
+                                # results_cp = algo.monitor(c, a, r)
+                                results_cp = algo.monitor_loo(c, a, r)
                                 print(f'results_cp:{results_cp}')
 
                     subopts[j].append(test_subopt) 

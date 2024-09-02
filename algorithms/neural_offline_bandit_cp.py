@@ -326,6 +326,107 @@ class ApproxNeuraLCBV2(BanditAlgorithm):
         print(f'Prediction Intervals: [{Y_lower}, {Y_upper}], Y: {Y_predict}')
         return results_cp
 
+
+    def monitor_loo(self, contexts=None, actions=None, rewards=None):
+        print(f'running monitor() of algo ApproxNeuraLCBV2 .......')
+        ## debug: 
+        # print(f'param.shape:')
+        # print([param.shape for param in jax.tree_leaves(self.nn.params)])
+        # print(f'type(self.nn.params): {self.nn.params}')
+        # for param in jax.tree_leaves(self.nn.params):
+        #     print(f'current param: {param}')
+        #     print(f'param.shape: {param.shape}')
+        #     new_param = jnp.ravel(param)
+        #     print(f'new_param.shape: {new_param.shape}')
+        # sys.exit()
+
+
+        ## calculating conformal prediction intervals
+        # Extract training and prediction data from the bandit dataset
+        X_train, Y_train = self.data.contexts, self.data.rewards
+        X_predict, Y_predict = contexts, rewards
+        
+        # Initialize prediction_interval_model with precomputed predictions
+        self.prediction_interval_model = prediction_interval(
+            self.nn,  # NeuralBanditModelV2 instance
+            X_train, X_predict, Y_train, Y_predict
+            # precomputed_preds=preds.ravel()
+        )
+        
+        # def run_experiments(self, alpha, stride, data_name, itrial, true_Y_predict=[], get_plots=False, none_CP=False, methods=['Ensemble', 'ICP', 'Weighted_ICP'], max_hours=48)
+        PIs_df, results_cp = self.prediction_interval_model.run_experiments(alpha=0.05, stride=10, data_name='sepsis', itrial=0, true_Y_predict=[],  none_CP=False, methods=['Ensemble'])
+        # PIs_df, mean_coverage = self.prediction_interval_model.run_experiments(0.05, 10, 1, 'dataset_name', 0, [], get_plots=False)
+        Y_upper = PIs_df[0]['upper'].values
+        Y_lower = PIs_df[0]['lower'].values
+        print(f'Prediction Intervals: [{Y_lower}, {Y_upper}], Y: {Y_predict}')
+
+        
+        '''
+        The way jnp.hstack is called might be causing the issue. 
+        When you use a generator expression with jnp.hstack, 
+        JAX might not handle it as expected because it could require an explicit materialization of the sequence. 
+        Try converting the generator to a list before passing it to jnp.hstack:
+        norm = jnp.hstack([jnp.ravel(param) for param in jax.tree_leaves(self.nn.params)])
+        '''
+        # norm = jnp.hstack((jnp.ravel(param) for param in jax.tree_leaves(self.nn.params)))
+        norm = jnp.hstack([jnp.ravel(param) for param in jax.tree_leaves(self.nn.params)])
+        print(f'norm:{norm}')
+        print(f'norm.shape:{norm.shape}')
+
+        # sys.exit()
+        # print(f'norm of ApproxNeuraLCBV2: {norm}')
+        # for key in self.nn.params.keys():
+        #     print(f'key:{key}')
+        #     print(f'self.nn.params[{key}]:{self.nn.params[key]}')
+        # # show the params after applying jax.tree_leaves:
+        # for param in jax.tree_leaves(self.nn.params):
+        #     print(f'param.shape in tree_leaves(self.nn.params):{param.shape}')
+        #     print(f'param in tree_leaves(self.nn.params):{param}')
+        # sys.exit()
+
+
+        # this is the predictions from the neural networks????
+        # (num_samples,)
+
+        print(f"contexts.shape:{contexts.shape}")
+        preds = self.nn.out(self.nn.params, contexts, actions)
+        print(f"preds.shape:{preds.shape}")
+
+
+        cnfs = []
+        for a in range(self.hparams.num_actions):
+            # ??? what is this actions_tmp???
+            # each element is set to integer 'a', length equals to the number of contexts
+            # generate a temporary action array where the chosen action a is applied uniformly across all sample in the batch
+            actions_tmp = jnp.ones(shape=(contexts.shape[0],)) * a 
+            #f: predicted rewards
+            # seems that 'f' is not used
+            f = self.nn.out(self.nn.params, contexts, actions_tmp) # (num_samples, 1)
+            g = self.nn.grad_out(self.nn.params, contexts, actions_tmp) / jnp.sqrt(self.nn.m) # (num_samples, p)
+            # self.diag_Lambda[a][:] is the confidence parameters
+            # this operation effectively scales the gradient by the inverse of the confidence parameters
+            # providing a measure of the uncertainty of variability in the model's predictions for action a across all contexts
+            gAg = jnp.sum( jnp.square(g) / self.diag_Lambda[a][:], axis=-1)
+            cnf = jnp.sqrt(gAg) # (num_samples,)
+
+            cnfs.append(cnf) 
+        cnf = jnp.hstack(cnfs) 
+
+        cost = self.nn.loss(self.nn.params, contexts, actions, rewards)
+        a = int(actions.ravel()[0])
+        if self.hparams.debug_mode == 'simple':
+            print('     r: {} | a: {} | f: {} | cnf: {} | loss: {} | param_mean: {}'.format(rewards.ravel()[0], a, \
+                preds.ravel()[0], \
+                cnf.ravel()[a], cost, jnp.mean(jnp.square(norm))))
+        else:
+            print('     r: {} | a: {} | f: {} | cnf: {} | loss: {} | param_mean: {}'.format(rewards.ravel()[0], \
+                a, preds.ravel(), \
+                cnf.ravel(), cost, jnp.mean(jnp.square(norm))))
+            
+
+        return results_cp
+    
+
 class NeuralGreedyV2(BanditAlgorithm):
     def __init__(self, hparams, update_freq=1, name='NeuralGreedyV2'):
         self.name = name 
