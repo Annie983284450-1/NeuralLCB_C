@@ -130,18 +130,18 @@ def test_BanditDataset():
     actions = np.random.randint(0,num_actions, (n,1)) 
     rewards = np.random.randn(n,1) 
 
-    print('contexts.shape, actions.shape, rewards.shape:')
+    # print('contexts.shape, actions.shape, rewards.shape:')
     print(contexts.shape, actions.shape, rewards.shape)
 
     bd.add(contexts, actions, rewards) 
-    print("bd.contexts.shape, bd.actions.shape, bd.rewards.shape:")
+    # print("bd.contexts.shape, bd.actions.shape, bd.rewards.shape:")
     print(bd.contexts.shape, bd.actions.shape, bd.rewards.shape)
 
     print(bd.actions)
     print(bd.rewards)
     print('=======')
     c,w,r = bd.get_batch_with_weights(batch_size=1)
-    print(f'c.shape, w.shape, r.shape:{c.shape},{w.shape}, {r.shape}')
+    # print(f'c.shape, w.shape, r.shape:{c.shape},{w.shape}, {r.shape}')
     print(w)
     print(r)
 

@@ -55,7 +55,7 @@ class prediction_interval():
         boot_predictions = np.zeros((B,n+n1),dtype=float)
         in_boot_sample = np.zeros((B,n),dtype=bool)
         out_sample_predict = np.zeros((n,n1))
-        ind_q = int((1-alpha)*n)
+        # ind_q = int((1-alpha)*n)
 
         for b in range(B):
             model = self.nn_model

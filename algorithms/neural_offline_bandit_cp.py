@@ -469,6 +469,8 @@ class ApproxNeuraLCBV2_cp(BanditAlgorithm):
         print(f'Prediction Intervals: [{Y_lower}, {Y_upper}], Y: {Y_predict}')
         self.pred_interval_centers = self.prediction_interval_model.Ensemble_pred_interval_centers
         return self.pred_interval_centers
+    
+    
     def sample_action(self, contexts):
         cs = self.hparams.chunk_size
         num_chunks = math.ceil(contexts.shape[0] / cs)
@@ -479,7 +481,8 @@ class ApproxNeuraLCBV2_cp(BanditAlgorithm):
             for a in range(self.hparams.num_actions):
                 actions = jnp.ones(shape=(ctxs.shape[0],)) * a 
                 f = self.nn.out(self.nn.params, ctxs, actions)
-                g = self.nn.grad_out(self.nn.params, ctxs, actions) / jnp.sqrt(self.nn.m)
+                # g = self.nn.grad_out(self.nn.params, ctxs, actions) / jnp.sqrt(self.nn.m)
+                g = self.nn.grad_out_cp(self.nn.params, ctxs, actions) / jnp.sqrt(self.nn.m)
                 gAg = jnp.sum(jnp.square(g) / self.diag_Lambda[a][:], axis=-1)
                 cnf = jnp.sqrt(gAg)
                 lcb_a = f.ravel() - self.hparams.beta * cnf.ravel()
@@ -487,6 +490,9 @@ class ApproxNeuraLCBV2_cp(BanditAlgorithm):
             lcb = jnp.hstack(lcb)
             acts.append(jnp.argmax(lcb, axis=1)) 
         return jnp.hstack(acts)
+    
+    def sample_action_cp(self):
+        pass
 
     # see the definition in BanditDataset\
     # update contexts, actions and reward
@@ -505,13 +511,15 @@ class ApproxNeuraLCBV2_cp(BanditAlgorithm):
 
         # Should run self.update_buffer before self.update to update the model in the latest data. 
         loo_preds = self.pred_interval_centers
+        print(f'loo_preds (self.pred_interval_centers): {loo_preds}')
         self.nn.train(self.data, self.hparams.num_steps,loo_preds)
 
         # Update confidence parameter over all samples in the batch
         # convoluted_contexts = self.nn.action_convolution(contexts, actions)  
         # u = self.nn.grad_out(self.nn.params, convoluted_contexts) / jnp.sqrt(self.nn.m)  # (num_samples, p)
         # grad_out(params, contexts)
-        u = self.nn.grad_out(self.nn.params, contexts, actions) / jnp.sqrt(self.nn.m)
+        # u = self.nn.grad_out(self.nn.params, contexts, actions) / jnp.sqrt(self.nn.m)
+        u = self.nn.grad_out_cp(self.nn.params, contexts, actions) / jnp.sqrt(self.nn.m)
         for i in range(contexts.shape[0]):
             # jax.ops.index_update(self.diag_Lambda, actions[i], \
             #     jnp.square(u[i,:]) + self.diag_Lambda[actions[i],:])  
@@ -525,23 +533,21 @@ class ApproxNeuraLCBV2_cp(BanditAlgorithm):
             enabling more nuanced decision-making in the contextual bandit setting.
             '''
             self.diag_Lambda[actions[i]] = self.diag_Lambda[actions[i]] + jnp.square(u[i,:])
-
+    '''
     def monitor(self, contexts=None, actions=None, rewards=None):
         print(f'running monitor() of algo ApproxNeuraLCBV2 .......')
         loo_preds = self.get_loo_params(contexts, actions, rewards)
-        '''
-        The way jnp.hstack is called might be causing the issue. 
-        When you use a generator expression with jnp.hstack, 
-        JAX might not handle it as expected because it could require an explicit materialization of the sequence. 
-        Try converting the generator to a list before passing it to jnp.hstack:
-        norm = jnp.hstack([jnp.ravel(param) for param in jax.tree_leaves(self.nn.params)])
-        '''
+        
+        # The way jnp.hstack is called might be causing the issue. 
+        # When you use a generator expression with jnp.hstack, 
+        # JAX might not handle it as expected because it could require an explicit materialization of the sequence. 
+        # Try converting the generator to a list before passing it to jnp.hstack:
+        # norm = jnp.hstack([jnp.ravel(param) for param in jax.tree_leaves(self.nn.params)])
         # norm = jnp.hstack((jnp.ravel(param) for param in jax.tree_leaves(self.nn.params)))
         norm = jnp.hstack([jnp.ravel(param) for param in jax.tree_leaves(self.nn.params)])
 
         preds = self.nn.out(self.nn.params, contexts, actions)
         # print(f"preds.shape:{preds.shape}")
-
 
         cnfs = []
         for a in range(self.hparams.num_actions):
@@ -572,6 +578,8 @@ class ApproxNeuraLCBV2_cp(BanditAlgorithm):
             print('     r: {} | a: {} | f: {} | cnf: {} | loss: {} | param_mean: {}'.format(rewards.ravel()[0], \
                 a, preds.ravel(), \
                 cnf.ravel(), cost, jnp.mean(jnp.square(norm))))
+    '''
+
             
  
 
@@ -587,8 +595,6 @@ class ApproxNeuraLCBV2_cp(BanditAlgorithm):
         #     new_param = jnp.ravel(param)
         #     print(f'new_param.shape: {new_param.shape}')
         # sys.exit()
-
-
 
         '''
         The way jnp.hstack is called might be causing the issue. 
@@ -631,7 +637,9 @@ class ApproxNeuraLCBV2_cp(BanditAlgorithm):
             #f: predicted rewards
             # seems that 'f' is not used
             f = self.nn.out(self.nn.params, contexts, actions_tmp) # (num_samples, 1)
-            g = self.nn.grad_out(self.nn.params, contexts, actions_tmp) / jnp.sqrt(self.nn.m) # (num_samples, p)
+            # g = self.nn.grad_out(self.nn.params, contexts, actions_tmp) / jnp.sqrt(self.nn.m) # (num_samples, p)
+            g = self.nn.grad_out_cp(self.nn.params, contexts, actions_tmp) / jnp.sqrt(self.nn.m) # (num_samples, p)
+
             # self.diag_Lambda[a][:] is the confidence parameters
             # this operation effectively scales the gradient by the inverse of the confidence parameters
             # providing a measure of the uncertainty of variability in the model's predictions for action a across all contexts

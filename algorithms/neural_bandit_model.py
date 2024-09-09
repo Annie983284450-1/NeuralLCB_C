@@ -313,7 +313,7 @@ class NeuralBanditModelV2(NeuralBanditModel):
         self.nn = hk.without_apply_rng(hk.transform(self.net_impure_fn))
         # self.out returns the predictions of the neural networks
         self.out = jax.jit(self.out_impure_fn) 
-        # self.grad_out = jax.jit(self.grad_out_impure_fn)
+        self.grad_out = jax.jit(self.grad_out_impure_fn)
         self.grad_out_cp = jax.jit(self.grad_out_impure_cp)
         # added action convolution???
         self.action_convolution = jax.jit(self.action_convolution_impure_fn)
@@ -581,6 +581,9 @@ class NeuralBanditModelV2(NeuralBanditModel):
         # self.out = jax.jit(self.out_impure_fn) 
         # preds = self.out(params, context) 
         # Debugging shapes
+            # Convert loo_preds to JAX array if it's a list
+        if isinstance(loo_preds, list):
+            loo_preds = jnp.array(loo_preds)
         print(f"loo_preds shape: {loo_preds.shape}")
         print(f"reward shape: {reward.shape}")
 

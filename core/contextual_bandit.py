@@ -106,6 +106,7 @@ def contextual_bandit_runner(algos, data, \
             # this is the ground truth, not the predicted value
             # Each iteration extracts a single data sample (context, action, reward) from the dataset.
             # as in pseudo code line 3
+            # this get one of the training dataset
             c,a,r = cmab.get_data(i) 
 
             for j,algo in enumerate(algos): 

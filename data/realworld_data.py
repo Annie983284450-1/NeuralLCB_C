@@ -62,7 +62,8 @@ class SepsisData(object):
         nosepsis_train_wins = nosepsis_train_wins.tolist()
 
         train_wins = sepsis_train_wins[0:int(self.num_contexts/3)]+nosepsis_train_wins[0:int(self.num_contexts/3*2)]    
-        print(f'train_wins:{train_wins}')
+        # print(f'train_wins:{train_wins}')
+        print(f'num_contexts: {self.num_contexts}')
         print(f'length of train wins:{len(train_wins)}')
 
         test_septic_wins = np.load('./Data/test_septic_wins.npy')
@@ -71,7 +72,8 @@ class SepsisData(object):
         test_noseptic_wins = test_noseptic_wins.tolist()
         # num_test_pat_noseptic_win = math.floor(self.num_test_pat_win*12)
         test_wins = test_septic_wins[0:int(self.num_test_contexts/2)]+test_noseptic_wins[0:int(self.num_test_contexts/2)]
-        print(f'test_wins:{test_wins}')
+        # print(f'test_wins:{test_wins}')
+        print(f'num of test contexts: {self.num_test_contexts}')
         print(f'length of test wins:{len(test_wins)}')
 
          
