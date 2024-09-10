@@ -99,11 +99,11 @@ class SepsisData(object):
         # file_name = 'data/SepsisData/fully_imputed_8windowed_max48_updated.csv'
         # with open(file_name,'r') as f:
         #     df = pd.read_csv(f, header = 0)
-        sepsis_full = pd.read_csv(f'./data/SepsisData/fully_imputed_8windowed_max48_updated.csv')
-        
+        # sepsis_full = pd.read_csv(f'./data/SepsisData/fully_imputed_8windowed_max48_updated.csv')
+        sepsis_full = pd.read_csv(f'./data/SepsisData/fully_imputed.csv')
+        sepsis_full = sepsis_full.drop(['HospAdmTim', 'hours2sepsis'])
         self.num_contexts = num_contexts 
         self.num_test_contexts = num_test_contexts
-        # self.context_dim = context_dim
         self.num_actions = num_actions
         self.pi = pi 
         self.eps = eps  
