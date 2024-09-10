@@ -83,9 +83,8 @@ def contextual_bandit_runner(algos, data, \
         ]
 
         # Compute test values and opt actions 
-        #rewards : (num_contexts, num_actions) 
+        # rewards : (num_contexts, num_actions) 
         # find the highest reward in each row(i.e., each contexr)
-
         # i.e., the ground truth
         opt_vals = np.max(cmab.test_mean_rewards, axis=1) 
         # find the index that leads to this optimal reward for each context (i.e., each row)
@@ -123,6 +122,7 @@ def contextual_bandit_runner(algos, data, \
 
                 # Test alg 
                 # test_freq default value 10
+                # for minist is 100
                 if i % test_freq == 0:
                     if algo.name == 'KernLCB': 
                         algo.update()

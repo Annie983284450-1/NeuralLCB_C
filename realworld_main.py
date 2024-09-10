@@ -15,8 +15,9 @@ import algorithms.neural_offline_bandit_cp  # Import the entire module
 
 # Reload the module
 importlib.reload(algorithms.neural_offline_bandit_cp)
-from algorithms.neural_offline_bandit_cp import ExactNeuraLCBV2, NeuralGreedyV2, ApproxNeuraLCBV2_cp
- 
+# from algorithms.neural_offline_bandit import ExactNeuraLCBV2, NeuralGreedyV2, ApproxNeuraLCBV2_cp
+from algorithms.neural_offline_bandit_cp import ApproxNeuraLCBV2_cp
+
 
 from algorithms.lin_lcb import LinLCB 
 from algorithms.kern_lcb import KernLCB 
@@ -25,6 +26,7 @@ from algorithms.neural_lin_lcb import ExactNeuralLinLCBV2, ExactNeuralLinGreedyV
     ApproxNeuralLinLCBJointModel, NeuralLinGreedyJointModel
 # data class is defined in this script!!
 from data.realworld_data import *
+from data.sepsisdataclass import *
 
 from absl import flags, app
 
@@ -124,9 +126,9 @@ flags.DEFINE_float('noise_std', 0.1, 'Noise std')
 # flags.DEFINE_integer('chunk_size', 500, 'Chunk size')
 flags.DEFINE_integer('chunk_size', 5, 'Chunk size')
 # flags.DEFINE_integer('batch_size', 32, 'Batch size')
-flags.DEFINE_integer('batch_size', 2, 'Batch size')
+flags.DEFINE_integer('batch_size', 4, 'Batch size')
 # flags.DEFINE_integer('num_steps', 100, 'Number of steps to train NN.') 
-flags.DEFINE_integer('num_steps', 1, 'Number of steps to train NN.') 
+flags.DEFINE_integer('num_steps', 10, 'Number of steps to train NN.') 
 
  
 flags.DEFINE_integer('buffer_s', -1, 'Size in the train data buffer.')

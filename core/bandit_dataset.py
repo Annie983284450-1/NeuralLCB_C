@@ -73,6 +73,8 @@ class BanditDataset(object):
         else:
             self.actions = jnp.vstack((self.actions, action.reshape(-1,1)))
 
+
+    
     def get_batch_with_weights(self, batch_size):
         """
         Return:
