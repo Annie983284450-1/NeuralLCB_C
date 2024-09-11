@@ -124,12 +124,12 @@ flags.DEFINE_integer('num_sim', 1, 'Number of simulations')
 
 flags.DEFINE_float('noise_std', 0.1, 'Noise std')
 
-# flags.DEFINE_integer('chunk_size', 500, 'Chunk size')
-flags.DEFINE_integer('chunk_size', 5, 'Chunk size')
-# flags.DEFINE_integer('batch_size', 32, 'Batch size')
-flags.DEFINE_integer('batch_size', 4, 'Batch size')
-# flags.DEFINE_integer('num_steps', 100, 'Number of steps to train NN.') 
-flags.DEFINE_integer('num_steps', 10, 'Number of steps to train NN.') 
+flags.DEFINE_integer('chunk_size', 500, 'Chunk size')
+# flags.DEFINE_integer('chunk_size', 5, 'Chunk size')
+flags.DEFINE_integer('batch_size', 32, 'Batch size')
+# flags.DEFINE_integer('batch_size', 4, 'Batch size')
+flags.DEFINE_integer('num_steps', 100, 'Number of steps to train NN.') 
+# flags.DEFINE_integer('num_steps', 10, 'Number of steps to train NN.') 
 
  
 flags.DEFINE_integer('buffer_s', -1, 'Size in the train data buffer.')

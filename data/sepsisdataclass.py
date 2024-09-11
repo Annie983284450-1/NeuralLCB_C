@@ -92,9 +92,23 @@ def remove_underrepresented_classes(features, labels, thresh=0.0005):
 
 import numpy as np
 import pandas as pd
-
+'''
+If rewards are deterministic (clear cause-effect relationship): You may not need any noise, and you can set noise_std to 0. 
+If rewards are stochastic (uncertainty in rewards): 
+In cases where the outcome (reward) has some inherent randomness or uncertainty 
+(e.g., real-world situations with incomplete information), adding noise can better simulate the real-world conditions. 
+In such cases, you could choose a small positive value for noise_std.
+start from 0.01 to 0.1 for reward is either 0 or 1 (small values)
+'''
 class SepsisData(object):
-    def __init__(self, file_name, train_patients_file, test_patients_file, num_actions=2, noise_std=0., pi='eps-greedy', eps=0.1, subset_r=0.5):
+    def __init__(self, file_name, 
+                 train_patients_file, 
+                 test_patients_file, 
+                 num_actions=2, 
+                 noise_std=0.,
+                pi='eps-greedy', 
+                eps=0.1, 
+                subset_r=0.5):
         """
         Initialize the Sepsis dataset for contextual bandit setting.
         :param file_name: path to the sepsis dataset CSV file.
