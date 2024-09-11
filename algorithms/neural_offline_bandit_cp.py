@@ -28,6 +28,7 @@ class ApproxNeuraLCBV2_cp(BanditAlgorithm):
         self.data = BanditDataset(hparams.context_dim, hparams.num_actions, hparams.buffer_s, '{}-data'.format(name))
         self.diag_Lambda = [jnp.ones(self.nn.num_params) * hparams.lambd0 for _ in range(hparams.num_actions)]
         self.pred_interval_centers = []
+        
     def reset(self, seed): 
         self.diag_Lambda = [jnp.ones(self.nn.num_params) * self.hparams.lambd0 for _ in range(self.hparams.num_actions)]
         self.nn.reset(seed) 
@@ -62,22 +63,27 @@ class ApproxNeuraLCBV2_cp(BanditAlgorithm):
     
     
     def sample_action(self, contexts):
-
-
         # flags.DEFINE_integer('chunk_size', 500, 'Chunk size')
         # flags.DEFINE_integer('batch_size', 32, 'Batch size')
         cs = self.hparams.chunk_size
+
         num_chunks = math.ceil(contexts.shape[0] / cs)
         acts = []
         for i in range(num_chunks):
             ctxs = contexts[i * cs: (i+1) * cs,:] 
-            lcb = []
+            # for each chunk of context, store the lower confidence bound (lcb)
+            lcb = [] 
             for a in range(self.hparams.num_actions):
+                # num_actions= 2
+                # a = 0 or 1
+                # actions = 0 if a =0, else 1
                 actions = jnp.ones(shape=(ctxs.shape[0],)) * a 
                 f = self.nn.out(self.nn.params, ctxs, actions)
                 # g = self.nn.grad_out(self.nn.params, ctxs, actions) / jnp.sqrt(self.nn.m)
                 g = self.nn.grad_out_cp(self.nn.params, ctxs, actions) / jnp.sqrt(self.nn.m)
+                # uncertainty of each action 
                 gAg = jnp.sum(jnp.square(g) / self.diag_Lambda[a][:], axis=-1)
+                # confidence
                 cnf = jnp.sqrt(gAg)
                 lcb_a = f.ravel() - self.hparams.beta * cnf.ravel()
                 lcb.append(lcb_a.reshape(-1,1)) 

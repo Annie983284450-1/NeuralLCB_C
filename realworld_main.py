@@ -200,8 +200,8 @@ def main(unused_argv):
 
     
     hparams = edict({
-        # 'layer_sizes': [100,100], 
-        'layer_sizes': [5,5], 
+        'layer_sizes': [100,100], 
+        # 'layer_sizes': [5,5], 
         's_init': 1, 
         'activation': jax.nn.relu, 
         'layer_n': True,

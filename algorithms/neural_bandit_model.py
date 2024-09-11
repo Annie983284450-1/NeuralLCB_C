@@ -20,16 +20,38 @@ __init__()
 build_model()
 train()
 """ 
+
+'''
+Difference between NeuralBanditModel and NeuralBanditModelV2:
+
+    NeuralBanditModel outputs a vector of predicted rewards for all actions, one for each action. 
+    The action is selected by the algorithm after the forward pass based on these predicted rewards.
+'''
+
+
+'''
+
+Aspect	           |           NeuralBanditModel	        |           NeuralBanditModelV2
+Action Handling    |	Predicts rewards for all actions	|   Predicts reward for a specific action
+Forward Pass       |	Action-independent	                |   Action-dependent
+Action Convolution |    No	                                |   Yes
+
+'''
+
+
 class NeuralBanditModel(NeuralNetwork):
     """Build a neural network model for bandits.
      
     This model takes a context as input and predict the expected rewards of multiple actions. 
+    The NeuralBanditModelV2 takes the context and the action together as input. 
+    The context is convolved with the action using the action_convolution_impure_fn, which effectively conditions the context on the specific action.
     """
 
     def __init__(self, optimizer, hparams, name):
         self.optimizer = optimizer 
         self.hparams = hparams 
         self.name = name 
+        # Using the smallest layer size helps in stabilizing the training process because it prevents overestimating the model’s capacity based on larger layers
         self.m = min(self.hparams.layer_sizes)
         self.build_model()
         print('{} has {} parameters.'.format(name, self.num_params))
@@ -291,6 +313,9 @@ class NeuralBanditModel(NeuralNetwork):
         
         self.params, self.opt_state = params, opt_state
 
+
+
+
 # sub class of NeuralBanditModel
 class NeuralBanditModelV2(NeuralBanditModel):
     """Build a neural network model V2 for bandits.
@@ -371,8 +396,6 @@ class NeuralBanditModelV2(NeuralBanditModel):
         out_network:Traced<ShapedArray(float32[1,1])>with<DynamicJaxprTrace(level=4/0)>
         type(out_network):Traced<ShapedArray(float32[1,1])>with<DynamicJaxprTrace(level=1/0)>
         out_network:Traced<ShapedArray(float32[1,1])>with<DynamicJaxprTrace(level=1/0)>
-        
-        
         '''
         out_network = self.nn.apply(params, contexts, actions)
         # print(f'type(out_network):{out_network}')
