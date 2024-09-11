@@ -16,6 +16,7 @@ import algorithms.neural_offline_bandit_cp  # Import the entire module
 # Reload the module
 importlib.reload(algorithms.neural_offline_bandit_cp)
 # from algorithms.neural_offline_bandit import ExactNeuraLCBV2, NeuralGreedyV2, ApproxNeuraLCBV2_cp
+from algorithms.neural_offline_bandit import NeuralGreedyV2 
 from algorithms.neural_offline_bandit_cp import ApproxNeuraLCBV2_cp
 
 
@@ -313,6 +314,7 @@ def main(unused_argv):
     #==============================
     # Runner 
     #==============================
+    # file path for saving the results
     file_name = os.path.join(res_dir, algo_prefix) + '.npz' 
     
     # this is the core function that run all the experiments

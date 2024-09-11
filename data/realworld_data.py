@@ -570,7 +570,6 @@ class StockData(object):
         return dataset 
 
 ## seems like adultdata is most similar to sepsis data
-
 class AdultData(object):
     def __init__(self, num_contexts, 
             num_test_contexts, 
