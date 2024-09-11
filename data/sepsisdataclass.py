@@ -101,14 +101,15 @@ In such cases, you could choose a small positive value for noise_std.
 start from 0.01 to 0.1 for reward is either 0 or 1 (small values)
 '''
 class SepsisData(object):
-    def __init__(self, file_name, 
-                 train_patients_file, 
-                 test_patients_file, 
-                 num_actions=2, 
-                 noise_std=0.,
+    def __init__(self,  
+                num_contexts, 
+                num_test_contexts,         
+                num_actions=2, 
+                noise_std=0.01,
                 pi='eps-greedy', 
                 eps=0.1, 
-                subset_r=0.5):
+                subset_r=0.5
+                ):
         """
         Initialize the Sepsis dataset for contextual bandit setting.
         :param file_name: path to the sepsis dataset CSV file.
@@ -120,6 +121,9 @@ class SepsisData(object):
         :param eps: epsilon value for epsilon-greedy policy.
         :param subset_r: subset ratio for selecting part of the data.
         """
+        self.name = 'sepsis'
+        self.num_contexts = num_contexts 
+        self.num_test_contexts = num_test_contexts
         self.num_actions = num_actions
         self.noise_std = noise_std
         self.pi = pi

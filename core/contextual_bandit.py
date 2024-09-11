@@ -122,7 +122,7 @@ def contextual_bandit_runner(algos, data, \
 
                 # Test alg 
                 # test_freq default value 10
-                # for minist is 100
+               
                 if i % test_freq == 0:
                     if algo.name == 'KernLCB': 
                         algo.update()

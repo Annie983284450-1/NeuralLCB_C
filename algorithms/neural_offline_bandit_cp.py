@@ -62,6 +62,10 @@ class ApproxNeuraLCBV2_cp(BanditAlgorithm):
     
     
     def sample_action(self, contexts):
+
+
+        # flags.DEFINE_integer('chunk_size', 500, 'Chunk size')
+        # flags.DEFINE_integer('batch_size', 32, 'Batch size')
         cs = self.hparams.chunk_size
         num_chunks = math.ceil(contexts.shape[0] / cs)
         acts = []
@@ -123,54 +127,7 @@ class ApproxNeuraLCBV2_cp(BanditAlgorithm):
             enabling more nuanced decision-making in the contextual bandit setting.
             '''
             self.diag_Lambda[actions[i]] = self.diag_Lambda[actions[i]] + jnp.square(u[i,:])
-    '''
-    def monitor(self, contexts=None, actions=None, rewards=None):
-        print(f'running monitor() of algo ApproxNeuraLCBV2 .......')
-        loo_preds = self.get_loo_params(contexts, actions, rewards)
-        
-        # The way jnp.hstack is called might be causing the issue. 
-        # When you use a generator expression with jnp.hstack, 
-        # JAX might not handle it as expected because it could require an explicit materialization of the sequence. 
-        # Try converting the generator to a list before passing it to jnp.hstack:
-        # norm = jnp.hstack([jnp.ravel(param) for param in jax.tree_leaves(self.nn.params)])
-        # norm = jnp.hstack((jnp.ravel(param) for param in jax.tree_leaves(self.nn.params)))
-        norm = jnp.hstack([jnp.ravel(param) for param in jax.tree_leaves(self.nn.params)])
 
-        preds = self.nn.out(self.nn.params, contexts, actions)
-        # print(f"preds.shape:{preds.shape}")
-
-        cnfs = []
-        for a in range(self.hparams.num_actions):
-            # ??? what is this actions_tmp???
-            # each element is set to integer 'a', length equals to the number of contexts
-            # generate a temporary action array where the chosen action a is applied uniformly across all sample in the batch
-            actions_tmp = jnp.ones(shape=(contexts.shape[0],)) * a 
-            #f: predicted rewards
-            # seems that 'f' is not used
-            f = self.nn.out(self.nn.params, contexts, actions_tmp) # (num_samples, 1)
-            g = self.nn.grad_out(self.nn.params, contexts, actions_tmp) / jnp.sqrt(self.nn.m) # (num_samples, p)
-            # self.diag_Lambda[a][:] is the confidence parameters
-            # this operation effectively scales the gradient by the inverse of the confidence parameters
-            # providing a measure of the uncertainty of variability in the model's predictions for action a across all contexts
-            gAg = jnp.sum( jnp.square(g) / self.diag_Lambda[a][:], axis=-1)
-            cnf = jnp.sqrt(gAg) # (num_samples,)
-
-            cnfs.append(cnf) 
-        cnf = jnp.hstack(cnfs) 
-        loo_preds = self.pred_interval_centers
-        cost = self.nn.loss(self.nn.params, contexts, actions, rewards, loo_preds)
-        a = int(actions.ravel()[0])
-        if self.hparams.debug_mode == 'simple':
-            print('     r: {} | a: {} | f: {} | cnf: {} | loss: {} | param_mean: {}'.format(rewards.ravel()[0], a, \
-                preds.ravel()[0], \
-                cnf.ravel()[a], cost, jnp.mean(jnp.square(norm))))
-        else:
-            print('     r: {} | a: {} | f: {} | cnf: {} | loss: {} | param_mean: {}'.format(rewards.ravel()[0], \
-                a, preds.ravel(), \
-                cnf.ravel(), cost, jnp.mean(jnp.square(norm))))
-    '''
-
-            
  
 
     def monitor_loo(self, contexts=None, actions=None, rewards=None):
@@ -249,3 +206,51 @@ class ApproxNeuraLCBV2_cp(BanditAlgorithm):
             print('     r: {} | a: {} | f: {} | cnf: {} | loss: {} | param_mean: {}'.format(rewards.ravel()[0], \
                 a, preds.ravel(), \
                 cnf.ravel(), cost, jnp.mean(jnp.square(norm))))
+    '''
+    def monitor(self, contexts=None, actions=None, rewards=None):
+        print(f'running monitor() of algo ApproxNeuraLCBV2 .......')
+        loo_preds = self.get_loo_params(contexts, actions, rewards)
+        
+        # The way jnp.hstack is called might be causing the issue. 
+        # When you use a generator expression with jnp.hstack, 
+        # JAX might not handle it as expected because it could require an explicit materialization of the sequence. 
+        # Try converting the generator to a list before passing it to jnp.hstack:
+        # norm = jnp.hstack([jnp.ravel(param) for param in jax.tree_leaves(self.nn.params)])
+        # norm = jnp.hstack((jnp.ravel(param) for param in jax.tree_leaves(self.nn.params)))
+        norm = jnp.hstack([jnp.ravel(param) for param in jax.tree_leaves(self.nn.params)])
+
+        preds = self.nn.out(self.nn.params, contexts, actions)
+        # print(f"preds.shape:{preds.shape}")
+
+        cnfs = []
+        for a in range(self.hparams.num_actions):
+            # ??? what is this actions_tmp???
+            # each element is set to integer 'a', length equals to the number of contexts
+            # generate a temporary action array where the chosen action a is applied uniformly across all sample in the batch
+            actions_tmp = jnp.ones(shape=(contexts.shape[0],)) * a 
+            #f: predicted rewards
+            # seems that 'f' is not used
+            f = self.nn.out(self.nn.params, contexts, actions_tmp) # (num_samples, 1)
+            g = self.nn.grad_out(self.nn.params, contexts, actions_tmp) / jnp.sqrt(self.nn.m) # (num_samples, p)
+            # self.diag_Lambda[a][:] is the confidence parameters
+            # this operation effectively scales the gradient by the inverse of the confidence parameters
+            # providing a measure of the uncertainty of variability in the model's predictions for action a across all contexts
+            gAg = jnp.sum( jnp.square(g) / self.diag_Lambda[a][:], axis=-1)
+            cnf = jnp.sqrt(gAg) # (num_samples,)
+
+            cnfs.append(cnf) 
+        cnf = jnp.hstack(cnfs) 
+        loo_preds = self.pred_interval_centers
+        cost = self.nn.loss(self.nn.params, contexts, actions, rewards, loo_preds)
+        a = int(actions.ravel()[0])
+        if self.hparams.debug_mode == 'simple':
+            print('     r: {} | a: {} | f: {} | cnf: {} | loss: {} | param_mean: {}'.format(rewards.ravel()[0], a, \
+                preds.ravel()[0], \
+                cnf.ravel()[a], cost, jnp.mean(jnp.square(norm))))
+        else:
+            print('     r: {} | a: {} | f: {} | cnf: {} | loss: {} | param_mean: {}'.format(rewards.ravel()[0], \
+                a, preds.ravel(), \
+                cnf.ravel(), cost, jnp.mean(jnp.square(norm))))
+    '''
+
+            

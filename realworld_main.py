@@ -105,11 +105,12 @@ flags.DEFINE_string('policy', 'eps-greedy', 'Offline policy, eps-greedy/subset')
 # flags.DEFINE_string('policy', 'online', 'Offline policy, eps-greedy/subset')
 flags.DEFINE_float('eps', 0.1, 'Probability of selecting a random action in eps-greedy')
 flags.DEFINE_float('subset_r', 0.5, 'The ratio of the action spaces to be selected in offline data')
-# flags.DEFINE_integer('num_contexts', 15000, 'Number of contexts for training.') 
-# flags.DEFINE_integer('num_test_contexts', 10000, 'Number of contexts for test.') 
+# this might only corresponding to a few hundreds patients
+flags.DEFINE_integer('num_contexts', 15000, 'Number of contexts for training.') 
+flags.DEFINE_integer('num_test_contexts', 10000, 'Number of contexts for test.') 
 
-flags.DEFINE_integer('num_contexts', 500, 'Number of contexts for training.') 
-flags.DEFINE_integer('num_test_contexts', 100, 'Number of contexts for test.') 
+# flags.DEFINE_integer('num_contexts', 500, 'Number of contexts for training.') 
+# flags.DEFINE_integer('num_test_contexts', 100, 'Number of contexts for test.') 
 
 flags.DEFINE_boolean('verbose', True, 'verbose') 
 flags.DEFINE_boolean('debug', True, 'debug') 
