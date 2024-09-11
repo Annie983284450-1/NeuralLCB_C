@@ -651,6 +651,7 @@ class NeuralBanditModelV2(NeuralBanditModel):
             actions: An array of actions, (None, )
             rewards: An array of rewards for the chosen actions, (None,)
         """
+        # The gradient of the loss function with respect to the parameters (grads = jax.grad(self.loss)) is computed, and the optimizer (like Adam) updates the parameters accordingly.
         grads = jax.grad(self.loss)(params, contexts, actions, rewards, loo_preds)
         updates, opt_state = self.optimizer.update(grads, opt_state)
         new_params = optax.apply_updates(params, updates)

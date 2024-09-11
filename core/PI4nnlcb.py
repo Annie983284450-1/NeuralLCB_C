@@ -214,10 +214,7 @@ class prediction_interval():
                               globals(), {k: getattr(self, k) for k in dir(self)})
               
 
-                # PI['lower'] = [max_hours+1 if y > max_hours+1 else y for y in PI['lower']]
-                # PI['lower'] = [0 if y<0 else y for y in PI['lower']]
-                # PI['upper'] = [max_hours+1 if y > max_hours+1 else y for y in PI['upper']]
-                # PI['upper'] = [0 if y<0 else y for y in PI['upper']] 
+
                 PI['method'] = method 
                 PI['alpha'] = alpha    
                 PI['itrial'] = itrial
@@ -237,10 +234,7 @@ class prediction_interval():
                 upper_mean = PI['upper'].mean()
                 print(f'Average Width is {mean_width}')
                 print('-------------------------------------')
-                # add to the end of the dataframe
-                # the results contains the average value, but what I want might be the accurate confidence interval on an hourly basis?
-                # results.loc[len(results)] = [itrial, data_name,
-                #                              self.regressor.__class__.__name__, method, train_size, mean_coverage, mean_width, lower_mean, upper_mean]         
+      
                 results.loc[len(results)] = [itrial, data_name,
                                              self.nn_model.__class__.__name__, method, train_size, mean_coverage, mean_width, lower_mean, upper_mean]          
             PIs_df = pd.concat(PIs, axis=1)

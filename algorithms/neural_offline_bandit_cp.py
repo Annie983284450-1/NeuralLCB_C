@@ -11,12 +11,14 @@ from core.bandit_dataset import BanditDataset
 from core.utils import inv_sherman_morrison, inv_sherman_morrison_single_sample, vectorize_tree
 from algorithms.neural_bandit_model import NeuralBanditModel, NeuralBanditModelV2
 import sys
-import utils_Sepsysolcp as util
-from core.PI4nnlcb import prediction_interval
+# import utils_Sepsysolcp as util
 
+from core.PI4nnlcb import prediction_interval
+import cp_funs.utils_cp as utils_cp
+ 
 # ======================================================================
 # ========================================================================
-# the ApproxNeuraLCBV2 for conformal prediction
+# the ApproxNeuraLCBV2 with conformal prediction
 class ApproxNeuraLCBV2_cp(BanditAlgorithm):
 
     def __init__(self, hparams, update_freq=1, name='ApproxNeuraLCBV2'):
@@ -25,42 +27,64 @@ class ApproxNeuraLCBV2_cp(BanditAlgorithm):
         self.update_freq = update_freq
         opt = optax.adam(hparams.lr)
         self.nn = NeuralBanditModelV2(opt, hparams, '{}-net'.format(name))
+        # data buffer for incoming data, update each round when we have a new (c,a, r)
         self.data = BanditDataset(hparams.context_dim, hparams.num_actions, hparams.buffer_s, '{}-data'.format(name))
         self.diag_Lambda = [jnp.ones(self.nn.num_params) * hparams.lambd0 for _ in range(hparams.num_actions)]
         self.pred_interval_centers = []
-        
+
     def reset(self, seed): 
         self.diag_Lambda = [jnp.ones(self.nn.num_params) * self.hparams.lambd0 for _ in range(self.hparams.num_actions)]
         self.nn.reset(seed) 
         self.data.reset()
                              
-    def get_loo_params(self,contexts=None, actions=None, rewards=None):
-        ## calculating conformal prediction intervals
-        # Extract training and prediction data from the bandit dataset
-        X_train, Y_train = self.data.contexts, self.data.rewards
-        X_predict, Y_predict = contexts, rewards
+    # def get_loo_params(self,contexts=None, actions=None, rewards=None):
+    #     ## calculating conformal prediction intervals
+    #     # Extract training and prediction data from the bandit dataset
+    #     X_train, Y_train = self.data.contexts, self.data.rewards
+    #     X_predict, Y_predict = contexts, rewards
         
-        # Initialize prediction_interval_model with precomputed predictions
-        # each time only process one entry
-        self.prediction_interval_model = prediction_interval(
-            self.nn,  # NeuralBanditModelV2 instance
-            X_train, X_predict, Y_train, Y_predict
-            # precomputed_preds=preds.ravel()
-        )
-        miss_test_idx=[]
-        B = 10
-        alpha=0.1
-        self.prediction_interval_model.fit_bootstrap_models_online(alpha, B, miss_test_idx)
+    #     # Initialize prediction_interval_model with precomputed predictions
+    #     # each time only process one entry
+    #     self.prediction_interval_model = prediction_interval(
+    #         self.nn,  # NeuralBanditModelV2 instance
+    #         X_train, X_predict, Y_train, Y_predict
+    #         # precomputed_preds=preds.ravel()
+    #     )
+    #     miss_test_idx=[]
+    #     B = 10
+    #     alpha=0.1
+    #     self.prediction_interval_model.fit_bootstrap_models_online(alpha, B, miss_test_idx)
         
-        # def run_experiments(self, alpha, stride, data_name, itrial, true_Y_predict=[], get_plots=False, none_CP=False, methods=['Ensemble', 'ICP', 'Weighted_ICP'], max_hours=48)
-        PIs_df, results_cp = self.prediction_interval_model.run_experiments(alpha=0.05, stride=10, data_name='sepsis', itrial=0, true_Y_predict=[],  none_CP=False, methods=['Ensemble'])
-        # PIs_df, mean_coverage = self.prediction_interval_model.run_experiments(0.05, 10, 1, 'dataset_name', 0, [], get_plots=False)
-        Y_upper = PIs_df[0]['upper'].values
-        Y_lower = PIs_df[0]['lower'].values
-        print(f'Prediction Intervals: [{Y_lower}, {Y_upper}], Y: {Y_predict}')
-        self.pred_interval_centers = self.prediction_interval_model.Ensemble_pred_interval_centers
-        return self.pred_interval_centers
-    
+    #     # def run_experiments(self, alpha, stride, data_name, itrial, true_Y_predict=[], get_plots=False, none_CP=False, methods=['Ensemble', 'ICP', 'Weighted_ICP'], max_hours=48)
+    #     PIs_df, results_cp = self.prediction_interval_model.run_experiments(alpha=0.05, stride=10, data_name='sepsis', itrial=0, true_Y_predict=[],  none_CP=False, methods=['Ensemble'])
+    #     # PIs_df, mean_coverage = self.prediction_interval_model.run_experiments(0.05, 10, 1, 'dataset_name', 0, [], get_plots=False)
+    #     Y_upper = PIs_df[0]['upper'].values
+    #     Y_lower = PIs_df[0]['lower'].values
+    #     print(f'Prediction Intervals: [{Y_lower}, {Y_upper}], Y: {Y_predict}')
+    #     self.pred_interval_centers = self.prediction_interval_model.Ensemble_pred_interval_centers
+    #     return self.pred_interval_centers
+
+
+
+
+    # update the neural network model incrementally and compute LOO predictions in real-time after each update.
+    def get_loo_preds(self, contexts, actions, rewards):        
+        """
+        Approximate LOO predictions using the online bootstrap method.
+        
+        Args:
+            contexts: The current contexts for prediction.
+            actions: The actions taken for those contexts.
+            rewards: The rewards associated with the actions.
+        
+        Returns:
+            loo_preds: LOO predictions for the current data points.
+        """ 
+        B = 15
+        boot_samples_idx = utils_cp.generate_bootstrap_samples()
+
+
+
     
     def sample_action(self, contexts):
         # flags.DEFINE_integer('chunk_size', 500, 'Chunk size')
@@ -91,8 +115,8 @@ class ApproxNeuraLCBV2_cp(BanditAlgorithm):
             acts.append(jnp.argmax(lcb, axis=1)) 
         return jnp.hstack(acts)
     
-    def sample_action_cp(self):
-        pass
+    # def sample_action_cp(self):
+    #     pass
 
     # see the definition in BanditDataset\
     # update contexts, actions and reward
@@ -112,7 +136,7 @@ class ApproxNeuraLCBV2_cp(BanditAlgorithm):
         # Should run self.update_buffer before self.update to update the model in the latest data. 
         loo_preds = self.pred_interval_centers
         print(f'loo_preds (self.pred_interval_centers): {loo_preds}')
-        self.nn.train(self.data, self.hparams.num_steps,loo_preds)
+        self.nn.train(self.data, self.hparams.num_steps, loo_preds)
 
         # Update confidence parameter over all samples in the batch
         # convoluted_contexts = self.nn.action_convolution(contexts, actions)  

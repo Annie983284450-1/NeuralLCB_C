@@ -29,22 +29,7 @@ def action_accuracy(pred_actions, opt_actions):
         opt_actions: (None,)
     """
     return np.mean(np.asarray(pred_actions == opt_actions).astype('float32'))
-
-# def reset_data(sim):
-#     # to be added
-#     pass
-
-# def generate_dynamic_loo_intervals(self, X_train, Y_train, X_predict, Y_predict, expert, final_result_path, alpha, max_hours, B,Isrefit,stride, data_name, itrial):
-#     cp_EnbPI = EnbPI.prediction_interval(locals()[f'{expert}_f'], X_train, X_predict, Y_train, Y_predict, final_result_path)
-#     cp_EnbPI.fit_bootstrap_models_online_multi(B, self.boot_samples_idx, Isrefit, model_name=expert, max_hours=max_hours)
-    
-#     # Perform leave-one-out bootstrap dynamically
-#     PIs_df, results = cp_EnbPI.run_experiments(alpha, stride, data_name, itrial, true_Y_predict=[], get_plots=False, none_CP=False, methods=methods, max_hours=max_hours)
-#     return PIs_df, results.mean_coverage.values[0]
-
-
-
-
+ 
 # this is the final function 
 def contextual_bandit_runner(algos, data, \
             num_sim, update_freq, test_freq, verbose, debug, normalize, save_path=None):
@@ -122,7 +107,7 @@ def contextual_bandit_runner(algos, data, \
 
                 # Test alg 
                 # test_freq default value 10
-               
+                # for minist is 100
                 if i % test_freq == 0:
                     if algo.name == 'KernLCB': 
                         algo.update()
