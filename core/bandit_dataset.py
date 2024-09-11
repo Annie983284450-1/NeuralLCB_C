@@ -97,6 +97,8 @@ class BanditDataset(object):
     which controls the size of the buffer used for sampling. 
     ensures that batches of data can be efficiently drawn for the iterative training processes  
     '''
+    # when called in NeuralBanditModelV2(): x,a,y = data.get_batch(self.hparams.batch_size, self.hparams.data_rand) 
+    # flags.DEFINE_integer('batch_size', 32, 'Batch size')
     def get_batch(self, batch_size, rand=True):
         """
         Return:

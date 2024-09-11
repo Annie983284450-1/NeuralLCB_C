@@ -76,8 +76,7 @@ class prediction_interval():
         else:
             print(f'        No refitting, use saved {model_name} models!!!')
             boot_samples_idx = np.load(os.path.join(saved_model_path,'boot_samples_idx.npy'))
-            # print(f'        boot_samples_idx: {boot_samples_idx}')
-        # print(f'        Size of $boot_samples_idx$: {boot_samples_idx.shape}')
+
         # hold predictions from each f^b, for the whole datatset
         boot_predictions = np.zeros((B, (n+n1)), dtype=float)
         # for i^th column, it shows which f^b uses i in training (so exclude in aggregation)
@@ -87,7 +86,6 @@ class prediction_interval():
         start = time.time()
         # S_b
         # the boot strap is trained on the training dataset only
-
         for b in range(B):
             # only refit the model when we need to do
             #i.e., the first fitting, and every 100 patients
