@@ -99,6 +99,9 @@ class BanditDataset(object):
     '''
     # when called in NeuralBanditModelV2(): x,a,y = data.get_batch(self.hparams.batch_size, self.hparams.data_rand) 
     # flags.DEFINE_integer('batch_size', 32, 'Batch size')
+    # flags.DEFINE_integer('buffer_s', -1, 'Size in the train data buffer.')
+
+
     def get_batch(self, batch_size, rand=True):
         """
         Return:

@@ -37,46 +37,32 @@ class prediction_interval():
     '''
  
 
-    def __init__(self, fit_func, X_train, X_predict, Y_train, Y_predict, final_result_path):
+    def __init__(self, nn_model, X_train, X_predict, Y_train, Y_predict, final_result_path):
         
-        self.regressor = fit_func
+        self.nn_model = nn_model
         self.X_train = X_train
         self.X_predict = X_predict
         self.Y_train = Y_train
         self.Y_predict = Y_predict
-        self.final_result_path = final_result_path
-        self.Ensemble_train_interval_centers = []  # Predicted training data centers by EnbPI
-        self.Ensemble_pred_interval_centers = []  # Predicted test data centers by EnbPI
-        self.Ensemble_online_resid = np.array([])  # LOO scores
-        self.Ensemble_pred_interval_ends = []  # Upper and lower end
-        self.beta_hat_bins = []
-        self.ICP_fitted_func = []  # it only store 1 fitted ICP func.
-        self.ICP_resid = np.array([])
-        self.WeightCP_online_resid = np.array([])
-        self.JaB_boot_samples_idx = 0
-        self.JaB_boot_predictions = 0
+        self.Ensemble_fitted_func = []
+        self.Ensemble_online_resid = np.array([])
+        self.Ensemble_pred_interval_centers = []   
+        # self.final_result_path = final_result_path
+        # self.Ensemble_train_interval_centers = []  # Predicted training data centers by EnbPI
+        # self.Ensemble_pred_interval_centers = []  # Predicted test data centers by EnbPI
+        # self.Ensemble_online_resid = np.array([])  # LOO scores
+        # self.Ensemble_pred_interval_ends = []  # Upper and lower end
+        # self.beta_hat_bins = []
+        # self.ICP_fitted_func = []  # it only store 1 fitted ICP func.
+        # self.ICP_resid = np.array([])
+        # self.WeightCP_online_resid = np.array([])
+        # self.JaB_boot_samples_idx = 0
+        # self.JaB_boot_predictions = 0
 
-    def fit_bootstrap_models_online(self, B, miss_test_idx, Isrefit, model_name, max_hours):
+    def fit_bootstrap_models_online(self, B, miss_test_idx, ):
         '''
           Train B bootstrap estimators from subsets of (X_train, Y_train), compute aggregated predictors, and compute the residuals
         '''
-        n = len(self.X_train)  
-        n1 = len(self.X_predict)  
- 
-        saved_model_path =  './saved_models/'+ model_name 
-        if not os.path.exists(saved_model_path):
- 
-            os.makedirs(saved_model_path)
-        if Isrefit:
-            
-            print(f'        !!!!!Refitting {model_name}!!!!!')
-            boot_samples_idx = util.generate_bootstrap_samples(n, n, B) 
-      
-            np.save(os.path.join(saved_model_path,'boot_samples_idx.npy'), boot_samples_idx)
-        else:
-            print(f'        No refitting, use saved {model_name} models!!!')
-            boot_samples_idx = np.load(os.path.join(saved_model_path,'boot_samples_idx.npy'))
-
         # hold predictions from each f^b, for the whole datatset
         boot_predictions = np.zeros((B, (n+n1)), dtype=float)
         # for i^th column, it shows which f^b uses i in training (so exclude in aggregation)

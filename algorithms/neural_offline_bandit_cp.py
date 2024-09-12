@@ -68,6 +68,7 @@ class ApproxNeuraLCBV2_cp(BanditAlgorithm):
 
 
     # update the neural network model incrementally and compute LOO predictions in real-time after each update.
+    # get LOO predictions for a batch of data points without fully retraining the model
     def get_loo_preds(self, contexts, actions, rewards):        
         """
         Approximate LOO predictions using the online bootstrap method.
@@ -81,11 +82,35 @@ class ApproxNeuraLCBV2_cp(BanditAlgorithm):
             loo_preds: LOO predictions for the current data points.
         """ 
         B = 15
-        boot_samples_idx = utils_cp.generate_bootstrap_samples()
+        boot_samples_idx = utils_cp.generate_bootstrap_samples(len(self.data.contexts), len(self.data.contexts), B)
+        boot_predictions = np.zeros(B, len(contexts))
 
+        for b in range(B):
+            boot_data = BanditDataset(self.hparams.context_dim,self.hparams.num_actions,self.hparams.buffer_s, f'{b}_th_boot_data')
+            boot_data.add(self.data.contexts[boot_samples_idx[b], :], self.data.actions[boot_samples_idx[b]], self.data.rewards[boot_samples_idx[b]])
+            self.nn.train(boot_data, self.hparams.num_steps)
+            
+            # Make predictions for the current batch
+            boot_predictions[b] = self.nn.out(self.nn.params, contexts, actions).flatten()
 
+        # Compute LOO predictions as the mean of the bootstrap predictions
+        loo_preds = np.mean(boot_predictions, axis=0)
+        return loo_preds
 
-    
+    def compute_prediction_intervals(self, alpha = 0.5, stride = 1):
+        """
+        Compute the prediction intervals for the current predictions using LOO conformal method.
+        
+        Args:
+            alpha: Confidence level (e.g., 0.05 for 95% intervals).
+            stride: Stride for generating intervals (default is 1).
+        
+        Returns:
+            PIs: DataFrame containing the lower and upper bounds of prediction intervals.
+        """                
+        
+
+    # line 5 in NeuraLCB_Bmode
     def sample_action(self, contexts):
         # flags.DEFINE_integer('chunk_size', 500, 'Chunk size')
         # flags.DEFINE_integer('batch_size', 32, 'Batch size')

@@ -258,7 +258,7 @@ class NeuralBanditModel(NeuralNetwork):
         """
         # self.out = jax.jit(self.out_impure_fn) 
         preds = self.out(params, context) 
-
+        # Batch size B is implicitly handled by the averaging function jnp.mean(), which divides the total error by the batch size.
         squared_loss = 0.5 * jnp.mean(jnp.sum(action * jnp.square(preds - reward), axis=1), axis=0)
         reg_loss = 0.5 * self.hparams.lambd * sum(
                 jnp.sum(jnp.square(param)) for param in jax.tree_leaves(params) 
@@ -593,42 +593,42 @@ class NeuralBanditModelV2(NeuralBanditModel):
 
         return squared_loss + reg_loss 
     
-    def loss_impure_loo(self, params, context, action, reward, loo_preds):
-        """
-        Args:
-            context: An array of context, (None, self.hparams.context_dim)
-            action: An array of one-hot action vectors, 1 for selected action and 0 other wise, 
-            (None, self.hparams.num_actions)
-            reward: An array of reward vectors, (None, self.hparams.num_actions)
-        """
-        # self.out = jax.jit(self.out_impure_fn) 
-        # preds = self.out(params, context) 
-        # Debugging shapes
-            # Convert loo_preds to JAX array if it's a list
-        if isinstance(loo_preds, list):
-            loo_preds = jnp.array(loo_preds)
-        print(f"loo_preds shape: {loo_preds.shape}")
-        print(f"reward shape: {reward.shape}")
+    # def loss_impure_loo(self, params, context, action, reward, loo_preds):
+    #     """
+    #     Args:
+    #         context: An array of context, (None, self.hparams.context_dim)
+    #         action: An array of one-hot action vectors, 1 for selected action and 0 other wise, 
+    #         (None, self.hparams.num_actions)
+    #         reward: An array of reward vectors, (None, self.hparams.num_actions)
+    #     """
+    #     # self.out = jax.jit(self.out_impure_fn) 
+    #     # preds = self.out(params, context) 
+    #     # Debugging shapes
+    #         # Convert loo_preds to JAX array if it's a list
+    #     if isinstance(loo_preds, list):
+    #         loo_preds = jnp.array(loo_preds)
+    #     print(f"loo_preds shape: {loo_preds.shape}")
+    #     print(f"reward shape: {reward.shape}")
 
-        sys.exit()
-        # Convert loo_preds to a JAX array if it's a list
-        if isinstance(loo_preds, list):
-            loo_preds = jnp.array(loo_preds)
+    #     sys.exit()
+    #     # Convert loo_preds to a JAX array if it's a list
+    #     if isinstance(loo_preds, list):
+    #         loo_preds = jnp.array(loo_preds)
         
-        # Ensure action and reward are also JAX arrays
-        if isinstance(action, list):
-            action = jnp.array(action)
-        if isinstance(reward, list):
-            reward = jnp.array(reward)
+    #     # Ensure action and reward are also JAX arrays
+    #     if isinstance(action, list):
+    #         action = jnp.array(action)
+    #     if isinstance(reward, list):
+    #         reward = jnp.array(reward)
 
 
 
-        squared_loss = 0.5 * jnp.mean(jnp.sum(action * jnp.square(loo_preds - reward), axis=1), axis=0)
-        reg_loss = 0.5 * self.hparams.lambd * sum(
-                jnp.sum(jnp.square(param)) for param in jax.tree_leaves(params) 
-            )
+    #     squared_loss = 0.5 * jnp.mean(jnp.sum(action * jnp.square(loo_preds - reward), axis=1), axis=0)
+    #     reg_loss = 0.5 * self.hparams.lambd * sum(
+    #             jnp.sum(jnp.square(param)) for param in jax.tree_leaves(params) 
+    #         )
 
-        return squared_loss + reg_loss
+    #     return squared_loss + reg_loss
 
     def init(self, seed): 
         key = jax.random.PRNGKey(seed)
@@ -663,6 +663,11 @@ class NeuralBanditModelV2(NeuralBanditModel):
             print('Training {} for {} steps.'.format(self.name, num_steps)) 
             
         params, opt_state = self.params, self.opt_state 
+        # flags.DEFINE_integer('num_steps', 100, 'Number of steps to train NN.') 
+        # The concept of num_steps in the train() function refers to the number of gradient update steps 
+        # or iterations that the model will go through during training. 
+        # It controls how many times the model processes batches of data and updates its parameters.
+
         for step in range(num_steps):
             """
             Return:
@@ -670,11 +675,13 @@ class NeuralBanditModelV2(NeuralBanditModel):
                 a: (batch_size, )
                 y: (batch_size, )
             """
+            # flags.DEFINE_bool('data_rand', True, 'Where randomly sample a data batch or  use the latest samples in the buffer' )
             x,a,y = data.get_batch(self.hparams.batch_size, self.hparams.data_rand) #(None,d), (None,), (None,)
             # self.update = jax.jit(self.update_impure_fn) 
             # update_impure_fn(self, params, opt_state, contexts, actions, rewards)  
             params, opt_state = self.update(params, opt_state, x,a,y, loo_preds) 
             # print the step loss
+            # flags.DEFINE_integer('freq_summary', 10, 'Summary frequency')
             if step % self.hparams.freq_summary == 0 and self.hparams.verbose:
                 # self.loss = jax.jit(self.loss_impure_fn)
                 # loss_impure_fn(self, params, contexts, actions, rewards)
