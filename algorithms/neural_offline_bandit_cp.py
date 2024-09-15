@@ -25,91 +25,20 @@ class ApproxNeuraLCBV2_cp(BanditAlgorithm):
         self.name = name 
         self.hparams = hparams 
         self.update_freq = update_freq
+        # learning rate 1e-3
         opt = optax.adam(hparams.lr)
         self.nn = NeuralBanditModelV2(opt, hparams, '{}-net'.format(name))
         # data buffer for incoming data, update each round when we have a new (c,a, r)
         self.data = BanditDataset(hparams.context_dim, hparams.num_actions, hparams.buffer_s, '{}-data'.format(name))
         self.diag_Lambda = [jnp.ones(self.nn.num_params) * hparams.lambd0 for _ in range(hparams.num_actions)]
         self.pred_interval_centers = []
+        self.prediction_interval_model = None
 
     def reset(self, seed): 
         self.diag_Lambda = [jnp.ones(self.nn.num_params) * self.hparams.lambd0 for _ in range(self.hparams.num_actions)]
         self.nn.reset(seed) 
         self.data.reset()
-                             
-    # def get_loo_params(self,contexts=None, actions=None, rewards=None):
-    #     ## calculating conformal prediction intervals
-    #     # Extract training and prediction data from the bandit dataset
-    #     X_train, Y_train = self.data.contexts, self.data.rewards
-    #     X_predict, Y_predict = contexts, rewards
-        
-    #     # Initialize prediction_interval_model with precomputed predictions
-    #     # each time only process one entry
-    #     self.prediction_interval_model = prediction_interval(
-    #         self.nn,  # NeuralBanditModelV2 instance
-    #         X_train, X_predict, Y_train, Y_predict
-    #         # precomputed_preds=preds.ravel()
-    #     )
-    #     miss_test_idx=[]
-    #     B = 10
-    #     alpha=0.1
-    #     self.prediction_interval_model.fit_bootstrap_models_online(alpha, B, miss_test_idx)
-        
-    #     # def run_experiments(self, alpha, stride, data_name, itrial, true_Y_predict=[], get_plots=False, none_CP=False, methods=['Ensemble', 'ICP', 'Weighted_ICP'], max_hours=48)
-    #     PIs_df, results_cp = self.prediction_interval_model.run_experiments(alpha=0.05, stride=10, data_name='sepsis', itrial=0, true_Y_predict=[],  none_CP=False, methods=['Ensemble'])
-    #     # PIs_df, mean_coverage = self.prediction_interval_model.run_experiments(0.05, 10, 1, 'dataset_name', 0, [], get_plots=False)
-    #     Y_upper = PIs_df[0]['upper'].values
-    #     Y_lower = PIs_df[0]['lower'].values
-    #     print(f'Prediction Intervals: [{Y_lower}, {Y_upper}], Y: {Y_predict}')
-    #     self.pred_interval_centers = self.prediction_interval_model.Ensemble_pred_interval_centers
-    #     return self.pred_interval_centers
-
-
-
-
-    # update the neural network model incrementally and compute LOO predictions in real-time after each update.
-    # get LOO predictions for a batch of data points without fully retraining the model
-    def get_loo_preds(self, contexts, actions, rewards):        
-        """
-        Approximate LOO predictions using the online bootstrap method.
-        
-        Args:
-            contexts: The current contexts for prediction.
-            actions: The actions taken for those contexts.
-            rewards: The rewards associated with the actions.
-        
-        Returns:
-            loo_preds: LOO predictions for the current data points.
-        """ 
-        B = 15
-        boot_samples_idx = utils_cp.generate_bootstrap_samples(len(self.data.contexts), len(self.data.contexts), B)
-        boot_predictions = np.zeros(B, len(contexts))
-
-        for b in range(B):
-            boot_data = BanditDataset(self.hparams.context_dim,self.hparams.num_actions,self.hparams.buffer_s, f'{b}_th_boot_data')
-            boot_data.add(self.data.contexts[boot_samples_idx[b], :], self.data.actions[boot_samples_idx[b]], self.data.rewards[boot_samples_idx[b]])
-            self.nn.train(boot_data, self.hparams.num_steps)
-            
-            # Make predictions for the current batch
-            boot_predictions[b] = self.nn.out(self.nn.params, contexts, actions).flatten()
-
-        # Compute LOO predictions as the mean of the bootstrap predictions
-        loo_preds = np.mean(boot_predictions, axis=0)
-        return loo_preds
-
-    def compute_prediction_intervals(self, alpha = 0.5, stride = 1):
-        """
-        Compute the prediction intervals for the current predictions using LOO conformal method.
-        
-        Args:
-            alpha: Confidence level (e.g., 0.05 for 95% intervals).
-            stride: Stride for generating intervals (default is 1).
-        
-        Returns:
-            PIs: DataFrame containing the lower and upper bounds of prediction intervals.
-        """                
-        
-
+        self.prediction_interval_model = None
     # line 5 in NeuraLCB_Bmode
     def sample_action(self, contexts):
         # flags.DEFINE_integer('chunk_size', 500, 'Chunk size')
@@ -140,11 +69,7 @@ class ApproxNeuraLCBV2_cp(BanditAlgorithm):
             acts.append(jnp.argmax(lcb, axis=1)) 
         return jnp.hstack(acts)
     
-    # def sample_action_cp(self):
-    #     pass
-
-    # see the definition in BanditDataset\
-    # update contexts, actions and reward
+ 
     def update_buffer(self, contexts, actions, rewards): 
         self.data.add(contexts, actions, rewards)
     
@@ -162,25 +87,8 @@ class ApproxNeuraLCBV2_cp(BanditAlgorithm):
         loo_preds = self.pred_interval_centers
         print(f'loo_preds (self.pred_interval_centers): {loo_preds}')
         self.nn.train(self.data, self.hparams.num_steps, loo_preds)
-
-        # Update confidence parameter over all samples in the batch
-        # convoluted_contexts = self.nn.action_convolution(contexts, actions)  
-        # u = self.nn.grad_out(self.nn.params, convoluted_contexts) / jnp.sqrt(self.nn.m)  # (num_samples, p)
-        # grad_out(params, contexts)
-        # u = self.nn.grad_out(self.nn.params, contexts, actions) / jnp.sqrt(self.nn.m)
         u = self.nn.grad_out_cp(self.nn.params, contexts, actions) / jnp.sqrt(self.nn.m)
         for i in range(contexts.shape[0]):
-            # jax.ops.index_update(self.diag_Lambda, actions[i], \
-            #     jnp.square(u[i,:]) + self.diag_Lambda[actions[i],:])  
-            # mapped to pseudo code line 6 in the paper
-            #'self.diag_Lambda' is initialized as a list of diagonal matrices 
-            # one for each action
-            '''
-            self.diag_Lambda stores these parameters for each possible action, 
-            actions[i] specifies which action's parameters should be updated based on the current observation. 
-            This allows the algorithm to update its confidence levels uniquely for each action based on the data observed, 
-            enabling more nuanced decision-making in the contextual bandit setting.
-            '''
             self.diag_Lambda[actions[i]] = self.diag_Lambda[actions[i]] + jnp.square(u[i,:])
 
  
@@ -207,27 +115,7 @@ class ApproxNeuraLCBV2_cp(BanditAlgorithm):
         '''
         # norm = jnp.hstack((jnp.ravel(param) for param in jax.tree_leaves(self.nn.params)))
         norm = jnp.hstack([jnp.ravel(param) for param in jax.tree_leaves(self.nn.params)])
-        print(f'norm:{norm}')
-        print(f'norm.shape:{norm.shape}')
-
-        # sys.exit()
-        # print(f'norm of ApproxNeuraLCBV2: {norm}')
-        # for key in self.nn.params.keys():
-        #     print(f'key:{key}')
-        #     print(f'self.nn.params[{key}]:{self.nn.params[key]}')
-        # # show the params after applying jax.tree_leaves:
-        # for param in jax.tree_leaves(self.nn.params):
-        #     print(f'param.shape in tree_leaves(self.nn.params):{param.shape}')
-        #     print(f'param in tree_leaves(self.nn.params):{param}')
-        # sys.exit()
-
-
-        # this is the predictions from the neural networks????
-        # (num_samples,)
-
-        # print(f"contexts.shape:{contexts.shape}")
         preds = self.nn.out(self.nn.params, contexts, actions)
-        # print(f"preds.shape:{preds.shape}")
 
 
         cnfs = []
@@ -236,15 +124,11 @@ class ApproxNeuraLCBV2_cp(BanditAlgorithm):
             # each element is set to integer 'a', length equals to the number of contexts
             # generate a temporary action array where the chosen action a is applied uniformly across all sample in the batch
             actions_tmp = jnp.ones(shape=(contexts.shape[0],)) * a 
-            #f: predicted rewards
-            # seems that 'f' is not used
             f = self.nn.out(self.nn.params, contexts, actions_tmp) # (num_samples, 1)
             # g = self.nn.grad_out(self.nn.params, contexts, actions_tmp) / jnp.sqrt(self.nn.m) # (num_samples, p)
             g = self.nn.grad_out_cp(self.nn.params, contexts, actions_tmp) / jnp.sqrt(self.nn.m) # (num_samples, p)
 
-            # self.diag_Lambda[a][:] is the confidence parameters
-            # this operation effectively scales the gradient by the inverse of the confidence parameters
-            # providing a measure of the uncertainty of variability in the model's predictions for action a across all contexts
+ 
             gAg = jnp.sum( jnp.square(g) / self.diag_Lambda[a][:], axis=-1)
             cnf = jnp.sqrt(gAg) # (num_samples,)
 
