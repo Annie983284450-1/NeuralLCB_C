@@ -81,6 +81,7 @@ def contextual_bandit_runner(algos, data, \
         # the width of the progeress bar in tdqm() is measured by characters
         # update the neural network each time there is a new context
         for i in tqdm(range(cmab.num_contexts),ncols=75):
+            print(f'!!!!!! @#$@ ROUND {i} @#$@ !!!!!!')
 
             # start_time = timeit()
             start_time = time.time()

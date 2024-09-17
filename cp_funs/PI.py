@@ -89,7 +89,9 @@ class prediction_interval():
             # sys.exit()
             
             # dataset = (contexts, actions, rewards, test_contexts, mean_test_rewards)
+            print(f'*********  {b}-th Bootstrap  ****************')
             print(f'data.contexts.shape:{data.contexts.shape}')
+            print(f'data.rewards.shape:{data.rewards.shape}')
             model.train(data, model.hparams.num_steps)
             # Predict using the trained model on the combined training and prediction set
             boot_predictions[b] = model.out(model.params, np.r_[self.X_train, self.X_predict], np.zeros((n + n1,))).flatten() # for V2

@@ -265,8 +265,8 @@ def main(unused_argv):
                 # UniformSampling(lin_hparams),
                 # NeuralGreedyV2(hparams, update_freq = FLAGS.update_freq), 
                 # class ApproxNeuraLCBV2(BanditAlgorithm)
-                # ApproxNeuraLCBV2_cp(hparams, update_freq = FLAGS.update_freq)
-                ApproxNeuraLCBV2(hparams, update_freq = FLAGS.update_freq)
+                ApproxNeuraLCBV2_cp(hparams, update_freq = FLAGS.update_freq)
+                # ApproxNeuraLCBV2(hparams, update_freq = FLAGS.update_freq)
             ]
 
         algo_prefix = 'approx-neural-gridsearch_epochs={}_m={}_layern={}_buffer={}_bs={}_lr={}_beta={}_lambda={}_lambda0={}'.format(
