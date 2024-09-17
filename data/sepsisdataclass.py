@@ -46,7 +46,8 @@ def classification_to_bandit_problem_sepsis(contexts, labels, df,num_actions=Non
     # is not actions is specified, the action is the prediction class
 
     # Normalize only the continuous features
-    contexts = df.copy()
+
+    # contexts = df.copy()
     
     # Separate categorical and continuous features
     categorical_cols = ['Gender', 'Unit1', 'Unit2', 'ICULOS']  # columns to exclude from normalization, ICULOS specially included
@@ -58,22 +59,39 @@ def classification_to_bandit_problem_sepsis(contexts, labels, df,num_actions=Non
     num_contexts = contexts.shape[0]
 
     # Due to random subsampling in small problems, some features may be constant
-    # ? if the features are constant, the std = 0, replace them with 1
+    # if the features are constant, the std = 0, replace them with 1
     # sstd = safe_std(np.std(contexts, axis=0, keepdims=True)[0, :])
-    sstd = safe_std(np.std(contexts[continuous_cols], axis=0, keepdims=True)[0, :])
+
+    # sstd = safe_std(np.std(contexts[continuous_cols].to_numpy(), axis=0, keepdims=True)[0, :])
     # Normalize features to have zero mean and unit variance
-    contexts[continuous_cols] = ((contexts[continuous_cols] - np.mean(contexts[continuous_cols], axis=0, keepdims=True)) / sstd)
+
+    #sstd = np.std(contexts[continuous_cols], axis=0).reshape(1, -1)  # Ensuring the result is 2D
+    #sstd = safe_std(sstd[0, :])  # Passing it to safe_std as before
+
+    contexts_continuous_np = df[continuous_cols].to_numpy()  # Convert to NumPy array for calculations
+    contexts_categorical_np = df[categorical_cols].to_numpy()
+    sstd = safe_std(np.std(contexts_continuous_np, axis=0, keepdims=True)[0, :])
+
+    # Normalize features to have zero mean and unit variance
+    contexts_continuous_np = ((contexts_continuous_np - np.mean(contexts_continuous_np, axis=0, keepdims=True)) / sstd)
+    final_contexts_np = np.concatenate([contexts_continuous_np, contexts_categorical_np], axis=1)
+
 
     # One hot encode labels as rewards
     '''
-    each row corresponds to a context, and each column corresponds to an action
+    each row corresponds to a context, and each columnx corresponds to an action
     initialize the rewards to zeros
     selecting the correct action (class) yields reward 1, otherwise 0
     '''
     rewards = np.zeros((num_contexts, num_actions))
-    rewards[np.arange(num_contexts), labels] = 1.0
 
-    return contexts, rewards #, (np.ones(num_contexts), labels)
+    # reward is already been one_hot encoded herein
+    rewards[np.arange(num_contexts), labels.ravel().astype(int)] = 1.0
+
+    # return contexts, rewards #, (np.ones(num_contexts), labels)
+    # print(f'final_contexts_np:{final_contexts_np}')
+
+    return final_contexts_np, rewards
 
   
 
@@ -134,16 +152,28 @@ class SepsisData(object):
         # Load train and test patient IDs
         train_patients = np.load(train_patients_file, allow_pickle=True)
         test_patients = np.load(test_patients_file, allow_pickle=True)
+
+        train_patients_ids = [patient.replace('.psv', '') for patient in train_patients]
+        test_patients_ids = [patient.replace('.psv', '') for patient in test_patients]
+
         file_name = './data/SepsisData/fully_imputed.csv'
         # Load dataset
         df = pd.read_csv(file_name)
 
         # Drop the column 'HospAdmTim' as per your requirement
-        df = df.drop(['HospAdmTim'], axis=1)
+        df = df.drop(['HospAdmTime'], axis=1)
+        # print(f'df.head():{df.head()}')
         
+        # print(f'train_patients:{train_patients_ids}')
+        # print(f'test_patients:{test_patients_ids}')
         # Separate dataset into train and test sets based on patient IDs
-        train_df = df[df['pat_id'].isin(train_patients)]
-        test_df = df[df['pat_id'].isin(test_patients)]
+        train_df = df[df['pat_id'].isin(train_patients_ids)]
+        test_df = df[df['pat_id'].isin(test_patients_ids)]
+        train_df = train_df[:min(num_contexts, len(train_df))].reset_index(drop=True)
+        test_df = test_df[:min(num_test_contexts, len(test_df))].reset_index(drop=True)
+
+
+
         
         # Extract labels (SepsisLabel) and drop it from the feature set
         train_labels = train_df['SepsisLabel'].to_numpy()
@@ -152,7 +182,8 @@ class SepsisData(object):
         # Drop unnecessary columns
         train_df = train_df.drop(['SepsisLabel', 'pat_id','hours2sepsis'], axis=1)
         test_df = test_df.drop(['SepsisLabel', 'pat_id', 'hours2sepsis'], axis=1)
-        
+        # print(f'train_df:{train_df.head()}')
+        # print(f'test_df:{test_df.head()}')
         # Convert the remaining columns (features) to numpy arrays
         train_contexts = train_df.to_numpy()
         test_contexts = test_df.to_numpy()
@@ -160,6 +191,11 @@ class SepsisData(object):
         # Convert the classification problem into a contextual bandit problem
         self.train_contexts, self.train_rewards = classification_to_bandit_problem_sepsis(train_contexts, train_labels,train_df,  num_actions)
         self.test_contexts, self.test_rewards = classification_to_bandit_problem_sepsis(test_contexts, test_labels, test_df, num_actions)
+        print('////////////. AAAAAAAAfter running classification_to_bandit_problem_sepsis().........../////////')
+        
+
+        print(f'train_rewards.shape:{self.train_rewards.shape}')
+        print(f'test_rewards.shape:{self.test_rewards.shape}')
         
         # Set the context dimension
         self.context_dim = self.train_contexts.shape[1]  # Number of features
@@ -199,101 +235,3 @@ class SepsisData(object):
 
 
  
-# class SepsisData(object):
-#     def __init__(self,
-#                  num_contexts,
-#                  num_test_contexts,
-#                 #  context_dim = 13,
-#                  num_actions = 2, # septic or non septic
-#                  noise_std = 0,
-#                  pi = 'eps-greedy', 
-#                  eps = 0.1, 
-#                  subset_r = 0.5,
-#                 #  remove_underrepresented=True,
-#                  ):
-#         self.name = 'sepsis'
-#         # file_name = 'data/SepsisData/fully_imputed_8windowed_max48_updated.csv'
-#         # with open(file_name,'r') as f:
-#         #     df = pd.read_csv(f, header = 0)
-#         # sepsis_full = pd.read_csv(f'./data/SepsisData/fully_imputed_8windowed_max48_updated.csv')
-#         sepsis_full = pd.read_csv(f'./data/SepsisData/fully_imputed.csv')
-#         sepsis_full = sepsis_full.drop(['HospAdmTim', 'hours2sepsis'])
-#         self.num_contexts = num_contexts 
-#         self.num_test_contexts = num_test_contexts
-#         self.num_actions = num_actions
-#         self.pi = pi 
-#         self.eps = eps  
-#         self.subset_r = subset_r
-#         self.noise_std = noise_std
-
-
-#         sepsis_train_wins = np.load('./data/SepsisData/sepsis_train_wins.npy')
-#         sepsis_train_wins = sepsis_train_wins.tolist()
-#         nosepsis_train_wins = np.load('./data/SepsisData/nosepsis_train_wins.npy')
-#         nosepsis_train_wins = nosepsis_train_wins.tolist()
-
-#         train_wins = sepsis_train_wins[0:int(self.num_contexts/3)]+nosepsis_train_wins[0:int(self.num_contexts/3*2)]    
-#         # print(f'train_wins:{train_wins}')
-#         print(f'num_contexts: {self.num_contexts}')
-#         print(f'length of train wins:{len(train_wins)}')
-
-#         test_septic_wins = np.load('./Data/test_septic_wins.npy')
-#         test_septic_wins = test_septic_wins.tolist()
-#         test_noseptic_wins = np.load('./Data/test_noseptic_wins.npy')
-#         test_noseptic_wins = test_noseptic_wins.tolist()
-#         # num_test_pat_noseptic_win = math.floor(self.num_test_pat_win*12)
-#         test_wins = test_septic_wins[0:int(self.num_test_contexts/2)]+test_noseptic_wins[0:int(self.num_test_contexts/2)]
-#         # print(f'test_wins:{test_wins}')
-#         print(f'num of test contexts: {self.num_test_contexts}')
-#         print(f'length of test wins:{len(test_wins)}')
-
-         
-#         train_df = sepsis_full[sepsis_full['pat_id'].isin(train_wins)]
-#         labels = train_df['SepsisLabel'].to_numpy()
-
-       
-#         train_df = train_df.drop(columns=['SepsisLabel','hours2sepsis','HospAdmTime', 'pat_id'])
-#         contexts = train_df.to_numpy() 
-
-
-#         test_df = sepsis_full[sepsis_full['pat_id'].isin(test_wins)]
-#         test_labels = test_df['SepsisLabel'].to_numpy()  
-#         test_df = test_df.drop(columns=['SepsisLabel','hours2sepsis','HospAdmTime', 'pat_id'])
-#         test_contexts= test_df.to_numpy() 
-
-
-#         """Normalize contexts and encode deterministic rewards."""
-#         self.contexts, self.mean_rewards = classification_to_bandit_problem(contexts, labels, num_actions)
-#         print(f'contexts for sepsis:{self.contexts}')
-#         print(f'mean rewards for sepsis:{self.mean_rewards}')
-#         self.test_contexts, self.test_mean_rewards = classification_to_bandit_problem(test_contexts, test_labels, num_actions)
-
-#         self.context_dim = contexts.shape[1]
-
-
-#     @property
-#     def num_samples(self):
-#         return self.contexts.shape[0]
-
-
-#     @property 
-#     def num_test_samples(self):
-#         return self.test_contexts.shape[0]
-    
-
-
-#     def reset_data(self, sim_id = 0):
-#         contexts = self.contexts 
-#         mean_rewards = self.mean_rewards 
-#         test_contexts = self.test_contexts 
-#         mean_test_rewards = self.test_mean_rewards
-
-         
-        
-#         actions = sample_offline_policy(mean_rewards, self.num_samples, self.num_actions, self.pi, self.eps, self.subset_r)
-#         #create rewards 
-#         # based on the paper, the gaussian noise is a standard in stochastic bandit literature
-#         rewards = mean_rewards + self.noise_std * np.random.normal(size=mean_rewards.shape)
-#         dataset = (contexts, actions, rewards, test_contexts, mean_test_rewards) 
-        
-#         return dataset 

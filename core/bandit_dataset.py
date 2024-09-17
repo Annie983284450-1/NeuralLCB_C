@@ -3,6 +3,7 @@
 import numpy as np 
 import jax
 import jax.numpy as jnp 
+import sys
 
 class BanditDataset(object):
     """Append new data and sample random minibatches. """
@@ -33,6 +34,7 @@ class BanditDataset(object):
             context: An array of d-dimensional contexts, (None, context_dim)
             action: An array of integers in [0, K-1] representing the chosen action, (None,1)
             reward: An array of real numbers representing the reward for (context, action), (None,1)
+             
      
         """
         # the use of JAX allows for Jax's accelerated computing capabilities
@@ -82,11 +84,32 @@ class BanditDataset(object):
             w: (batch_size, num_actions)
             y: (batch_size, num_actions)
         """
+        
+        self.contexts = jnp.array(self.contexts)
+        self.actions = jnp.array(self.actions)
+        self.rewards = jnp.array(self.rewards)
+
+
         n = self.num_samples 
         if self.buffer_s == -1:
             ind = np.random.choice(range(n), batch_size) 
         else: 
             ind = np.random.choice(range(max(0, n - self.buffer_s), n), batch_size)
+        ind = jnp.array(ind)
+        print(f'................. Testing get_batch_with_weights .................')
+        # print(f'batch_size:{batch_size}')
+        # # print("Contexts shape:", self.contexts.shape)
+        # print("Actions shape:", self.actions.shape)
+        # print("Rewards shape:", self.rewards.shape)
+        # print("Index shape:", ind.shape)
+
+        # context_batch = self.contexts[ind, :]  # Check if this works
+        # print(f'context_batch:{context_batch}')
+        # sys.exit()
+        # action_one_hot = jax.nn.one_hot(self.actions[ind, :].ravel(), self.num_actions)  # Check if this works
+        # reward_batch = self.rewards[ind, :]  # Check if this works
+        
+
         return self.contexts[ind, :], jax.nn.one_hot(self.actions[ind,:].ravel(), self.num_actions), self.rewards[ind, :]
     '''
     get_batch():
@@ -108,49 +131,70 @@ class BanditDataset(object):
             x: (batch_size, context_dim)
             a: (batch_size, )
             y: (batch_size, )
-        """
+        """        
+        print(f'................. Testing get_batch().................')
+        self.contexts = jnp.array(self.contexts)
+        self.actions = jnp.array(self.actions)
+        self.rewards = jnp.array(self.rewards)
+        # available_samples
         n = self.num_samples 
+        
         assert n > 0 
         if rand:
             if self.buffer_s == -1:
-                ind = np.random.choice(n, batch_size) 
+                ind = np.random.choice(range(n), min(batch_size, n), replace=False)
+                # ind = np.random.choice(n, batch_size) 
             else: 
-                ind = np.random.choice(range(max(0, n - self.buffer_s), n), batch_size)
+                ind = np.random.choice(range(max(0, n - self.buffer_s), n), min(batch_size, n), replace=False)
+
+                # ind = np.random.choice(range(max(0, n - self.buffer_s), n), batch_size)
         else:
             ind = range(n - batch_size,n)
-        a = self.actions[ind,:].ravel()
-        return self.contexts[ind, :], a, self.rewards[ind, a]
+        a = self.actions[ind,:].ravel().astype(int)
+        rewards_batch = self.rewards[ind, :]  # First select the rows using ind
+        rewards_selected = rewards_batch[:, a]
+        context_batch = self.contexts[ind, :]
+        # Debugging: print the shapes to verify consistency
+        # print("Context batch shape:", context_batch.shape)
+        # print("Actions shape:", a.shape)
+        # print(f'actions:{a}')
+        # print("Rewards batch shape:", rewards_batch.shape)
+        print("Rewards selected shape:", rewards_selected.shape)
+        
+        return context_batch, a, rewards_selected 
+
 
     @property 
     def num_samples(self): 
         return 0 if self.contexts is None else self.contexts.shape[0]
 
 
-def test_BanditDataset():
-    context_dim = 5 
-    num_actions = 2 
-    n = 8 
-    bd = BanditDataset(context_dim, num_actions)
+# def test_BanditDataset():
+#     context_dim = 5 
+#     num_actions = 2 
+#     n = 8 
+#     bd = BanditDataset(context_dim, num_actions)
 
 
-    contexts = np.random.uniform(size=(n, context_dim)) 
-    actions = np.random.randint(0,num_actions, (n,1)) 
-    rewards = np.random.randn(n,1) 
+#     contexts = np.random.uniform(size=(n, context_dim)) 
+#     actions = np.random.randint(0,num_actions, (n,1)) 
+#     rewards = np.random.randn(n,1) 
+#     print('Testing Banditdataset ..........................')
 
-    # print('contexts.shape, actions.shape, rewards.shape:')
-    print(contexts.shape, actions.shape, rewards.shape)
+#     print('contexts.shape, actions.shape, rewards.shape:')
+#     print(contexts.shape, actions.shape, rewards.shape)
 
-    bd.add(contexts, actions, rewards) 
-    # print("bd.contexts.shape, bd.actions.shape, bd.rewards.shape:")
-    print(bd.contexts.shape, bd.actions.shape, bd.rewards.shape)
+#     bd.add(contexts, actions, rewards) 
+#     print("bd.contexts.shape, bd.actions.shape, bd.rewards.shape:")
+#     print(bd.contexts.shape, bd.actions.shape, bd.rewards.shape)
 
-    print(bd.actions)
-    print(bd.rewards)
-    print('=======')
-    c,w,r = bd.get_batch_with_weights(batch_size=1)
-    # print(f'c.shape, w.shape, r.shape:{c.shape},{w.shape}, {r.shape}')
-    print(w)
-    print(r)
+#     print(bd.actions)
+#     print(bd.rewards)
+#     print('===================================')
+#     c,w,r = bd.get_batch_with_weights(batch_size=1)
+#     # print(f'c.shape, w.shape, r.shape:{c.shape},{w.shape}, {r.shape}')
+#     print(w)
+#     print(r)
 
 
-test_BanditDataset()
+# test_BanditDataset()

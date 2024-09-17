@@ -5,20 +5,30 @@ import jax
 import jax.numpy as jnp 
 from easydict import EasyDict as edict
 import os 
+import importlib
+
+import core.contextual_bandit  # Import the entire module
+
+# Reload the module
+importlib.reload(core.contextual_bandit)
+
 
 from core.contextual_bandit import contextual_bandit_runner
 # the core code
 # from algorithms.neural_offline_bandit import ExactNeuraLCBV2, NeuralGreedyV2, ApproxNeuraLCBV2
 
-import importlib
-import algorithms.neural_offline_bandit_cp  # Import the entire module
+
+# import algorithms.neural_offline_bandit_cp  # Import the entire module
+
+# # Reload the module
+# importlib.reload(algorithms.neural_offline_bandit_cp)
+import algorithms.neural_offline_bandit # Import the entire module
 
 # Reload the module
-importlib.reload(algorithms.neural_offline_bandit_cp)
-
+importlib.reload(algorithms.neural_offline_bandit)
 
 # from algorithms.neural_offline_bandit import ExactNeuraLCBV2, NeuralGreedyV2, ApproxNeuraLCBV2_cp
-from algorithms.neural_offline_bandit import NeuralGreedyV2 
+from algorithms.neural_offline_bandit import NeuralGreedyV2, ApproxNeuraLCBV2
 from algorithms.neural_offline_bandit_cp import ApproxNeuraLCBV2_cp
 
 
@@ -108,8 +118,8 @@ flags.DEFINE_string('policy', 'eps-greedy', 'Offline policy, eps-greedy/subset')
 flags.DEFINE_float('eps', 0.1, 'Probability of selecting a random action in eps-greedy')
 flags.DEFINE_float('subset_r', 0.5, 'The ratio of the action spaces to be selected in offline data')
 # this might only corresponding to a few hundreds patients
-flags.DEFINE_integer('num_contexts', 15000, 'Number of contexts for training.') 
-flags.DEFINE_integer('num_test_contexts', 10000, 'Number of contexts for test.') 
+flags.DEFINE_integer('num_contexts', 1500, 'Number of contexts for training.') 
+flags.DEFINE_integer('num_test_contexts', 1000, 'Number of contexts for test.') 
 
 # flags.DEFINE_integer('num_contexts', 500, 'Number of contexts for training.') 
 # flags.DEFINE_integer('num_test_contexts', 100, 'Number of contexts for test.') 
@@ -188,13 +198,13 @@ def main(unused_argv):
     # returned dataset = (contexts, actions, rewards, test_contexts, mean_test_rewards) 
     # rewards are added with noise, while mean_(test_)rewards are pure rewards
     dataset = data.reset_data()
-    print(f'Contexts: {dataset[0]}')
+    # print(f'Contexts: {dataset[0]}')
     context_dim = dataset[0].shape[1] 
     print(f'context_dim: {context_dim}')
-    print(f'Actions: {dataset[1]}')
-    print(f'rewards: {dataset[2]}')
-    print(f'test_contexts: {dataset[3]}')
-    print(f'mean_test_rewards: {dataset[4]}')
+    # print(f'Actions: {dataset[1]}')
+    # print(f'rewards: {dataset[2]}')
+    # print(f'test_contexts: {dataset[3]}')
+    # print(f'mean_test_rewards: {dataset[4]}')
     # sys.exit()
     context_dim = dataset[0].shape[1] 
     num_actions = data.num_actions 
@@ -255,7 +265,8 @@ def main(unused_argv):
                 # UniformSampling(lin_hparams),
                 # NeuralGreedyV2(hparams, update_freq = FLAGS.update_freq), 
                 # class ApproxNeuraLCBV2(BanditAlgorithm)
-                ApproxNeuraLCBV2_cp(hparams, update_freq = FLAGS.update_freq)
+                # ApproxNeuraLCBV2_cp(hparams, update_freq = FLAGS.update_freq)
+                ApproxNeuraLCBV2(hparams, update_freq = FLAGS.update_freq)
             ]
 
         algo_prefix = 'approx-neural-gridsearch_epochs={}_m={}_layern={}_buffer={}_bs={}_lr={}_beta={}_lambda={}_lambda0={}'.format(

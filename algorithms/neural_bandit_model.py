@@ -14,6 +14,7 @@ import jax.numpy as jnp
 import optax
 from tqdm import tqdm
 import sys
+import copy
 """
 class NeuralNetwork is A neural network prototype with 3 basic functions:
 __init__()
@@ -55,7 +56,11 @@ class NeuralBanditModel(NeuralNetwork):
         self.m = min(self.hparams.layer_sizes)
         self.build_model()
         print('{} has {} parameters.'.format(name, self.num_params))
-
+    def clone(self):
+        return copy.deepcopy(self)
+    
+    def reset(self, seed):
+        self.init(seed)
     def build_model(self):
         """Transform impure functions into pure functions and apply JAX tranformations."""
         # hk.transform transform the nn to sth JAX can process
@@ -258,6 +263,7 @@ class NeuralBanditModel(NeuralNetwork):
         """
         # self.out = jax.jit(self.out_impure_fn) 
         preds = self.out(params, context) 
+
         # Batch size B is implicitly handled by the averaging function jnp.mean(), which divides the total error by the batch size.
         squared_loss = 0.5 * jnp.mean(jnp.sum(action * jnp.square(preds - reward), axis=1), axis=0)
         reg_loss = 0.5 * self.hparams.lambd * sum(
@@ -323,15 +329,14 @@ class NeuralBanditModelV2(NeuralBanditModel):
     This model takes an action-convoluted context as input and predict the expected reward of the context. 
     """
 
-    def __init__(self, optimizer, hparams, name='NeuralBanditModelV2', loo_preds=None):
+    def __init__(self, optimizer, hparams, name='NeuralBanditModelV2' ):
         self.optimizer = optimizer 
         self.hparams = hparams 
         self.name = name 
         self.m = min(self.hparams.layer_sizes)
         self.build_model()
         print('{} has {} parameters.'.format(name, self.num_params))
-        self.loo_preds = loo_preds  # LOO predictions are passed here
-
+       
     def build_model(self):
         """Transform impure functions into pure functions and apply JAX tranformations."""
         #hk.transform will return 2 separate functions: init() and apply()
@@ -339,11 +344,11 @@ class NeuralBanditModelV2(NeuralBanditModel):
         # self.out returns the predictions of the neural networks
         self.out = jax.jit(self.out_impure_fn) 
         self.grad_out = jax.jit(self.grad_out_impure_fn)
-        self.grad_out_cp = jax.jit(self.grad_out_impure_cp)
+        # self.grad_out_cp = jax.jit(self.grad_out_impure_cp)
         # added action convolution???
         self.action_convolution = jax.jit(self.action_convolution_impure_fn)
-        # self.loss = jax.jit(self.loss_impure_fn)
-        self.loss = jax.jit(self.loss_impure_loo)
+        self.loss = jax.jit(self.loss_impure_fn)
+       
         self.update = jax.jit(self.update_impure_fn)
 
         # Initialize network parameters and opt states. 
@@ -404,57 +409,6 @@ class NeuralBanditModelV2(NeuralBanditModel):
 
         # return self.nn.apply(params, contexts, actions)
 
-    '''
-    Rather than replacing the existing gradient computation, we can use LOO predictions as an additional signal in the gradient computation. 
- 
-
-    1. Use LOO Predictions in Gradient Calculation: 
-    If utilize LOO predictions directly, 
-    modify the grad_out_impure_fn to take into account the differences between the model’s current predictions and the LOO predictions.
-
-    2. Incorporate LOO Predictions as Regularization: 
-    use the LOO predictions as a regularization term in loss function, 
-    ensuring that model’s parameters are updated not only to minimize the standard loss but also to stay consistent with the LOO predictions.
-    '''
-    def grad_out_impure_cp(self, params, contexts, actions, loo_preds=None):
-        """
-        Args:
-            params: Network parameters 
-            contexts: (None, context_dim)
-            actions: (None,)
-            loo_preds: (None,) - Leave-One-Out predictions, optional
-        """
-        acts = jax.nn.one_hot(actions, self.hparams.num_actions)[:, None, :]
-        ker = jnp.eye(self.hparams.context_dim)[None, :, :]
-        sel = jnp.kron(acts, ker)  # (None, context_dim, context_dim * num_actions, :)
-
-        # Compute gradients with respect to parameters
-        grad_params = jax.jacrev(self.out)(params, contexts, actions)
-
-        grads = []
-        for key in grad_params:
-            if key == 'linear':  # extract the weights for the chosen actions only.
-                u = grad_params[key]['w']
-                v = jnp.sum(jnp.multiply(u, sel[:, :, :, None]), axis=2)  # (None, context_dim, :)
-                grads.append(v.reshape(contexts.shape[0], -1))
-                grads.append(grad_params[key]['b'].reshape(contexts.shape[0], -1))
-            else:
-                for p in jax.tree_leaves(grad_params[key]):
-                    grads.append(p.reshape(contexts.shape[0], -1))
-
-        # Combine the gradients
-        combined_grads = jnp.hstack(grads)
-
-        # If LOO predictions are provided, adjust the gradients accordingly
-        if loo_preds is not None:
-            # Adjust gradients based on the difference between current predictions and LOO predictions
-            # For example, we could add or subtract a fraction of the LOO difference to/from the gradient
-            preds = self.out(params, contexts, actions).ravel()  # Current model predictions
-            diff = preds - loo_preds
-            adjustment = jnp.outer(diff, jnp.ones_like(combined_grads[0]))  # Create adjustment based on LOO diffs
-            combined_grads += adjustment  # Modify the gradients using LOO predictions
-
-        return combined_grads
     '''
     The grad_out_impure_fn function returns gradients of the output with respect to 
     the neural network parameters for given contexts and actions. s
@@ -585,50 +539,24 @@ class NeuralBanditModelV2(NeuralBanditModel):
             rewards: An array of rewards for the chosen actions, (None,)
         """
         preds = self.out(params, contexts, actions) 
+        print(f'#######Running loss_impure_fn in NeuralBanditModelV2...........')
+        print("Predictions shape:", preds.shape)
+        print("Rewards shape:", rewards.shape)
+        # sys.exit()
 
-        squared_loss = 0.5 * jnp.mean( jnp.square(preds.ravel() - rewards.ravel()) )
-        reg_loss = 0.5 * self.hparams.lambd * sum(
-                jnp.sum(jnp.square(param)) for param in jax.tree_leaves(params) 
-            )
 
+        # squared_loss = 0.5 * jnp.mean( jnp.square(preds.ravel() - rewards.ravel()) )
+        # reg_loss = 0.5 * self.hparams.lambd * sum(
+        #         jnp.sum(jnp.square(param)) for param in jax.tree_leaves(params) 
+        #     )
+        # debugging
+        squared_loss = 0.05 
+        reg_loss =  0
         return squared_loss + reg_loss 
+
+    def clone(self):
+        return copy.deepcopy(self)
     
-    # def loss_impure_loo(self, params, context, action, reward, loo_preds):
-    #     """
-    #     Args:
-    #         context: An array of context, (None, self.hparams.context_dim)
-    #         action: An array of one-hot action vectors, 1 for selected action and 0 other wise, 
-    #         (None, self.hparams.num_actions)
-    #         reward: An array of reward vectors, (None, self.hparams.num_actions)
-    #     """
-    #     # self.out = jax.jit(self.out_impure_fn) 
-    #     # preds = self.out(params, context) 
-    #     # Debugging shapes
-    #         # Convert loo_preds to JAX array if it's a list
-    #     if isinstance(loo_preds, list):
-    #         loo_preds = jnp.array(loo_preds)
-    #     print(f"loo_preds shape: {loo_preds.shape}")
-    #     print(f"reward shape: {reward.shape}")
-
-    #     sys.exit()
-    #     # Convert loo_preds to a JAX array if it's a list
-    #     if isinstance(loo_preds, list):
-    #         loo_preds = jnp.array(loo_preds)
-        
-    #     # Ensure action and reward are also JAX arrays
-    #     if isinstance(action, list):
-    #         action = jnp.array(action)
-    #     if isinstance(reward, list):
-    #         reward = jnp.array(reward)
-
-
-
-    #     squared_loss = 0.5 * jnp.mean(jnp.sum(action * jnp.square(loo_preds - reward), axis=1), axis=0)
-    #     reg_loss = 0.5 * self.hparams.lambd * sum(
-    #             jnp.sum(jnp.square(param)) for param in jax.tree_leaves(params) 
-    #         )
-
-    #     return squared_loss + reg_loss
 
     def init(self, seed): 
         key = jax.random.PRNGKey(seed)
@@ -644,7 +572,7 @@ class NeuralBanditModelV2(NeuralBanditModel):
         self.opt_state = self.optimizer.init(self.params)
 
     
-    def update_impure_fn(self, params, opt_state, contexts, actions, rewards,loo_preds):
+    def update_impure_fn(self, params, opt_state, contexts, actions, rewards ):
         """
         Args:
             contexts: An array of contexts, (None, self.hparams.context_dim)
@@ -652,15 +580,19 @@ class NeuralBanditModelV2(NeuralBanditModel):
             rewards: An array of rewards for the chosen actions, (None,)
         """
         # The gradient of the loss function with respect to the parameters (grads = jax.grad(self.loss)) is computed, and the optimizer (like Adam) updates the parameters accordingly.
-        grads = jax.grad(self.loss)(params, contexts, actions, rewards, loo_preds)
+        print(f'#######Running update_impure_fn in NeuralBanditModelV2...........')
+        # print("Predictions shape:", preds.shape)
+        print("Rewards shape:", rewards.shape)
+        grads = jax.grad(self.loss)(params, contexts, actions, rewards )
         updates, opt_state = self.optimizer.update(grads, opt_state)
         new_params = optax.apply_updates(params, updates)
         return new_params, opt_state
 
     # data is a BanditDataset 
-    def train(self, data, num_steps, loo_preds):
+    def train(self, data, num_steps):
+        print('(((((((Running train() in NeuralBanditModelV2)))))))')
         if self.hparams.verbose:
-            print('Training {} for {} steps.'.format(self.name, num_steps)) 
+            print('*******Training {} for {} steps.'.format(self.name, num_steps)) 
             
         params, opt_state = self.params, self.opt_state 
         # flags.DEFINE_integer('num_steps', 100, 'Number of steps to train NN.') 
@@ -677,15 +609,95 @@ class NeuralBanditModelV2(NeuralBanditModel):
             """
             # flags.DEFINE_bool('data_rand', True, 'Where randomly sample a data batch or  use the latest samples in the buffer' )
             x,a,y = data.get_batch(self.hparams.batch_size, self.hparams.data_rand) #(None,d), (None,), (None,)
+            # x,a,y = data.get_batch_with_weights(self.hparams.batch_size)
+            # print(f'(x,a,y) from get_batch():')
+            # print(f'x:{x}')
+            # print(f'a:{a}')
+            # print(f'y.shape:{y.shape}')s
+            # sys.exit()
             # self.update = jax.jit(self.update_impure_fn) 
             # update_impure_fn(self, params, opt_state, contexts, actions, rewards)  
-            params, opt_state = self.update(params, opt_state, x,a,y, loo_preds) 
+           
+           
+            
+            params, opt_state = self.update(params, opt_state, x,a,y ) 
+            
+
             # print the step loss
             # flags.DEFINE_integer('freq_summary', 10, 'Summary frequency')
             if step % self.hparams.freq_summary == 0 and self.hparams.verbose:
                 # self.loss = jax.jit(self.loss_impure_fn)
                 # loss_impure_fn(self, params, contexts, actions, rewards)
+
                 cost = self.loss(params, x,a,y)
                 print('{} | step: {} | loss: {}'.format(self.name, step, cost))
+            
         
         self.params, self.opt_state = params, opt_state
+        # print(f'self.params:{self.params}')
+        # print(f'self.opt_state:{self.opt_state}')
+        # sys.exit()
+
+
+
+
+
+
+
+
+
+
+
+
+
+    '''
+    Rather than replacing the existing gradient computation, we can use LOO predictions as an additional signal in the gradient computation. 
+ 
+
+    1. Use LOO Predictions in Gradient Calculation: 
+    If utilize LOO predictions directly, 
+    modify the grad_out_impure_fn to take into account the differences between the model’s current predictions and the LOO predictions.
+
+    2. Incorporate LOO Predictions as Regularization: 
+    use the LOO predictions as a regularization term in loss function, 
+    ensuring that model’s parameters are updated not only to minimize the standard loss but also to stay consistent with the LOO predictions.
+    '''
+    # def grad_out_impure_cp(self, params, contexts, actions, loo_preds=None):
+    #     """
+    #     Args:
+    #         params: Network parameters 
+    #         contexts: (None, context_dim)
+    #         actions: (None,)
+    #         loo_preds: (None,) - Leave-One-Out predictions, optional
+    #     """
+    #     acts = jax.nn.one_hot(actions, self.hparams.num_actions)[:, None, :]
+    #     ker = jnp.eye(self.hparams.context_dim)[None, :, :]
+    #     sel = jnp.kron(acts, ker)  # (None, context_dim, context_dim * num_actions, :)
+
+    #     # Compute gradients with respect to parameters
+    #     grad_params = jax.jacrev(self.out)(params, contexts, actions)
+
+    #     grads = []
+    #     for key in grad_params:
+    #         if key == 'linear':  # extract the weights for the chosen actions only.
+    #             u = grad_params[key]['w']
+    #             v = jnp.sum(jnp.multiply(u, sel[:, :, :, None]), axis=2)  # (None, context_dim, :)
+    #             grads.append(v.reshape(contexts.shape[0], -1))
+    #             grads.append(grad_params[key]['b'].reshape(contexts.shape[0], -1))
+    #         else:
+    #             for p in jax.tree_leaves(grad_params[key]):
+    #                 grads.append(p.reshape(contexts.shape[0], -1))
+
+    #     # Combine the gradients
+    #     combined_grads = jnp.hstack(grads)
+
+    #     # If LOO predictions are provided, adjust the gradients accordingly
+    #     if loo_preds is not None:
+    #         # Adjust gradients based on the difference between current predictions and LOO predictions
+    #         # For example, we could add or subtract a fraction of the LOO difference to/from the gradient
+    #         preds = self.out(params, contexts, actions).ravel()  # Current model predictions
+    #         diff = preds - loo_preds
+    #         adjustment = jnp.outer(diff, jnp.ones_like(combined_grads[0]))  # Create adjustment based on LOO diffs
+    #         combined_grads += adjustment  # Modify the gradients using LOO predictions
+
+    #     return combined_grads

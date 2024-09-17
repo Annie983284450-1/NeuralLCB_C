@@ -1,7 +1,7 @@
 import importlib
 import pickle
 import warnings
-import utils_Sepsysolcp as util
+
 import time as time
 import math
 import matplotlib.pyplot as plt
@@ -28,8 +28,7 @@ import dill
 import cp_funs.utils_cp as util
 multiprocessing.get_context().Process().Pickle = dill
 from core.bandit_dataset import BanditDataset
-
-
+import copy
 
 class prediction_interval():
     '''
@@ -37,7 +36,7 @@ class prediction_interval():
     '''
  
 
-    def __init__(self, nn_model, X_train, X_predict, Y_train, Y_predict, final_result_path):
+    def __init__(self, nn_model, X_train, X_predict, Y_train, Y_predict):
         
         self.nn_model = nn_model
         self.X_train = X_train
@@ -54,14 +53,16 @@ class prediction_interval():
         # self.Ensemble_pred_interval_centers = []  # Predicted test data centers by EnbPI
         # self.Ensemble_online_resid = np.array([])  # LOO scores
         # self.Ensemble_pred_interval_ends = []  # Upper and lower end
-        # self.beta_hat_bins = []
+        self.beta_hat_bins = []
         # self.ICP_fitted_func = []  # it only store 1 fitted ICP func.
         # self.ICP_resid = np.array([])
         # self.WeightCP_online_resid = np.array([])
         # self.JaB_boot_samples_idx = 0
         # self.JaB_boot_predictions = 0
 
-    def fit_bootstrap_models_online(self, B, miss_test_idx):
+
+
+    def fit_bootstrap_models_online(self,  B, miss_test_idx):
         '''
           Train B bootstrap estimators from subsets of (X_train, Y_train), compute aggregated predictors, and compute the residuals
         '''
@@ -78,14 +79,23 @@ class prediction_interval():
         # Loop over bootstrap models
         for b in range(B):
             # Clone the current neural network model
-            model = clone_model(self.nn_model)
+            # model = clone_model(self.nn_model)
+            model = self.nn_model.clone()
             data = BanditDataset(model.hparams.context_dim, model.hparams.num_actions, len(self.X_train), f'{b}_th_fitdata')
             # Add the bootstrapped data into the model
             data.add(self.X_train[boot_samples_idx[b], :], np.zeros(len(boot_samples_idx[b])), self.Y_train[boot_samples_idx[b]])
             # Train the model on the bootstrapped dataset
+            # print(f'data after added:{data}')
+            # sys.exit()
+            
+            # dataset = (contexts, actions, rewards, test_contexts, mean_test_rewards)
+            print(f'data.contexts.shape:{data.contexts.shape}')
             model.train(data, model.hparams.num_steps)
             # Predict using the trained model on the combined training and prediction set
-            boot_predictions[b] = model.out(model.params, np.r_[self.X_train, self.X_predict], np.zeros((n + n1,))).flatten()
+            boot_predictions[b] = model.out(model.params, np.r_[self.X_train, self.X_predict], np.zeros((n + n1,))).flatten() # for V2
+          
+       
+
             self.Ensemble_fitted_func.append(model)  # Save the model for later use
             in_boot_sample[b, boot_samples_idx[b]] = True
 
