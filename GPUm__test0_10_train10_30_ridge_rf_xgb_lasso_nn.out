@@ -1,0 +1,2862 @@
+nohup: ignoring input
+2024-01-11 20:53:19.074975: I tensorflow/stream_executor/platform/default/dso_loader.cc:49] Successfully opened dynamic library libcudart.so.11.0
+No display found. Using non-interactive Agg backend
+Switched to: agg
+expert dict: {'ridge': 0, 'rf': 1, 'xgb': 2, 'lasso': 3, 'nn': 4}
+final columns: ['patient_id', 'alpha', 'itrial', 'method', 'ridge_interval', 'rf_interval', 'xgb_interval', 'lasso_interval', 'nn_interval', 'ridge_coverage', 'rf_coverage', 'xgb_coverage', 'lasso_coverage', 'nn_coverage', 'ridge_regret', 'rf_regret', 'xgb_regret', 'lasso_regret', 'nn_regret', 'UCB_avg_ridge', 'UCB_avg_rf', 'UCB_avg_xgb', 'UCB_avg_lasso', 'UCB_avg_nn', 'LCB_avg_ridge', 'LCB_avg_rf', 'LCB_avg_xgb', 'LCB_avg_lasso', 'LCB_avg_nn', 'winner_avg']
+
+
+
+=======Processing patient 0th patient: p106715====================
+        !!!!!"ridge" will be refitted!!!!!
+        ///Finish Fitting 25 Bootstrap for ridge, took 0.8510832786560059 secs.///
+###Max LOO training residual is 24.778818218552324
+###Min LOO training residual is -41.95851183973644
+        There are #0/1426 training sample that do not have LOO bootstraps!!!
+        ~~~~~~Finish Computing LOO residuals, took 0.24155068397521973 secs.~~
+        ###Max LOO test residual is 13.863098573480976
+        ###Min LOO test residual is 3.2370568895167153
+
+
+        !!!!!"rf" will be refitted!!!!!
+        ///Finish Fitting 25 Bootstrap for rf, took 0.9490699768066406 secs.///
+###Max LOO training residual is 17.462592078911463
+###Min LOO training residual is -38.177212415342396
+        There are #0/1426 training sample that do not have LOO bootstraps!!!
+        ~~~~~~Finish Computing LOO residuals, took 0.24275779724121094 secs.~~
+        ###Max LOO test residual is 6.694022980016314
+        ###Min LOO test residual is 1.0
+
+
+        !!!!!"xgb" will be refitted!!!!!
+        ///Finish Fitting 25 Bootstrap for xgb, took 93.6206202507019 secs.///
+###Max LOO training residual is 20.07222843170166
+###Min LOO training residual is -42.391239166259766
+        There are #0/1426 training sample that do not have LOO bootstraps!!!
+        ~~~~~~Finish Computing LOO residuals, took 0.251725435256958 secs.~~
+        ###Max LOO test residual is 3.773836388648178
+        ###Min LOO test residual is 1.0
+
+
+        !!!!!"lasso" will be refitted!!!!!
+        ///Finish Fitting 25 Bootstrap for lasso, took 1.3785736560821533 secs.///
+2024-01-11 20:55:01.548268: I tensorflow/compiler/jit/xla_cpu_device.cc:41] Not creating XLA devices, tf_xla_enable_xla_devices not set
+2024-01-11 20:55:01.550060: I tensorflow/stream_executor/platform/default/dso_loader.cc:49] Successfully opened dynamic library libcuda.so.1
+2024-01-11 20:55:01.575965: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1720] Found device 0 with properties: 
+pciBusID: 0000:05:00.0 name: NVIDIA TITAN Xp computeCapability: 6.1
+coreClock: 1.582GHz coreCount: 30 deviceMemorySize: 11.90GiB deviceMemoryBandwidth: 510.07GiB/s
+2024-01-11 20:55:01.576352: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1720] Found device 1 with properties: 
+pciBusID: 0000:06:00.0 name: NVIDIA TITAN Xp computeCapability: 6.1
+coreClock: 1.582GHz coreCount: 30 deviceMemorySize: 11.90GiB deviceMemoryBandwidth: 510.07GiB/s
+2024-01-11 20:55:01.576728: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1720] Found device 2 with properties: 
+pciBusID: 0000:09:00.0 name: NVIDIA TITAN Xp computeCapability: 6.1
+coreClock: 1.582GHz coreCount: 30 deviceMemorySize: 11.90GiB deviceMemoryBandwidth: 510.07GiB/s
+2024-01-11 20:55:01.577136: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1720] Found device 3 with properties: 
+pciBusID: 0000:0a:00.0 name: NVIDIA TITAN Xp computeCapability: 6.1
+coreClock: 1.582GHz coreCount: 30 deviceMemorySize: 11.90GiB deviceMemoryBandwidth: 510.07GiB/s
+2024-01-11 20:55:01.577183: I tensorflow/stream_executor/platform/default/dso_loader.cc:49] Successfully opened dynamic library libcudart.so.11.0
+2024-01-11 20:55:01.579881: I tensorflow/stream_executor/platform/default/dso_loader.cc:49] Successfully opened dynamic library libcublas.so.11
+2024-01-11 20:55:01.579979: I tensorflow/stream_executor/platform/default/dso_loader.cc:49] Successfully opened dynamic library libcublasLt.so.11
+2024-01-11 20:55:01.581217: I tensorflow/stream_executor/platform/default/dso_loader.cc:49] Successfully opened dynamic library libcufft.so.10
+2024-01-11 20:55:01.581652: I tensorflow/stream_executor/platform/default/dso_loader.cc:49] Successfully opened dynamic library libcurand.so.10
+2024-01-11 20:55:01.584376: I tensorflow/stream_executor/platform/default/dso_loader.cc:49] Successfully opened dynamic library libcusolver.so.10
+2024-01-11 20:55:01.585108: I tensorflow/stream_executor/platform/default/dso_loader.cc:49] Successfully opened dynamic library libcusparse.so.11
+2024-01-11 20:55:01.585405: I tensorflow/stream_executor/platform/default/dso_loader.cc:49] Successfully opened dynamic library libcudnn.so.8
+2024-01-11 20:55:01.587676: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1862] Adding visible gpu devices: 0, 1, 2, 3
+2024-01-11 20:55:01.589677: I tensorflow/compiler/jit/xla_gpu_device.cc:99] Not creating XLA devices, tf_xla_enable_xla_devices not set
+2024-01-11 20:55:02.378690: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1720] Found device 0 with properties: 
+pciBusID: 0000:05:00.0 name: NVIDIA TITAN Xp computeCapability: 6.1
+coreClock: 1.582GHz coreCount: 30 deviceMemorySize: 11.90GiB deviceMemoryBandwidth: 510.07GiB/s
+2024-01-11 20:55:02.379044: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1720] Found device 1 with properties: 
+pciBusID: 0000:06:00.0 name: NVIDIA TITAN Xp computeCapability: 6.1
+coreClock: 1.582GHz coreCount: 30 deviceMemorySize: 11.90GiB deviceMemoryBandwidth: 510.07GiB/s
+2024-01-11 20:55:02.379350: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1720] Found device 2 with properties: 
+pciBusID: 0000:09:00.0 name: NVIDIA TITAN Xp computeCapability: 6.1
+coreClock: 1.582GHz coreCount: 30 deviceMemorySize: 11.90GiB deviceMemoryBandwidth: 510.07GiB/s
+2024-01-11 20:55:02.379685: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1720] Found device 3 with properties: 
+pciBusID: 0000:0a:00.0 name: NVIDIA TITAN Xp computeCapability: 6.1
+coreClock: 1.582GHz coreCount: 30 deviceMemorySize: 11.90GiB deviceMemoryBandwidth: 510.07GiB/s
+2024-01-11 20:55:02.379745: I tensorflow/stream_executor/platform/default/dso_loader.cc:49] Successfully opened dynamic library libcudart.so.11.0
+2024-01-11 20:55:02.379779: I tensorflow/stream_executor/platform/default/dso_loader.cc:49] Successfully opened dynamic library libcublas.so.11
+2024-01-11 20:55:02.379838: I tensorflow/stream_executor/platform/default/dso_loader.cc:49] Successfully opened dynamic library libcublasLt.so.11
+2024-01-11 20:55:02.379864: I tensorflow/stream_executor/platform/default/dso_loader.cc:49] Successfully opened dynamic library libcufft.so.10
+2024-01-11 20:55:02.379889: I tensorflow/stream_executor/platform/default/dso_loader.cc:49] Successfully opened dynamic library libcurand.so.10
+2024-01-11 20:55:02.379914: I tensorflow/stream_executor/platform/default/dso_loader.cc:49] Successfully opened dynamic library libcusolver.so.10
+2024-01-11 20:55:02.379939: I tensorflow/stream_executor/platform/default/dso_loader.cc:49] Successfully opened dynamic library libcusparse.so.11
+2024-01-11 20:55:02.379965: I tensorflow/stream_executor/platform/default/dso_loader.cc:49] Successfully opened dynamic library libcudnn.so.8
+2024-01-11 20:55:02.383639: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1862] Adding visible gpu devices: 0, 1, 2, 3
+2024-01-11 20:55:02.383732: I tensorflow/stream_executor/platform/default/dso_loader.cc:49] Successfully opened dynamic library libcudart.so.11.0
+2024-01-11 20:55:03.844686: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1261] Device interconnect StreamExecutor with strength 1 edge matrix:
+2024-01-11 20:55:03.844735: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1267]      0 1 2 3 
+2024-01-11 20:55:03.844746: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1280] 0:   N Y Y Y 
+2024-01-11 20:55:03.844769: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1280] 1:   Y N Y Y 
+2024-01-11 20:55:03.844799: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1280] 2:   Y Y N Y 
+2024-01-11 20:55:03.844806: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1280] 3:   Y Y Y N 
+2024-01-11 20:55:03.846746: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1406] Created TensorFlow device (/job:localhost/replica:0/task:0/device:GPU:0 with 5496 MB memory) -> physical GPU (device: 0, name: NVIDIA TITAN Xp, pci bus id: 0000:05:00.0, compute capability: 6.1)
+2024-01-11 20:55:03.847793: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1406] Created TensorFlow device (/job:localhost/replica:0/task:0/device:GPU:1 with 5498 MB memory) -> physical GPU (device: 1, name: NVIDIA TITAN Xp, pci bus id: 0000:06:00.0, compute capability: 6.1)
+2024-01-11 20:55:03.848632: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1406] Created TensorFlow device (/job:localhost/replica:0/task:0/device:GPU:2 with 5498 MB memory) -> physical GPU (device: 2, name: NVIDIA TITAN Xp, pci bus id: 0000:09:00.0, compute capability: 6.1)
+2024-01-11 20:55:03.849666: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1406] Created TensorFlow device (/job:localhost/replica:0/task:0/device:GPU:3 with 6037 MB memory) -> physical GPU (device: 3, name: NVIDIA TITAN Xp, pci bus id: 0000:0a:00.0, compute capability: 6.1)
+2024-01-11 20:55:04.075078: W tensorflow/core/grappler/optimizers/data/auto_shard.cc:656] In AUTO-mode, and switching to DATA-based sharding, instead of FILE-based sharding as we cannot find appropriate reader dataset op(s) to shard. Error: Did not find a shardable source, walked to a node which is not a dataset: name: "FlatMapDataset/_9"
+op: "FlatMapDataset"
+input: "PrefetchDataset/_8"
+attr {
+  key: "Targuments"
+  value {
+    list {
+    }
+  }
+}
+attr {
+  key: "f"
+  value {
+    func {
+      name: "__inference_Dataset_flat_map_slice_batch_indices_156"
+    }
+  }
+}
+attr {
+  key: "output_shapes"
+  value {
+    list {
+      shape {
+        dim {
+          size: -1
+        }
+      }
+    }
+  }
+}
+attr {
+  key: "output_types"
+  value {
+    list {
+      type: DT_INT64
+    }
+  }
+}
+. Consider either turning off auto-sharding or switching the auto_shard_policy to DATA to shard this dataset. You can do this by creating a new `tf.data.Options()` object then setting `options.experimental_distribute.auto_shard_policy = AutoShardPolicy.DATA` before applying the options object to the dataset via `dataset.with_options(options)`.
+2024-01-11 20:55:04.083138: I tensorflow/compiler/mlir/mlir_graph_optimization_pass.cc:116] None of the MLIR optimization passes are enabled (registered 2)
+2024-01-11 20:55:04.095687: I tensorflow/core/platform/profile_utils/cpu_utils.cc:112] CPU Frequency: 2198650000 Hz
+2024-01-11 20:55:08.567533: I tensorflow/stream_executor/platform/default/dso_loader.cc:49] Successfully opened dynamic library libcublas.so.11
+2024-01-11 20:55:08.782512: I tensorflow/stream_executor/platform/default/dso_loader.cc:49] Successfully opened dynamic library libcublasLt.so.11
+2024-01-11 20:55:17.316477: W tensorflow/core/grappler/optimizers/data/auto_shard.cc:656] In AUTO-mode, and switching to DATA-based sharding, instead of FILE-based sharding as we cannot find appropriate reader dataset op(s) to shard. Error: Did not find a shardable source, walked to a node which is not a dataset: name: "FlatMapDataset/_9"
+op: "FlatMapDataset"
+input: "PrefetchDataset/_8"
+attr {
+  key: "Targuments"
+  value {
+    list {
+    }
+  }
+}
+attr {
+  key: "f"
+  value {
+    func {
+      name: "__inference_Dataset_flat_map_slice_batch_indices_8720"
+    }
+  }
+}
+attr {
+  key: "output_shapes"
+  value {
+    list {
+      shape {
+        dim {
+          size: 32
+        }
+      }
+    }
+  }
+}
+attr {
+  key: "output_types"
+  value {
+    list {
+      type: DT_INT64
+    }
+  }
+}
+. Consider either turning off auto-sharding or switching the auto_shard_policy to DATA to shard this dataset. You can do this by creating a new `tf.data.Options()` object then setting `options.experimental_distribute.auto_shard_policy = AutoShardPolicy.DATA` before applying the options object to the dataset via `dataset.with_options(options)`.
+2024-01-11 20:55:18.751197: W tensorflow/core/grappler/optimizers/data/auto_shard.cc:656] In AUTO-mode, and switching to DATA-based sharding, instead of FILE-based sharding as we cannot find appropriate reader dataset op(s) to shard. Error: Did not find a shardable source, walked to a node which is not a dataset: name: "FlatMapDataset/_9"
+op: "FlatMapDataset"
+input: "PrefetchDataset/_8"
+attr {
+  key: "Targuments"
+  value {
+    list {
+    }
+  }
+}
+attr {
+  key: "f"
+  value {
+    func {
+      name: "__inference_Dataset_flat_map_slice_batch_indices_9304"
+    }
+  }
+}
+attr {
+  key: "output_shapes"
+  value {
+    list {
+      shape {
+        dim {
+          size: 46
+        }
+      }
+    }
+  }
+}
+attr {
+  key: "output_types"
+  value {
+    list {
+      type: DT_INT64
+    }
+  }
+}
+. Consider either turning off auto-sharding or switching the auto_shard_policy to DATA to shard this dataset. You can do this by creating a new `tf.data.Options()` object then setting `options.experimental_distribute.auto_shard_policy = AutoShardPolicy.DATA` before applying the options object to the dataset via `dataset.with_options(options)`.
+2024-01-11 20:55:33.544903: W tensorflow/core/grappler/optimizers/data/auto_shard.cc:656] In AUTO-mode, and switching to DATA-based sharding, instead of FILE-based sharding as we cannot find appropriate reader dataset op(s) to shard. Error: Did not find a shardable source, walked to a node which is not a dataset: name: "FlatMapDataset/_9"
+op: "FlatMapDataset"
+input: "PrefetchDataset/_8"
+attr {
+  key: "Targuments"
+  value {
+    list {
+    }
+  }
+}
+attr {
+  key: "f"
+  value {
+    func {
+      name: "__inference_Dataset_flat_map_slice_batch_indices_20214"
+    }
+  }
+}
+attr {
+  key: "output_shapes"
+  value {
+    list {
+      shape {
+        dim {
+          size: 32
+        }
+      }
+    }
+  }
+}
+attr {
+  key: "output_types"
+  value {
+    list {
+      type: DT_INT64
+    }
+  }
+}
+. Consider either turning off auto-sharding or switching the auto_shard_policy to DATA to shard this dataset. You can do this by creating a new `tf.data.Options()` object then setting `options.experimental_distribute.auto_shard_policy = AutoShardPolicy.DATA` before applying the options object to the dataset via `dataset.with_options(options)`.
+2024-01-11 20:55:34.957879: W tensorflow/core/grappler/optimizers/data/auto_shard.cc:656] In AUTO-mode, and switching to DATA-based sharding, instead of FILE-based sharding as we cannot find appropriate reader dataset op(s) to shard. Error: Did not find a shardable source, walked to a node which is not a dataset: name: "FlatMapDataset/_9"
+op: "FlatMapDataset"
+input: "PrefetchDataset/_8"
+attr {
+  key: "Targuments"
+  value {
+    list {
+    }
+  }
+}
+attr {
+  key: "f"
+  value {
+    func {
+      name: "__inference_Dataset_flat_map_slice_batch_indices_20803"
+    }
+  }
+}
+attr {
+  key: "output_shapes"
+  value {
+    list {
+      shape {
+        dim {
+          size: -1
+        }
+      }
+    }
+  }
+}
+attr {
+  key: "output_types"
+  value {
+    list {
+      type: DT_INT64
+    }
+  }
+}
+. Consider either turning off auto-sharding or switching the auto_shard_policy to DATA to shard this dataset. You can do this by creating a new `tf.data.Options()` object then setting `options.experimental_distribute.auto_shard_policy = AutoShardPolicy.DATA` before applying the options object to the dataset via `dataset.with_options(options)`.
+2024-01-11 20:55:52.375445: W tensorflow/core/grappler/optimizers/data/auto_shard.cc:656] In AUTO-mode, and switching to DATA-based sharding, instead of FILE-based sharding as we cannot find appropriate reader dataset op(s) to shard. Error: Did not find a shardable source, walked to a node which is not a dataset: name: "FlatMapDataset/_9"
+op: "FlatMapDataset"
+input: "PrefetchDataset/_8"
+attr {
+  key: "Targuments"
+  value {
+    list {
+    }
+  }
+}
+attr {
+  key: "f"
+  value {
+    func {
+      name: "__inference_Dataset_flat_map_slice_batch_indices_32427"
+    }
+  }
+}
+attr {
+  key: "output_shapes"
+  value {
+    list {
+      shape {
+        dim {
+          size: 32
+        }
+      }
+    }
+  }
+}
+attr {
+  key: "output_types"
+  value {
+    list {
+      type: DT_INT64
+    }
+  }
+}
+. Consider either turning off auto-sharding or switching the auto_shard_policy to DATA to shard this dataset. You can do this by creating a new `tf.data.Options()` object then setting `options.experimental_distribute.auto_shard_policy = AutoShardPolicy.DATA` before applying the options object to the dataset via `dataset.with_options(options)`.
+2024-01-11 20:55:53.795831: W tensorflow/core/grappler/optimizers/data/auto_shard.cc:656] In AUTO-mode, and switching to DATA-based sharding, instead of FILE-based sharding as we cannot find appropriate reader dataset op(s) to shard. Error: Did not find a shardable source, walked to a node which is not a dataset: name: "FlatMapDataset/_9"
+op: "FlatMapDataset"
+input: "PrefetchDataset/_8"
+attr {
+  key: "Targuments"
+  value {
+    list {
+    }
+  }
+}
+attr {
+  key: "f"
+  value {
+    func {
+      name: "__inference_Dataset_flat_map_slice_batch_indices_33016"
+    }
+  }
+}
+attr {
+  key: "output_shapes"
+  value {
+    list {
+      shape {
+        dim {
+          size: -1
+        }
+      }
+    }
+  }
+}
+attr {
+  key: "output_types"
+  value {
+    list {
+      type: DT_INT64
+    }
+  }
+}
+. Consider either turning off auto-sharding or switching the auto_shard_policy to DATA to shard this dataset. You can do this by creating a new `tf.data.Options()` object then setting `options.experimental_distribute.auto_shard_policy = AutoShardPolicy.DATA` before applying the options object to the dataset via `dataset.with_options(options)`.
+2024-01-11 20:56:07.021351: W tensorflow/core/grappler/optimizers/data/auto_shard.cc:656] In AUTO-mode, and switching to DATA-based sharding, instead of FILE-based sharding as we cannot find appropriate reader dataset op(s) to shard. Error: Did not find a shardable source, walked to a node which is not a dataset: name: "FlatMapDataset/_9"
+op: "FlatMapDataset"
+input: "PrefetchDataset/_8"
+attr {
+  key: "Targuments"
+  value {
+    list {
+    }
+  }
+}
+attr {
+  key: "f"
+  value {
+    func {
+      name: "__inference_Dataset_flat_map_slice_batch_indices_42294"
+    }
+  }
+}
+attr {
+  key: "output_shapes"
+  value {
+    list {
+      shape {
+        dim {
+          size: 32
+        }
+      }
+    }
+  }
+}
+attr {
+  key: "output_types"
+  value {
+    list {
+      type: DT_INT64
+    }
+  }
+}
+. Consider either turning off auto-sharding or switching the auto_shard_policy to DATA to shard this dataset. You can do this by creating a new `tf.data.Options()` object then setting `options.experimental_distribute.auto_shard_policy = AutoShardPolicy.DATA` before applying the options object to the dataset via `dataset.with_options(options)`.
+2024-01-11 20:56:08.430033: W tensorflow/core/grappler/optimizers/data/auto_shard.cc:656] In AUTO-mode, and switching to DATA-based sharding, instead of FILE-based sharding as we cannot find appropriate reader dataset op(s) to shard. Error: Did not find a shardable source, walked to a node which is not a dataset: name: "FlatMapDataset/_9"
+op: "FlatMapDataset"
+input: "PrefetchDataset/_8"
+attr {
+  key: "Targuments"
+  value {
+    list {
+    }
+  }
+}
+attr {
+  key: "f"
+  value {
+    func {
+      name: "__inference_Dataset_flat_map_slice_batch_indices_42883"
+    }
+  }
+}
+attr {
+  key: "output_shapes"
+  value {
+    list {
+      shape {
+        dim {
+          size: -1
+        }
+      }
+    }
+  }
+}
+attr {
+  key: "output_types"
+  value {
+    list {
+      type: DT_INT64
+    }
+  }
+}
+. Consider either turning off auto-sharding or switching the auto_shard_policy to DATA to shard this dataset. You can do this by creating a new `tf.data.Options()` object then setting `options.experimental_distribute.auto_shard_policy = AutoShardPolicy.DATA` before applying the options object to the dataset via `dataset.with_options(options)`.
+2024-01-11 20:56:25.861086: W tensorflow/core/grappler/optimizers/data/auto_shard.cc:656] In AUTO-mode, and switching to DATA-based sharding, instead of FILE-based sharding as we cannot find appropriate reader dataset op(s) to shard. Error: Did not find a shardable source, walked to a node which is not a dataset: name: "FlatMapDataset/_9"
+op: "FlatMapDataset"
+input: "PrefetchDataset/_8"
+attr {
+  key: "Targuments"
+  value {
+    list {
+    }
+  }
+}
+attr {
+  key: "f"
+  value {
+    func {
+      name: "__inference_Dataset_flat_map_slice_batch_indices_54657"
+    }
+  }
+}
+attr {
+  key: "output_shapes"
+  value {
+    list {
+      shape {
+        dim {
+          size: 32
+        }
+      }
+    }
+  }
+}
+attr {
+  key: "output_types"
+  value {
+    list {
+      type: DT_INT64
+    }
+  }
+}
+. Consider either turning off auto-sharding or switching the auto_shard_policy to DATA to shard this dataset. You can do this by creating a new `tf.data.Options()` object then setting `options.experimental_distribute.auto_shard_policy = AutoShardPolicy.DATA` before applying the options object to the dataset via `dataset.with_options(options)`.
+2024-01-11 20:56:27.265366: W tensorflow/core/grappler/optimizers/data/auto_shard.cc:656] In AUTO-mode, and switching to DATA-based sharding, instead of FILE-based sharding as we cannot find appropriate reader dataset op(s) to shard. Error: Did not find a shardable source, walked to a node which is not a dataset: name: "FlatMapDataset/_9"
+op: "FlatMapDataset"
+input: "PrefetchDataset/_8"
+attr {
+  key: "Targuments"
+  value {
+    list {
+    }
+  }
+}
+attr {
+  key: "f"
+  value {
+    func {
+      name: "__inference_Dataset_flat_map_slice_batch_indices_55246"
+    }
+  }
+}
+attr {
+  key: "output_shapes"
+  value {
+    list {
+      shape {
+        dim {
+          size: -1
+        }
+      }
+    }
+  }
+}
+attr {
+  key: "output_types"
+  value {
+    list {
+      type: DT_INT64
+    }
+  }
+}
+. Consider either turning off auto-sharding or switching the auto_shard_policy to DATA to shard this dataset. You can do this by creating a new `tf.data.Options()` object then setting `options.experimental_distribute.auto_shard_policy = AutoShardPolicy.DATA` before applying the options object to the dataset via `dataset.with_options(options)`.
+2024-01-11 20:56:40.473408: W tensorflow/core/grappler/optimizers/data/auto_shard.cc:656] In AUTO-mode, and switching to DATA-based sharding, instead of FILE-based sharding as we cannot find appropriate reader dataset op(s) to shard. Error: Did not find a shardable source, walked to a node which is not a dataset: name: "FlatMapDataset/_9"
+op: "FlatMapDataset"
+input: "PrefetchDataset/_8"
+attr {
+  key: "Targuments"
+  value {
+    list {
+    }
+  }
+}
+attr {
+  key: "f"
+  value {
+    func {
+      name: "__inference_Dataset_flat_map_slice_batch_indices_64473"
+    }
+  }
+}
+attr {
+  key: "output_shapes"
+  value {
+    list {
+      shape {
+        dim {
+          size: 32
+        }
+      }
+    }
+  }
+}
+attr {
+  key: "output_types"
+  value {
+    list {
+      type: DT_INT64
+    }
+  }
+}
+. Consider either turning off auto-sharding or switching the auto_shard_policy to DATA to shard this dataset. You can do this by creating a new `tf.data.Options()` object then setting `options.experimental_distribute.auto_shard_policy = AutoShardPolicy.DATA` before applying the options object to the dataset via `dataset.with_options(options)`.
+2024-01-11 20:56:42.060195: W tensorflow/core/grappler/optimizers/data/auto_shard.cc:656] In AUTO-mode, and switching to DATA-based sharding, instead of FILE-based sharding as we cannot find appropriate reader dataset op(s) to shard. Error: Did not find a shardable source, walked to a node which is not a dataset: name: "FlatMapDataset/_9"
+op: "FlatMapDataset"
+input: "PrefetchDataset/_8"
+attr {
+  key: "Targuments"
+  value {
+    list {
+    }
+  }
+}
+attr {
+  key: "f"
+  value {
+    func {
+      name: "__inference_Dataset_flat_map_slice_batch_indices_65062"
+    }
+  }
+}
+attr {
+  key: "output_shapes"
+  value {
+    list {
+      shape {
+        dim {
+          size: -1
+        }
+      }
+    }
+  }
+}
+attr {
+  key: "output_types"
+  value {
+    list {
+      type: DT_INT64
+    }
+  }
+}
+. Consider either turning off auto-sharding or switching the auto_shard_policy to DATA to shard this dataset. You can do this by creating a new `tf.data.Options()` object then setting `options.experimental_distribute.auto_shard_policy = AutoShardPolicy.DATA` before applying the options object to the dataset via `dataset.with_options(options)`.
+2024-01-11 20:56:58.967342: W tensorflow/core/grappler/optimizers/data/auto_shard.cc:656] In AUTO-mode, and switching to DATA-based sharding, instead of FILE-based sharding as we cannot find appropriate reader dataset op(s) to shard. Error: Did not find a shardable source, walked to a node which is not a dataset: name: "FlatMapDataset/_9"
+op: "FlatMapDataset"
+input: "PrefetchDataset/_8"
+attr {
+  key: "Targuments"
+  value {
+    list {
+    }
+  }
+}
+attr {
+  key: "f"
+  value {
+    func {
+      name: "__inference_Dataset_flat_map_slice_batch_indices_76686"
+    }
+  }
+}
+attr {
+  key: "output_shapes"
+  value {
+    list {
+      shape {
+        dim {
+          size: 32
+        }
+      }
+    }
+  }
+}
+attr {
+  key: "output_types"
+  value {
+    list {
+      type: DT_INT64
+    }
+  }
+}
+. Consider either turning off auto-sharding or switching the auto_shard_policy to DATA to shard this dataset. You can do this by creating a new `tf.data.Options()` object then setting `options.experimental_distribute.auto_shard_policy = AutoShardPolicy.DATA` before applying the options object to the dataset via `dataset.with_options(options)`.
+2024-01-11 20:57:00.376334: W tensorflow/core/grappler/optimizers/data/auto_shard.cc:656] In AUTO-mode, and switching to DATA-based sharding, instead of FILE-based sharding as we cannot find appropriate reader dataset op(s) to shard. Error: Did not find a shardable source, walked to a node which is not a dataset: name: "FlatMapDataset/_9"
+op: "FlatMapDataset"
+input: "PrefetchDataset/_8"
+attr {
+  key: "Targuments"
+  value {
+    list {
+    }
+  }
+}
+attr {
+  key: "f"
+  value {
+    func {
+      name: "__inference_Dataset_flat_map_slice_batch_indices_77275"
+    }
+  }
+}
+attr {
+  key: "output_shapes"
+  value {
+    list {
+      shape {
+        dim {
+          size: -1
+        }
+      }
+    }
+  }
+}
+attr {
+  key: "output_types"
+  value {
+    list {
+      type: DT_INT64
+    }
+  }
+}
+. Consider either turning off auto-sharding or switching the auto_shard_policy to DATA to shard this dataset. You can do this by creating a new `tf.data.Options()` object then setting `options.experimental_distribute.auto_shard_policy = AutoShardPolicy.DATA` before applying the options object to the dataset via `dataset.with_options(options)`.
+2024-01-11 20:57:14.168100: W tensorflow/core/grappler/optimizers/data/auto_shard.cc:656] In AUTO-mode, and switching to DATA-based sharding, instead of FILE-based sharding as we cannot find appropriate reader dataset op(s) to shard. Error: Did not find a shardable source, walked to a node which is not a dataset: name: "FlatMapDataset/_9"
+op: "FlatMapDataset"
+input: "PrefetchDataset/_8"
+attr {
+  key: "Targuments"
+  value {
+    list {
+    }
+  }
+}
+attr {
+  key: "f"
+  value {
+    func {
+      name: "__inference_Dataset_flat_map_slice_batch_indices_86849"
+    }
+  }
+}
+attr {
+  key: "output_shapes"
+  value {
+    list {
+      shape {
+        dim {
+          size: 32
+        }
+      }
+    }
+  }
+}
+attr {
+  key: "output_types"
+  value {
+    list {
+      type: DT_INT64
+    }
+  }
+}
+. Consider either turning off auto-sharding or switching the auto_shard_policy to DATA to shard this dataset. You can do this by creating a new `tf.data.Options()` object then setting `options.experimental_distribute.auto_shard_policy = AutoShardPolicy.DATA` before applying the options object to the dataset via `dataset.with_options(options)`.
+2024-01-11 20:57:15.578880: W tensorflow/core/grappler/optimizers/data/auto_shard.cc:656] In AUTO-mode, and switching to DATA-based sharding, instead of FILE-based sharding as we cannot find appropriate reader dataset op(s) to shard. Error: Did not find a shardable source, walked to a node which is not a dataset: name: "FlatMapDataset/_9"
+op: "FlatMapDataset"
+input: "PrefetchDataset/_8"
+attr {
+  key: "Targuments"
+  value {
+    list {
+    }
+  }
+}
+attr {
+  key: "f"
+  value {
+    func {
+      name: "__inference_Dataset_flat_map_slice_batch_indices_87438"
+    }
+  }
+}
+attr {
+  key: "output_shapes"
+  value {
+    list {
+      shape {
+        dim {
+          size: -1
+        }
+      }
+    }
+  }
+}
+attr {
+  key: "output_types"
+  value {
+    list {
+      type: DT_INT64
+    }
+  }
+}
+. Consider either turning off auto-sharding or switching the auto_shard_policy to DATA to shard this dataset. You can do this by creating a new `tf.data.Options()` object then setting `options.experimental_distribute.auto_shard_policy = AutoShardPolicy.DATA` before applying the options object to the dataset via `dataset.with_options(options)`.
+2024-01-11 20:57:33.248386: W tensorflow/core/grappler/optimizers/data/auto_shard.cc:656] In AUTO-mode, and switching to DATA-based sharding, instead of FILE-based sharding as we cannot find appropriate reader dataset op(s) to shard. Error: Did not find a shardable source, walked to a node which is not a dataset: name: "FlatMapDataset/_9"
+op: "FlatMapDataset"
+input: "PrefetchDataset/_8"
+attr {
+  key: "Targuments"
+  value {
+    list {
+    }
+  }
+}
+attr {
+  key: "f"
+  value {
+    func {
+      name: "__inference_Dataset_flat_map_slice_batch_indices_99470"
+    }
+  }
+}
+attr {
+  key: "output_shapes"
+  value {
+    list {
+      shape {
+        dim {
+          size: 32
+        }
+      }
+    }
+  }
+}
+attr {
+  key: "output_types"
+  value {
+    list {
+      type: DT_INT64
+    }
+  }
+}
+. Consider either turning off auto-sharding or switching the auto_shard_policy to DATA to shard this dataset. You can do this by creating a new `tf.data.Options()` object then setting `options.experimental_distribute.auto_shard_policy = AutoShardPolicy.DATA` before applying the options object to the dataset via `dataset.with_options(options)`.
+2024-01-11 20:57:34.658917: W tensorflow/core/grappler/optimizers/data/auto_shard.cc:656] In AUTO-mode, and switching to DATA-based sharding, instead of FILE-based sharding as we cannot find appropriate reader dataset op(s) to shard. Error: Did not find a shardable source, walked to a node which is not a dataset: name: "FlatMapDataset/_9"
+op: "FlatMapDataset"
+input: "PrefetchDataset/_8"
+attr {
+  key: "Targuments"
+  value {
+    list {
+    }
+  }
+}
+attr {
+  key: "f"
+  value {
+    func {
+      name: "__inference_Dataset_flat_map_slice_batch_indices_100059"
+    }
+  }
+}
+attr {
+  key: "output_shapes"
+  value {
+    list {
+      shape {
+        dim {
+          size: -1
+        }
+      }
+    }
+  }
+}
+attr {
+  key: "output_types"
+  value {
+    list {
+      type: DT_INT64
+    }
+  }
+}
+. Consider either turning off auto-sharding or switching the auto_shard_policy to DATA to shard this dataset. You can do this by creating a new `tf.data.Options()` object then setting `options.experimental_distribute.auto_shard_policy = AutoShardPolicy.DATA` before applying the options object to the dataset via `dataset.with_options(options)`.
+2024-01-11 20:57:51.329532: W tensorflow/core/grappler/optimizers/data/auto_shard.cc:656] In AUTO-mode, and switching to DATA-based sharding, instead of FILE-based sharding as we cannot find appropriate reader dataset op(s) to shard. Error: Did not find a shardable source, walked to a node which is not a dataset: name: "FlatMapDataset/_9"
+op: "FlatMapDataset"
+input: "PrefetchDataset/_8"
+attr {
+  key: "Targuments"
+  value {
+    list {
+    }
+  }
+}
+attr {
+  key: "f"
+  value {
+    func {
+      name: "__inference_Dataset_flat_map_slice_batch_indices_111383"
+    }
+  }
+}
+attr {
+  key: "output_shapes"
+  value {
+    list {
+      shape {
+        dim {
+          size: 32
+        }
+      }
+    }
+  }
+}
+attr {
+  key: "output_types"
+  value {
+    list {
+      type: DT_INT64
+    }
+  }
+}
+. Consider either turning off auto-sharding or switching the auto_shard_policy to DATA to shard this dataset. You can do this by creating a new `tf.data.Options()` object then setting `options.experimental_distribute.auto_shard_policy = AutoShardPolicy.DATA` before applying the options object to the dataset via `dataset.with_options(options)`.
+2024-01-11 20:57:52.740049: W tensorflow/core/grappler/optimizers/data/auto_shard.cc:656] In AUTO-mode, and switching to DATA-based sharding, instead of FILE-based sharding as we cannot find appropriate reader dataset op(s) to shard. Error: Did not find a shardable source, walked to a node which is not a dataset: name: "FlatMapDataset/_9"
+op: "FlatMapDataset"
+input: "PrefetchDataset/_8"
+attr {
+  key: "Targuments"
+  value {
+    list {
+    }
+  }
+}
+attr {
+  key: "f"
+  value {
+    func {
+      name: "__inference_Dataset_flat_map_slice_batch_indices_111972"
+    }
+  }
+}
+attr {
+  key: "output_shapes"
+  value {
+    list {
+      shape {
+        dim {
+          size: -1
+        }
+      }
+    }
+  }
+}
+attr {
+  key: "output_types"
+  value {
+    list {
+      type: DT_INT64
+    }
+  }
+}
+. Consider either turning off auto-sharding or switching the auto_shard_policy to DATA to shard this dataset. You can do this by creating a new `tf.data.Options()` object then setting `options.experimental_distribute.auto_shard_policy = AutoShardPolicy.DATA` before applying the options object to the dataset via `dataset.with_options(options)`.
+2024-01-11 20:58:06.635833: W tensorflow/core/grappler/optimizers/data/auto_shard.cc:656] In AUTO-mode, and switching to DATA-based sharding, instead of FILE-based sharding as we cannot find appropriate reader dataset op(s) to shard. Error: Did not find a shardable source, walked to a node which is not a dataset: name: "FlatMapDataset/_9"
+op: "FlatMapDataset"
+input: "PrefetchDataset/_8"
+attr {
+  key: "Targuments"
+  value {
+    list {
+    }
+  }
+}
+attr {
+  key: "f"
+  value {
+    func {
+      name: "__inference_Dataset_flat_map_slice_batch_indices_121709"
+    }
+  }
+}
+attr {
+  key: "output_shapes"
+  value {
+    list {
+      shape {
+        dim {
+          size: 32
+        }
+      }
+    }
+  }
+}
+attr {
+  key: "output_types"
+  value {
+    list {
+      type: DT_INT64
+    }
+  }
+}
+. Consider either turning off auto-sharding or switching the auto_shard_policy to DATA to shard this dataset. You can do this by creating a new `tf.data.Options()` object then setting `options.experimental_distribute.auto_shard_policy = AutoShardPolicy.DATA` before applying the options object to the dataset via `dataset.with_options(options)`.
+2024-01-11 20:58:08.042614: W tensorflow/core/grappler/optimizers/data/auto_shard.cc:656] In AUTO-mode, and switching to DATA-based sharding, instead of FILE-based sharding as we cannot find appropriate reader dataset op(s) to shard. Error: Did not find a shardable source, walked to a node which is not a dataset: name: "FlatMapDataset/_9"
+op: "FlatMapDataset"
+input: "PrefetchDataset/_8"
+attr {
+  key: "Targuments"
+  value {
+    list {
+    }
+  }
+}
+attr {
+  key: "f"
+  value {
+    func {
+      name: "__inference_Dataset_flat_map_slice_batch_indices_122298"
+    }
+  }
+}
+attr {
+  key: "output_shapes"
+  value {
+    list {
+      shape {
+        dim {
+          size: -1
+        }
+      }
+    }
+  }
+}
+attr {
+  key: "output_types"
+  value {
+    list {
+      type: DT_INT64
+    }
+  }
+}
+. Consider either turning off auto-sharding or switching the auto_shard_policy to DATA to shard this dataset. You can do this by creating a new `tf.data.Options()` object then setting `options.experimental_distribute.auto_shard_policy = AutoShardPolicy.DATA` before applying the options object to the dataset via `dataset.with_options(options)`.
+2024-01-11 20:58:25.644033: W tensorflow/core/grappler/optimizers/data/auto_shard.cc:656] In AUTO-mode, and switching to DATA-based sharding, instead of FILE-based sharding as we cannot find appropriate reader dataset op(s) to shard. Error: Did not find a shardable source, walked to a node which is not a dataset: name: "FlatMapDataset/_9"
+op: "FlatMapDataset"
+input: "PrefetchDataset/_8"
+attr {
+  key: "Targuments"
+  value {
+    list {
+    }
+  }
+}
+attr {
+  key: "f"
+  value {
+    func {
+      name: "__inference_Dataset_flat_map_slice_batch_indices_134222"
+    }
+  }
+}
+attr {
+  key: "output_shapes"
+  value {
+    list {
+      shape {
+        dim {
+          size: 32
+        }
+      }
+    }
+  }
+}
+attr {
+  key: "output_types"
+  value {
+    list {
+      type: DT_INT64
+    }
+  }
+}
+. Consider either turning off auto-sharding or switching the auto_shard_policy to DATA to shard this dataset. You can do this by creating a new `tf.data.Options()` object then setting `options.experimental_distribute.auto_shard_policy = AutoShardPolicy.DATA` before applying the options object to the dataset via `dataset.with_options(options)`.
+2024-01-11 20:58:27.055620: W tensorflow/core/grappler/optimizers/data/auto_shard.cc:656] In AUTO-mode, and switching to DATA-based sharding, instead of FILE-based sharding as we cannot find appropriate reader dataset op(s) to shard. Error: Did not find a shardable source, walked to a node which is not a dataset: name: "FlatMapDataset/_9"
+op: "FlatMapDataset"
+input: "PrefetchDataset/_8"
+attr {
+  key: "Targuments"
+  value {
+    list {
+    }
+  }
+}
+attr {
+  key: "f"
+  value {
+    func {
+      name: "__inference_Dataset_flat_map_slice_batch_indices_134811"
+    }
+  }
+}
+attr {
+  key: "output_shapes"
+  value {
+    list {
+      shape {
+        dim {
+          size: -1
+        }
+      }
+    }
+  }
+}
+attr {
+  key: "output_types"
+  value {
+    list {
+      type: DT_INT64
+    }
+  }
+}
+. Consider either turning off auto-sharding or switching the auto_shard_policy to DATA to shard this dataset. You can do this by creating a new `tf.data.Options()` object then setting `options.experimental_distribute.auto_shard_policy = AutoShardPolicy.DATA` before applying the options object to the dataset via `dataset.with_options(options)`.
+2024-01-11 20:58:40.648656: W tensorflow/core/grappler/optimizers/data/auto_shard.cc:656] In AUTO-mode, and switching to DATA-based sharding, instead of FILE-based sharding as we cannot find appropriate reader dataset op(s) to shard. Error: Did not find a shardable source, walked to a node which is not a dataset: name: "FlatMapDataset/_9"
+op: "FlatMapDataset"
+input: "PrefetchDataset/_8"
+attr {
+  key: "Targuments"
+  value {
+    list {
+    }
+  }
+}
+attr {
+  key: "f"
+  value {
+    func {
+      name: "__inference_Dataset_flat_map_slice_batch_indices_144435"
+    }
+  }
+}
+attr {
+  key: "output_shapes"
+  value {
+    list {
+      shape {
+        dim {
+          size: 32
+        }
+      }
+    }
+  }
+}
+attr {
+  key: "output_types"
+  value {
+    list {
+      type: DT_INT64
+    }
+  }
+}
+. Consider either turning off auto-sharding or switching the auto_shard_policy to DATA to shard this dataset. You can do this by creating a new `tf.data.Options()` object then setting `options.experimental_distribute.auto_shard_policy = AutoShardPolicy.DATA` before applying the options object to the dataset via `dataset.with_options(options)`.
+2024-01-11 20:58:42.059200: W tensorflow/core/grappler/optimizers/data/auto_shard.cc:656] In AUTO-mode, and switching to DATA-based sharding, instead of FILE-based sharding as we cannot find appropriate reader dataset op(s) to shard. Error: Did not find a shardable source, walked to a node which is not a dataset: name: "FlatMapDataset/_9"
+op: "FlatMapDataset"
+input: "PrefetchDataset/_8"
+attr {
+  key: "Targuments"
+  value {
+    list {
+    }
+  }
+}
+attr {
+  key: "f"
+  value {
+    func {
+      name: "__inference_Dataset_flat_map_slice_batch_indices_145024"
+    }
+  }
+}
+attr {
+  key: "output_shapes"
+  value {
+    list {
+      shape {
+        dim {
+          size: -1
+        }
+      }
+    }
+  }
+}
+attr {
+  key: "output_types"
+  value {
+    list {
+      type: DT_INT64
+    }
+  }
+}
+. Consider either turning off auto-sharding or switching the auto_shard_policy to DATA to shard this dataset. You can do this by creating a new `tf.data.Options()` object then setting `options.experimental_distribute.auto_shard_policy = AutoShardPolicy.DATA` before applying the options object to the dataset via `dataset.with_options(options)`.
+2024-01-11 20:58:57.674338: W tensorflow/core/grappler/optimizers/data/auto_shard.cc:656] In AUTO-mode, and switching to DATA-based sharding, instead of FILE-based sharding as we cannot find appropriate reader dataset op(s) to shard. Error: Did not find a shardable source, walked to a node which is not a dataset: name: "FlatMapDataset/_9"
+op: "FlatMapDataset"
+input: "PrefetchDataset/_8"
+attr {
+  key: "Targuments"
+  value {
+    list {
+    }
+  }
+}
+attr {
+  key: "f"
+  value {
+    func {
+      name: "__inference_Dataset_flat_map_slice_batch_indices_155748"
+    }
+  }
+}
+attr {
+  key: "output_shapes"
+  value {
+    list {
+      shape {
+        dim {
+          size: 32
+        }
+      }
+    }
+  }
+}
+attr {
+  key: "output_types"
+  value {
+    list {
+      type: DT_INT64
+    }
+  }
+}
+. Consider either turning off auto-sharding or switching the auto_shard_policy to DATA to shard this dataset. You can do this by creating a new `tf.data.Options()` object then setting `options.experimental_distribute.auto_shard_policy = AutoShardPolicy.DATA` before applying the options object to the dataset via `dataset.with_options(options)`.
+2024-01-11 20:58:59.084199: W tensorflow/core/grappler/optimizers/data/auto_shard.cc:656] In AUTO-mode, and switching to DATA-based sharding, instead of FILE-based sharding as we cannot find appropriate reader dataset op(s) to shard. Error: Did not find a shardable source, walked to a node which is not a dataset: name: "FlatMapDataset/_9"
+op: "FlatMapDataset"
+input: "PrefetchDataset/_8"
+attr {
+  key: "Targuments"
+  value {
+    list {
+    }
+  }
+}
+attr {
+  key: "f"
+  value {
+    func {
+      name: "__inference_Dataset_flat_map_slice_batch_indices_156337"
+    }
+  }
+}
+attr {
+  key: "output_shapes"
+  value {
+    list {
+      shape {
+        dim {
+          size: -1
+        }
+      }
+    }
+  }
+}
+attr {
+  key: "output_types"
+  value {
+    list {
+      type: DT_INT64
+    }
+  }
+}
+. Consider either turning off auto-sharding or switching the auto_shard_policy to DATA to shard this dataset. You can do this by creating a new `tf.data.Options()` object then setting `options.experimental_distribute.auto_shard_policy = AutoShardPolicy.DATA` before applying the options object to the dataset via `dataset.with_options(options)`.
+2024-01-11 20:59:12.959399: W tensorflow/core/grappler/optimizers/data/auto_shard.cc:656] In AUTO-mode, and switching to DATA-based sharding, instead of FILE-based sharding as we cannot find appropriate reader dataset op(s) to shard. Error: Did not find a shardable source, walked to a node which is not a dataset: name: "FlatMapDataset/_9"
+op: "FlatMapDataset"
+input: "PrefetchDataset/_8"
+attr {
+  key: "Targuments"
+  value {
+    list {
+    }
+  }
+}
+attr {
+  key: "f"
+  value {
+    func {
+      name: "__inference_Dataset_flat_map_slice_batch_indices_166023"
+    }
+  }
+}
+attr {
+  key: "output_shapes"
+  value {
+    list {
+      shape {
+        dim {
+          size: 32
+        }
+      }
+    }
+  }
+}
+attr {
+  key: "output_types"
+  value {
+    list {
+      type: DT_INT64
+    }
+  }
+}
+. Consider either turning off auto-sharding or switching the auto_shard_policy to DATA to shard this dataset. You can do this by creating a new `tf.data.Options()` object then setting `options.experimental_distribute.auto_shard_policy = AutoShardPolicy.DATA` before applying the options object to the dataset via `dataset.with_options(options)`.
+2024-01-11 20:59:14.369732: W tensorflow/core/grappler/optimizers/data/auto_shard.cc:656] In AUTO-mode, and switching to DATA-based sharding, instead of FILE-based sharding as we cannot find appropriate reader dataset op(s) to shard. Error: Did not find a shardable source, walked to a node which is not a dataset: name: "FlatMapDataset/_9"
+op: "FlatMapDataset"
+input: "PrefetchDataset/_8"
+attr {
+  key: "Targuments"
+  value {
+    list {
+    }
+  }
+}
+attr {
+  key: "f"
+  value {
+    func {
+      name: "__inference_Dataset_flat_map_slice_batch_indices_166612"
+    }
+  }
+}
+attr {
+  key: "output_shapes"
+  value {
+    list {
+      shape {
+        dim {
+          size: -1
+        }
+      }
+    }
+  }
+}
+attr {
+  key: "output_types"
+  value {
+    list {
+      type: DT_INT64
+    }
+  }
+}
+. Consider either turning off auto-sharding or switching the auto_shard_policy to DATA to shard this dataset. You can do this by creating a new `tf.data.Options()` object then setting `options.experimental_distribute.auto_shard_policy = AutoShardPolicy.DATA` before applying the options object to the dataset via `dataset.with_options(options)`.
+2024-01-11 20:59:26.326029: W tensorflow/core/grappler/optimizers/data/auto_shard.cc:656] In AUTO-mode, and switching to DATA-based sharding, instead of FILE-based sharding as we cannot find appropriate reader dataset op(s) to shard. Error: Did not find a shardable source, walked to a node which is not a dataset: name: "FlatMapDataset/_9"
+op: "FlatMapDataset"
+input: "PrefetchDataset/_8"
+attr {
+  key: "Targuments"
+  value {
+    list {
+    }
+  }
+}
+attr {
+  key: "f"
+  value {
+    func {
+      name: "__inference_Dataset_flat_map_slice_batch_indices_175086"
+    }
+  }
+}
+attr {
+  key: "output_shapes"
+  value {
+    list {
+      shape {
+        dim {
+          size: 32
+        }
+      }
+    }
+  }
+}
+attr {
+  key: "output_types"
+  value {
+    list {
+      type: DT_INT64
+    }
+  }
+}
+. Consider either turning off auto-sharding or switching the auto_shard_policy to DATA to shard this dataset. You can do this by creating a new `tf.data.Options()` object then setting `options.experimental_distribute.auto_shard_policy = AutoShardPolicy.DATA` before applying the options object to the dataset via `dataset.with_options(options)`.
+2024-01-11 20:59:27.738012: W tensorflow/core/grappler/optimizers/data/auto_shard.cc:656] In AUTO-mode, and switching to DATA-based sharding, instead of FILE-based sharding as we cannot find appropriate reader dataset op(s) to shard. Error: Did not find a shardable source, walked to a node which is not a dataset: name: "FlatMapDataset/_9"
+op: "FlatMapDataset"
+input: "PrefetchDataset/_8"
+attr {
+  key: "Targuments"
+  value {
+    list {
+    }
+  }
+}
+attr {
+  key: "f"
+  value {
+    func {
+      name: "__inference_Dataset_flat_map_slice_batch_indices_175675"
+    }
+  }
+}
+attr {
+  key: "output_shapes"
+  value {
+    list {
+      shape {
+        dim {
+          size: -1
+        }
+      }
+    }
+  }
+}
+attr {
+  key: "output_types"
+  value {
+    list {
+      type: DT_INT64
+    }
+  }
+}
+. Consider either turning off auto-sharding or switching the auto_shard_policy to DATA to shard this dataset. You can do this by creating a new `tf.data.Options()` object then setting `options.experimental_distribute.auto_shard_policy = AutoShardPolicy.DATA` before applying the options object to the dataset via `dataset.with_options(options)`.
+2024-01-11 20:59:40.102071: W tensorflow/core/grappler/optimizers/data/auto_shard.cc:656] In AUTO-mode, and switching to DATA-based sharding, instead of FILE-based sharding as we cannot find appropriate reader dataset op(s) to shard. Error: Did not find a shardable source, walked to a node which is not a dataset: name: "FlatMapDataset/_9"
+op: "FlatMapDataset"
+input: "PrefetchDataset/_8"
+attr {
+  key: "Targuments"
+  value {
+    list {
+    }
+  }
+}
+attr {
+  key: "f"
+  value {
+    func {
+      name: "__inference_Dataset_flat_map_slice_batch_indices_184494"
+    }
+  }
+}
+attr {
+  key: "output_shapes"
+  value {
+    list {
+      shape {
+        dim {
+          size: 32
+        }
+      }
+    }
+  }
+}
+attr {
+  key: "output_types"
+  value {
+    list {
+      type: DT_INT64
+    }
+  }
+}
+. Consider either turning off auto-sharding or switching the auto_shard_policy to DATA to shard this dataset. You can do this by creating a new `tf.data.Options()` object then setting `options.experimental_distribute.auto_shard_policy = AutoShardPolicy.DATA` before applying the options object to the dataset via `dataset.with_options(options)`.
+2024-01-11 20:59:41.510881: W tensorflow/core/grappler/optimizers/data/auto_shard.cc:656] In AUTO-mode, and switching to DATA-based sharding, instead of FILE-based sharding as we cannot find appropriate reader dataset op(s) to shard. Error: Did not find a shardable source, walked to a node which is not a dataset: name: "FlatMapDataset/_9"
+op: "FlatMapDataset"
+input: "PrefetchDataset/_8"
+attr {
+  key: "Targuments"
+  value {
+    list {
+    }
+  }
+}
+attr {
+  key: "f"
+  value {
+    func {
+      name: "__inference_Dataset_flat_map_slice_batch_indices_185083"
+    }
+  }
+}
+attr {
+  key: "output_shapes"
+  value {
+    list {
+      shape {
+        dim {
+          size: -1
+        }
+      }
+    }
+  }
+}
+attr {
+  key: "output_types"
+  value {
+    list {
+      type: DT_INT64
+    }
+  }
+}
+. Consider either turning off auto-sharding or switching the auto_shard_policy to DATA to shard this dataset. You can do this by creating a new `tf.data.Options()` object then setting `options.experimental_distribute.auto_shard_policy = AutoShardPolicy.DATA` before applying the options object to the dataset via `dataset.with_options(options)`.
+2024-01-11 20:59:59.883484: W tensorflow/core/grappler/optimizers/data/auto_shard.cc:656] In AUTO-mode, and switching to DATA-based sharding, instead of FILE-based sharding as we cannot find appropriate reader dataset op(s) to shard. Error: Did not find a shardable source, walked to a node which is not a dataset: name: "FlatMapDataset/_9"
+op: "FlatMapDataset"
+input: "PrefetchDataset/_8"
+attr {
+  key: "Targuments"
+  value {
+    list {
+    }
+  }
+}
+attr {
+  key: "f"
+  value {
+    func {
+      name: "__inference_Dataset_flat_map_slice_batch_indices_197457"
+    }
+  }
+}
+attr {
+  key: "output_shapes"
+  value {
+    list {
+      shape {
+        dim {
+          size: 32
+        }
+      }
+    }
+  }
+}
+attr {
+  key: "output_types"
+  value {
+    list {
+      type: DT_INT64
+    }
+  }
+}
+. Consider either turning off auto-sharding or switching the auto_shard_policy to DATA to shard this dataset. You can do this by creating a new `tf.data.Options()` object then setting `options.experimental_distribute.auto_shard_policy = AutoShardPolicy.DATA` before applying the options object to the dataset via `dataset.with_options(options)`.
+2024-01-11 21:00:01.296565: W tensorflow/core/grappler/optimizers/data/auto_shard.cc:656] In AUTO-mode, and switching to DATA-based sharding, instead of FILE-based sharding as we cannot find appropriate reader dataset op(s) to shard. Error: Did not find a shardable source, walked to a node which is not a dataset: name: "FlatMapDataset/_9"
+op: "FlatMapDataset"
+input: "PrefetchDataset/_8"
+attr {
+  key: "Targuments"
+  value {
+    list {
+    }
+  }
+}
+attr {
+  key: "f"
+  value {
+    func {
+      name: "__inference_Dataset_flat_map_slice_batch_indices_198046"
+    }
+  }
+}
+attr {
+  key: "output_shapes"
+  value {
+    list {
+      shape {
+        dim {
+          size: -1
+        }
+      }
+    }
+  }
+}
+attr {
+  key: "output_types"
+  value {
+    list {
+      type: DT_INT64
+    }
+  }
+}
+. Consider either turning off auto-sharding or switching the auto_shard_policy to DATA to shard this dataset. You can do this by creating a new `tf.data.Options()` object then setting `options.experimental_distribute.auto_shard_policy = AutoShardPolicy.DATA` before applying the options object to the dataset via `dataset.with_options(options)`.
+2024-01-11 21:00:15.839326: W tensorflow/core/grappler/optimizers/data/auto_shard.cc:656] In AUTO-mode, and switching to DATA-based sharding, instead of FILE-based sharding as we cannot find appropriate reader dataset op(s) to shard. Error: Did not find a shardable source, walked to a node which is not a dataset: name: "FlatMapDataset/_9"
+op: "FlatMapDataset"
+input: "PrefetchDataset/_8"
+attr {
+  key: "Targuments"
+  value {
+    list {
+    }
+  }
+}
+attr {
+  key: "f"
+  value {
+    func {
+      name: "__inference_Dataset_flat_map_slice_batch_indices_208120"
+    }
+  }
+}
+attr {
+  key: "output_shapes"
+  value {
+    list {
+      shape {
+        dim {
+          size: 32
+        }
+      }
+    }
+  }
+}
+attr {
+  key: "output_types"
+  value {
+    list {
+      type: DT_INT64
+    }
+  }
+}
+. Consider either turning off auto-sharding or switching the auto_shard_policy to DATA to shard this dataset. You can do this by creating a new `tf.data.Options()` object then setting `options.experimental_distribute.auto_shard_policy = AutoShardPolicy.DATA` before applying the options object to the dataset via `dataset.with_options(options)`.
+2024-01-11 21:00:17.252493: W tensorflow/core/grappler/optimizers/data/auto_shard.cc:656] In AUTO-mode, and switching to DATA-based sharding, instead of FILE-based sharding as we cannot find appropriate reader dataset op(s) to shard. Error: Did not find a shardable source, walked to a node which is not a dataset: name: "FlatMapDataset/_9"
+op: "FlatMapDataset"
+input: "PrefetchDataset/_8"
+attr {
+  key: "Targuments"
+  value {
+    list {
+    }
+  }
+}
+attr {
+  key: "f"
+  value {
+    func {
+      name: "__inference_Dataset_flat_map_slice_batch_indices_208709"
+    }
+  }
+}
+attr {
+  key: "output_shapes"
+  value {
+    list {
+      shape {
+        dim {
+          size: -1
+        }
+      }
+    }
+  }
+}
+attr {
+  key: "output_types"
+  value {
+    list {
+      type: DT_INT64
+    }
+  }
+}
+. Consider either turning off auto-sharding or switching the auto_shard_policy to DATA to shard this dataset. You can do this by creating a new `tf.data.Options()` object then setting `options.experimental_distribute.auto_shard_policy = AutoShardPolicy.DATA` before applying the options object to the dataset via `dataset.with_options(options)`.
+2024-01-11 21:00:31.834388: W tensorflow/core/grappler/optimizers/data/auto_shard.cc:656] In AUTO-mode, and switching to DATA-based sharding, instead of FILE-based sharding as we cannot find appropriate reader dataset op(s) to shard. Error: Did not find a shardable source, walked to a node which is not a dataset: name: "FlatMapDataset/_9"
+op: "FlatMapDataset"
+input: "PrefetchDataset/_8"
+attr {
+  key: "Targuments"
+  value {
+    list {
+    }
+  }
+}
+attr {
+  key: "f"
+  value {
+    func {
+      name: "__inference_Dataset_flat_map_slice_batch_indices_218854"
+    }
+  }
+}
+attr {
+  key: "output_shapes"
+  value {
+    list {
+      shape {
+        dim {
+          size: 32
+        }
+      }
+    }
+  }
+}
+attr {
+  key: "output_types"
+  value {
+    list {
+      type: DT_INT64
+    }
+  }
+}
+. Consider either turning off auto-sharding or switching the auto_shard_policy to DATA to shard this dataset. You can do this by creating a new `tf.data.Options()` object then setting `options.experimental_distribute.auto_shard_policy = AutoShardPolicy.DATA` before applying the options object to the dataset via `dataset.with_options(options)`.
+2024-01-11 21:00:33.247389: W tensorflow/core/grappler/optimizers/data/auto_shard.cc:656] In AUTO-mode, and switching to DATA-based sharding, instead of FILE-based sharding as we cannot find appropriate reader dataset op(s) to shard. Error: Did not find a shardable source, walked to a node which is not a dataset: name: "FlatMapDataset/_9"
+op: "FlatMapDataset"
+input: "PrefetchDataset/_8"
+attr {
+  key: "Targuments"
+  value {
+    list {
+    }
+  }
+}
+attr {
+  key: "f"
+  value {
+    func {
+      name: "__inference_Dataset_flat_map_slice_batch_indices_219443"
+    }
+  }
+}
+attr {
+  key: "output_shapes"
+  value {
+    list {
+      shape {
+        dim {
+          size: -1
+        }
+      }
+    }
+  }
+}
+attr {
+  key: "output_types"
+  value {
+    list {
+      type: DT_INT64
+    }
+  }
+}
+. Consider either turning off auto-sharding or switching the auto_shard_policy to DATA to shard this dataset. You can do this by creating a new `tf.data.Options()` object then setting `options.experimental_distribute.auto_shard_policy = AutoShardPolicy.DATA` before applying the options object to the dataset via `dataset.with_options(options)`.
+2024-01-11 21:00:44.741638: W tensorflow/core/grappler/optimizers/data/auto_shard.cc:656] In AUTO-mode, and switching to DATA-based sharding, instead of FILE-based sharding as we cannot find appropriate reader dataset op(s) to shard. Error: Did not find a shardable source, walked to a node which is not a dataset: name: "FlatMapDataset/_9"
+op: "FlatMapDataset"
+input: "PrefetchDataset/_8"
+attr {
+  key: "Targuments"
+  value {
+    list {
+    }
+  }
+}
+attr {
+  key: "f"
+  value {
+    func {
+      name: "__inference_Dataset_flat_map_slice_batch_indices_227617"
+    }
+  }
+}
+attr {
+  key: "output_shapes"
+  value {
+    list {
+      shape {
+        dim {
+          size: 32
+        }
+      }
+    }
+  }
+}
+attr {
+  key: "output_types"
+  value {
+    list {
+      type: DT_INT64
+    }
+  }
+}
+. Consider either turning off auto-sharding or switching the auto_shard_policy to DATA to shard this dataset. You can do this by creating a new `tf.data.Options()` object then setting `options.experimental_distribute.auto_shard_policy = AutoShardPolicy.DATA` before applying the options object to the dataset via `dataset.with_options(options)`.
+2024-01-11 21:00:46.157215: W tensorflow/core/grappler/optimizers/data/auto_shard.cc:656] In AUTO-mode, and switching to DATA-based sharding, instead of FILE-based sharding as we cannot find appropriate reader dataset op(s) to shard. Error: Did not find a shardable source, walked to a node which is not a dataset: name: "FlatMapDataset/_9"
+op: "FlatMapDataset"
+input: "PrefetchDataset/_8"
+attr {
+  key: "Targuments"
+  value {
+    list {
+    }
+  }
+}
+attr {
+  key: "f"
+  value {
+    func {
+      name: "__inference_Dataset_flat_map_slice_batch_indices_228206"
+    }
+  }
+}
+attr {
+  key: "output_shapes"
+  value {
+    list {
+      shape {
+        dim {
+          size: -1
+        }
+      }
+    }
+  }
+}
+attr {
+  key: "output_types"
+  value {
+    list {
+      type: DT_INT64
+    }
+  }
+}
+. Consider either turning off auto-sharding or switching the auto_shard_policy to DATA to shard this dataset. You can do this by creating a new `tf.data.Options()` object then setting `options.experimental_distribute.auto_shard_policy = AutoShardPolicy.DATA` before applying the options object to the dataset via `dataset.with_options(options)`.
+2024-01-11 21:01:05.454914: W tensorflow/core/grappler/optimizers/data/auto_shard.cc:656] In AUTO-mode, and switching to DATA-based sharding, instead of FILE-based sharding as we cannot find appropriate reader dataset op(s) to shard. Error: Did not find a shardable source, walked to a node which is not a dataset: name: "FlatMapDataset/_9"
+op: "FlatMapDataset"
+input: "PrefetchDataset/_8"
+attr {
+  key: "Targuments"
+  value {
+    list {
+    }
+  }
+}
+attr {
+  key: "f"
+  value {
+    func {
+      name: "__inference_Dataset_flat_map_slice_batch_indices_241280"
+    }
+  }
+}
+attr {
+  key: "output_shapes"
+  value {
+    list {
+      shape {
+        dim {
+          size: 32
+        }
+      }
+    }
+  }
+}
+attr {
+  key: "output_types"
+  value {
+    list {
+      type: DT_INT64
+    }
+  }
+}
+. Consider either turning off auto-sharding or switching the auto_shard_policy to DATA to shard this dataset. You can do this by creating a new `tf.data.Options()` object then setting `options.experimental_distribute.auto_shard_policy = AutoShardPolicy.DATA` before applying the options object to the dataset via `dataset.with_options(options)`.
+2024-01-11 21:01:06.859712: W tensorflow/core/grappler/optimizers/data/auto_shard.cc:656] In AUTO-mode, and switching to DATA-based sharding, instead of FILE-based sharding as we cannot find appropriate reader dataset op(s) to shard. Error: Did not find a shardable source, walked to a node which is not a dataset: name: "FlatMapDataset/_9"
+op: "FlatMapDataset"
+input: "PrefetchDataset/_8"
+attr {
+  key: "Targuments"
+  value {
+    list {
+    }
+  }
+}
+attr {
+  key: "f"
+  value {
+    func {
+      name: "__inference_Dataset_flat_map_slice_batch_indices_241864"
+    }
+  }
+}
+attr {
+  key: "output_shapes"
+  value {
+    list {
+      shape {
+        dim {
+          size: 46
+        }
+      }
+    }
+  }
+}
+attr {
+  key: "output_types"
+  value {
+    list {
+      type: DT_INT64
+    }
+  }
+}
+. Consider either turning off auto-sharding or switching the auto_shard_policy to DATA to shard this dataset. You can do this by creating a new `tf.data.Options()` object then setting `options.experimental_distribute.auto_shard_policy = AutoShardPolicy.DATA` before applying the options object to the dataset via `dataset.with_options(options)`.
+2024-01-11 21:01:18.670302: W tensorflow/core/grappler/optimizers/data/auto_shard.cc:656] In AUTO-mode, and switching to DATA-based sharding, instead of FILE-based sharding as we cannot find appropriate reader dataset op(s) to shard. Error: Did not find a shardable source, walked to a node which is not a dataset: name: "FlatMapDataset/_9"
+op: "FlatMapDataset"
+input: "PrefetchDataset/_8"
+attr {
+  key: "Targuments"
+  value {
+    list {
+    }
+  }
+}
+attr {
+  key: "f"
+  value {
+    func {
+      name: "__inference_Dataset_flat_map_slice_batch_indices_250324"
+    }
+  }
+}
+attr {
+  key: "output_shapes"
+  value {
+    list {
+      shape {
+        dim {
+          size: 32
+        }
+      }
+    }
+  }
+}
+attr {
+  key: "output_types"
+  value {
+    list {
+      type: DT_INT64
+    }
+  }
+}
+. Consider either turning off auto-sharding or switching the auto_shard_policy to DATA to shard this dataset. You can do this by creating a new `tf.data.Options()` object then setting `options.experimental_distribute.auto_shard_policy = AutoShardPolicy.DATA` before applying the options object to the dataset via `dataset.with_options(options)`.
+2024-01-11 21:01:20.077915: W tensorflow/core/grappler/optimizers/data/auto_shard.cc:656] In AUTO-mode, and switching to DATA-based sharding, instead of FILE-based sharding as we cannot find appropriate reader dataset op(s) to shard. Error: Did not find a shardable source, walked to a node which is not a dataset: name: "FlatMapDataset/_9"
+op: "FlatMapDataset"
+input: "PrefetchDataset/_8"
+attr {
+  key: "Targuments"
+  value {
+    list {
+    }
+  }
+}
+attr {
+  key: "f"
+  value {
+    func {
+      name: "__inference_Dataset_flat_map_slice_batch_indices_250913"
+    }
+  }
+}
+attr {
+  key: "output_shapes"
+  value {
+    list {
+      shape {
+        dim {
+          size: -1
+        }
+      }
+    }
+  }
+}
+attr {
+  key: "output_types"
+  value {
+    list {
+      type: DT_INT64
+    }
+  }
+}
+. Consider either turning off auto-sharding or switching the auto_shard_policy to DATA to shard this dataset. You can do this by creating a new `tf.data.Options()` object then setting `options.experimental_distribute.auto_shard_policy = AutoShardPolicy.DATA` before applying the options object to the dataset via `dataset.with_options(options)`.
+2024-01-11 21:01:32.157230: W tensorflow/core/grappler/optimizers/data/auto_shard.cc:656] In AUTO-mode, and switching to DATA-based sharding, instead of FILE-based sharding as we cannot find appropriate reader dataset op(s) to shard. Error: Did not find a shardable source, walked to a node which is not a dataset: name: "FlatMapDataset/_9"
+op: "FlatMapDataset"
+input: "PrefetchDataset/_8"
+attr {
+  key: "Targuments"
+  value {
+    list {
+    }
+  }
+}
+attr {
+  key: "f"
+  value {
+    func {
+      name: "__inference_Dataset_flat_map_slice_batch_indices_259579"
+    }
+  }
+}
+attr {
+  key: "output_shapes"
+  value {
+    list {
+      shape {
+        dim {
+          size: 32
+        }
+      }
+    }
+  }
+}
+attr {
+  key: "output_types"
+  value {
+    list {
+      type: DT_INT64
+    }
+  }
+}
+. Consider either turning off auto-sharding or switching the auto_shard_policy to DATA to shard this dataset. You can do this by creating a new `tf.data.Options()` object then setting `options.experimental_distribute.auto_shard_policy = AutoShardPolicy.DATA` before applying the options object to the dataset via `dataset.with_options(options)`.
+2024-01-11 21:01:33.570022: W tensorflow/core/grappler/optimizers/data/auto_shard.cc:656] In AUTO-mode, and switching to DATA-based sharding, instead of FILE-based sharding as we cannot find appropriate reader dataset op(s) to shard. Error: Did not find a shardable source, walked to a node which is not a dataset: name: "FlatMapDataset/_9"
+op: "FlatMapDataset"
+input: "PrefetchDataset/_8"
+attr {
+  key: "Targuments"
+  value {
+    list {
+    }
+  }
+}
+attr {
+  key: "f"
+  value {
+    func {
+      name: "__inference_Dataset_flat_map_slice_batch_indices_260168"
+    }
+  }
+}
+attr {
+  key: "output_shapes"
+  value {
+    list {
+      shape {
+        dim {
+          size: -1
+        }
+      }
+    }
+  }
+}
+attr {
+  key: "output_types"
+  value {
+    list {
+      type: DT_INT64
+    }
+  }
+}
+. Consider either turning off auto-sharding or switching the auto_shard_policy to DATA to shard this dataset. You can do this by creating a new `tf.data.Options()` object then setting `options.experimental_distribute.auto_shard_policy = AutoShardPolicy.DATA` before applying the options object to the dataset via `dataset.with_options(options)`.
+2024-01-11 21:01:52.572242: W tensorflow/core/grappler/optimizers/data/auto_shard.cc:656] In AUTO-mode, and switching to DATA-based sharding, instead of FILE-based sharding as we cannot find appropriate reader dataset op(s) to shard. Error: Did not find a shardable source, walked to a node which is not a dataset: name: "FlatMapDataset/_9"
+op: "FlatMapDataset"
+input: "PrefetchDataset/_8"
+attr {
+  key: "Targuments"
+  value {
+    list {
+    }
+  }
+}
+attr {
+  key: "f"
+  value {
+    func {
+      name: "__inference_Dataset_flat_map_slice_batch_indices_272863"
+    }
+  }
+}
+attr {
+  key: "output_shapes"
+  value {
+    list {
+      shape {
+        dim {
+          size: 32
+        }
+      }
+    }
+  }
+}
+attr {
+  key: "output_types"
+  value {
+    list {
+      type: DT_INT64
+    }
+  }
+}
+. Consider either turning off auto-sharding or switching the auto_shard_policy to DATA to shard this dataset. You can do this by creating a new `tf.data.Options()` object then setting `options.experimental_distribute.auto_shard_policy = AutoShardPolicy.DATA` before applying the options object to the dataset via `dataset.with_options(options)`.
+###Max LOO training residual is 25.16324410450617
+###Min LOO training residual is -41.95800143572102
+        There are #0/1426 training sample that do not have LOO bootstraps!!!
+        ~~~~~~Finish Computing LOO residuals, took 0.2453770637512207 secs.~~
+        ###Max LOO test residual is 14.120879833232912
+        ###Min LOO test residual is 3.408275098349087
+
+
+        !!!!!"nn" will be refitted!!!!!
+        ///Finish Fitting 25 Bootstrap for nn, took 412.3697261810303 secs.///
+###Max LOO training residual is 48.34953138563368
+###Min LOO training residual is -29.48586416244507
+        There are #0/1426 training sample that do not have LOO bootstraps!!!
+        ~~~~~~Finish Computing LOO residuals, took 0.7703123092651367 secs.~~
+        ###Max LOO test residual is 36.32282240403303
+        ###Min LOO test residual is 7.252230842651471
+
+
+======================**************============================
+%%%%%%%%%%%  Calculating residuals and conformal prediction intervals for patient p106715 .......................
+~~~~~~~~~~At trial # 0 and alpha=0.05~~~~~~~~~~~~~~
+**********Runnning Ensemble ......
+num_unique_resid: 46
+size of resid_strided: (46, 1426)
+~~~~~~~~~~~~Finish Computing 46 UNIQUE Prediction Intervals, took 0.07057452201843262 secs.~~~~~~~~~~~~
+size of width_left: 46
+Average Coverage is 0.0
+Average Width is 35.33671593001006
+-------------------------------------
+  itrial          dataname  muh_fun  ...  avg_width mean_lower  mean_upper
+0      0  physionet_sepsis  RidgeCV  ...  35.336716  12.663284        48.0
+
+[1 rows x 9 columns]
+@*%$$$$$    upper_ae: [0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739]
+@*%$$$$$    lower_ae: [0.75534826 0.83755194 0.80520496 0.78889339 0.80389778 0.75825418
+ 0.77784107 0.76243909 0.75862039 0.78653202 0.73367253 0.70207149
+ 0.67968109 0.64382333 0.67271709 0.6999507  0.65985438 0.65614965
+ 0.68549514 0.77148789 0.78608815 0.78312031 0.76237491 0.80982672
+ 0.79118839 0.78608099 0.82492862 0.85531758 0.79769057 0.8414997
+ 0.87482424 0.86311327 0.83784568 0.86514763 0.8708698  0.86543926
+ 0.87062242 0.84972329 0.85878934 0.8508969  0.86431873 0.83601839
+ 0.81313596 0.82580679 0.84286874 0.76969316]
+[LCB_ridge_curr, UCB_ridge_curr]: [0.20742646485360883, 0.9347826086956522]
+**********Runnning Ensemble ......
+num_unique_resid: 46
+size of resid_strided: (46, 1426)
+~~~~~~~~~~~~Finish Computing 46 UNIQUE Prediction Intervals, took 0.06911301612854004 secs.~~~~~~~~~~~~
+size of width_left: 46
+Average Coverage is 0.0
+Average Width is 16.299890636913343
+-------------------------------------
+  itrial          dataname  ... mean_lower mean_upper
+0      0  physionet_sepsis  ...  31.700109       48.0
+
+[1 rows x 9 columns]
+@*%$$$$$    upper_ae: [0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739]
+@*%$$$$$    lower_ae: [0.33295472 0.41296721 0.41725904 0.34793855 0.29971321 0.30065626
+ 0.33295472 0.3381938  0.3462136  0.36785494 0.33295472 0.33295472
+ 0.33295472 0.33295472 0.33295472 0.33295472 0.34667621 0.35438644
+ 0.37559803 0.41273    0.40673668 0.37641284 0.39043247 0.40165776
+ 0.38748594 0.3667644  0.40443705 0.41325271 0.45673783 0.40837098
+ 0.42150681 0.39345457 0.35882996 0.38482819 0.41527321 0.41160867
+ 0.40381164 0.39475005 0.39791326 0.39820183 0.42274168 0.37905108
+ 0.38626272 0.38174863 0.37428209 0.37951249]
+[LCB_rf_curr, UCB_rf_curr]: [0.6222707148480936, 0.9347826086956522]
+**********Runnning Ensemble ......
+num_unique_resid: 46
+size of resid_strided: (46, 1426)
+~~~~~~~~~~~~Finish Computing 46 UNIQUE Prediction Intervals, took 0.07105326652526855 secs.~~~~~~~~~~~~
+size of width_left: 46
+Average Coverage is 0.0
+Average Width is 15.296810539202808
+-------------------------------------
+  itrial          dataname       muh_fun  ...  avg_width mean_lower  mean_upper
+0      0  physionet_sepsis  XGBRegressor  ...  15.296811  32.703189        48.0
+
+[1 rows x 9 columns]
+@*%$$$$$    upper_ae: [0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739]
+@*%$$$$$    lower_ae: [0.34251372 0.3753402  0.37587026 0.34312362 0.34012874 0.34109576
+ 0.34120572 0.34192726 0.33927045 0.36001286 0.33851932 0.33732341
+ 0.33732341 0.33732341 0.33732341 0.33732341 0.33732341 0.33732341
+ 0.33732341 0.344216   0.34989167 0.34622756 0.34323051 0.35161728
+ 0.34580213 0.34852814 0.34495597 0.35840665 0.35693402 0.34243044
+ 0.35793717 0.35268653 0.3725638  0.37043848 0.37002139 0.37030635
+ 0.3976242  0.38805816 0.38308821 0.36029262 0.38971605 0.38959251
+ 0.38681201 0.35463115 0.34505883 0.33814752]
+[LCB_xgb_curr, UCB_xgb_curr]: [0.6452843929707117, 0.9347826086956522]
+**********Runnning Ensemble ......
+num_unique_resid: 46
+size of resid_strided: (46, 1426)
+~~~~~~~~~~~~Finish Computing 46 UNIQUE Prediction Intervals, took 0.06788325309753418 secs.~~~~~~~~~~~~
+size of width_left: 46
+Average Coverage is 0.0
+Average Width is 35.36677038867565
+-------------------------------------
+  itrial          dataname  muh_fun  ... avg_width mean_lower  mean_upper
+0      0  physionet_sepsis  LassoCV  ...  35.36677   12.63323        48.0
+
+[1 rows x 9 columns]
+@*%$$$$$    upper_ae: [0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739]
+@*%$$$$$    lower_ae: [0.745924   0.83122239 0.79743622 0.77830616 0.79217194 0.78703501
+ 0.80742118 0.76542158 0.75657916 0.78911624 0.7342197  0.70177632
+ 0.6778478  0.64302654 0.67019436 0.6989129  0.65749028 0.65362678
+ 0.68434811 0.7710027  0.78699327 0.78540016 0.76201799 0.81082446
+ 0.79153856 0.78785895 0.82488378 0.85629101 0.7981731  0.84258713
+ 0.87590925 0.86421191 0.8395156  0.8673803  0.87156025 0.86653316
+ 0.87180405 0.85076351 0.85965775 0.85160254 0.86423343 0.83880809
+ 0.81392003 0.82683318 0.84551576 0.76887381]
+[LCB_lasso_curr, UCB_lasso_curr]: [0.2067117214490909, 0.9347826086956522]
+**********Runnning Ensemble ......
+num_unique_resid: 46
+size of resid_strided: (46, 1426)
+~~~~~~~~~~~~Finish Computing 46 UNIQUE Prediction Intervals, took 0.07096290588378906 secs.~~~~~~~~~~~~
+size of width_left: 46
+Average Coverage is 0.0
+Average Width is 16.86206585404334
+-------------------------------------
+  itrial          dataname muh_fun  ...  avg_width mean_lower  mean_upper
+0      0  physionet_sepsis     str  ...  16.862066  26.352935      43.215
+
+[1 rows x 9 columns]
+@*%$$$$$    upper_ae: [0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06905035 0.11468643 0.06521739 0.24052435 0.06521739
+ 0.14919951 0.09169665 0.06521739 0.38809383 0.36946715 0.42942755
+ 0.45787493 0.2778314  0.27878744 0.285073   0.45378714 0.37185519
+ 0.34503322 0.36307379 0.28365078 0.13040636]
+@*%$$$$$    lower_ae: [0.33569069 0.36816726 0.36066206 0.36569316 0.33597256 0.31973201
+ 0.30572374 0.31135377 0.30464977 0.28417454 0.29607486 0.30582516
+ 0.30215572 0.24352127 0.263284   0.27386422 0.28293908 0.2741585
+ 0.26169797 0.36274548 0.37973427 0.34246661 0.42583157 0.47594851
+ 0.45391275 0.49167359 0.5387511  0.47299894 0.66415254 0.45227302
+ 0.58036702 0.52363103 0.42729163 0.82043566 0.80277234 0.86450378
+ 0.8978292  0.71985961 0.72645029 0.73564344 0.90573667 0.82507935
+ 0.80161973 0.82135845 0.7432581  0.59540038]
+[LCB_nn_curr, UCB_nn_curr]: [0.4647986713566037, 0.8002486860196563]
+Selecting the best expert on average for p106715 @@@@~~~
+Selecting the best expert on hourly basis for p106715 @@@@@@@~~~
+~~~~~~~~~~At trial # 0 and alpha=0.1~~~~~~~~~~~~~~
+**********Runnning Ensemble ......
+num_unique_resid: 46
+size of resid_strided: (46, 1426)
+~~~~~~~~~~~~Finish Computing 46 UNIQUE Prediction Intervals, took 0.07007670402526855 secs.~~~~~~~~~~~~
+size of width_left: 46
+Average Coverage is 0.0
+Average Width is 26.546949662165808
+-------------------------------------
+  itrial          dataname  muh_fun  ... avg_width mean_lower  mean_upper
+0      0  physionet_sepsis  RidgeCV  ...  26.54695   21.45305        48.0
+
+[1 rows x 9 columns]
+@*%$$$$$    upper_ae: [0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739]
+@*%$$$$$    lower_ae: [0.53021626 0.61241994 0.58007296 0.5637614  0.57876578 0.57132476
+ 0.59091165 0.57550967 0.57169097 0.5996026  0.54674311 0.51514207
+ 0.49275167 0.45689391 0.48578767 0.51302127 0.47292496 0.46922023
+ 0.49856572 0.58455847 0.59915873 0.59619089 0.57544549 0.6228973
+ 0.60425897 0.59915156 0.6379992  0.66838816 0.61076115 0.65457028
+ 0.68789481 0.67618385 0.65091626 0.67821821 0.68394038 0.67850984
+ 0.683693   0.66279387 0.67185991 0.66396748 0.6773893  0.64908897
+ 0.62620654 0.63887737 0.65593932 0.58276374]
+[LCB_ridge_curr, UCB_ridge_curr]: [0.39760819813595827, 0.9347826086956522]
+**********Runnning Ensemble ......
+num_unique_resid: 46
+size of resid_strided: (46, 1426)
+~~~~~~~~~~~~Finish Computing 46 UNIQUE Prediction Intervals, took 0.07111167907714844 secs.~~~~~~~~~~~~
+size of width_left: 46
+Average Coverage is 0.0
+Average Width is 12.748591284327393
+-------------------------------------
+  itrial          dataname  ... mean_lower mean_upper
+0      0  physionet_sepsis  ...  35.251409       48.0
+
+[1 rows x 9 columns]
+@*%$$$$$    upper_ae: [0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739]
+@*%$$$$$    lower_ae: [0.26574504 0.34575753 0.35004935 0.28072886 0.27288793 0.27383099
+ 0.26574504 0.27098412 0.27900391 0.30064525 0.26574504 0.26574504
+ 0.26574504 0.26574504 0.26574504 0.26574504 0.27946653 0.28717676
+ 0.30838835 0.34552031 0.33952699 0.30920315 0.32322278 0.33444807
+ 0.32027626 0.29955471 0.33722736 0.34604303 0.38952814 0.3411613
+ 0.35429712 0.32624488 0.29162027 0.31761851 0.34806352 0.34439898
+ 0.33660195 0.32754036 0.26315075 0.26343932 0.28797917 0.24428857
+ 0.25150021 0.24698612 0.23951959 0.24474998]
+[LCB_rf_curr, UCB_rf_curr]: [0.6987649880167162, 0.9347826086956522]
+**********Runnning Ensemble ......
+num_unique_resid: 46
+size of resid_strided: (46, 1426)
+~~~~~~~~~~~~Finish Computing 46 UNIQUE Prediction Intervals, took 0.06865310668945312 secs.~~~~~~~~~~~~
+size of width_left: 46
+Average Coverage is 0.0
+Average Width is 8.475521558924237
+-------------------------------------
+  itrial          dataname       muh_fun  ... avg_width mean_lower  mean_upper
+0      0  physionet_sepsis  XGBRegressor  ...  8.475522  39.524478        48.0
+
+[1 rows x 9 columns]
+@*%$$$$$    upper_ae: [0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739]
+@*%$$$$$    lower_ae: [0.19609359 0.22892007 0.22945013 0.19670348 0.1937086  0.19467563
+ 0.19478558 0.19550713 0.19285031 0.21359273 0.19209919 0.19090327
+ 0.19090327 0.19090327 0.19090327 0.19090327 0.19090327 0.19090327
+ 0.19090327 0.19779587 0.20347154 0.19980743 0.19681038 0.20519715
+ 0.199382   0.20210801 0.19853584 0.21198652 0.21051389 0.19601031
+ 0.21151704 0.2062664  0.22614367 0.22401835 0.22360125 0.22139731
+ 0.24605479 0.23574634 0.22761396 0.20481836 0.23424179 0.23411826
+ 0.23133776 0.19915689 0.18958457 0.18267326]
+[LCB_xgb_curr, UCB_xgb_curr]: [0.7933862541860444, 0.9347826086956522]
+**********Runnning Ensemble ......
+num_unique_resid: 46
+size of resid_strided: (46, 1426)
+~~~~~~~~~~~~Finish Computing 46 UNIQUE Prediction Intervals, took 0.07158088684082031 secs.~~~~~~~~~~~~
+size of width_left: 46
+Average Coverage is 0.0
+Average Width is 26.93572331338751
+-------------------------------------
+  itrial          dataname  muh_fun  ...  avg_width mean_lower  mean_upper
+0      0  physionet_sepsis  LassoCV  ...  26.935723  21.064277        48.0
+
+[1 rows x 9 columns]
+@*%$$$$$    upper_ae: [0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739]
+@*%$$$$$    lower_ae: [0.53966791 0.6249663  0.59118013 0.57205006 0.58591585 0.58077892
+ 0.60116509 0.58626121 0.57741879 0.60995587 0.55505933 0.52261595
+ 0.49868743 0.46386617 0.49103399 0.51975253 0.47832991 0.47446641
+ 0.50518774 0.59184233 0.6078329  0.60623979 0.58285762 0.63166409
+ 0.61237819 0.60869858 0.64572341 0.67713064 0.61901273 0.66342676
+ 0.69674888 0.68505154 0.66035523 0.68821993 0.69239988 0.68737279
+ 0.69264368 0.67160314 0.68049738 0.67244217 0.68507306 0.65964772
+ 0.63475966 0.64767281 0.66635539 0.58971344]
+[LCB_lasso_curr, UCB_lasso_curr]: [0.38911046520898973, 0.9347826086956522]
+**********Runnning Ensemble ......
+num_unique_resid: 46
+size of resid_strided: (46, 1426)
+~~~~~~~~~~~~Finish Computing 46 UNIQUE Prediction Intervals, took 0.0693204402923584 secs.~~~~~~~~~~~~
+size of width_left: 46
+Average Coverage is 0.0
+Average Width is 12.453948892985547
+-------------------------------------
+  itrial          dataname muh_fun  ...  avg_width mean_lower  mean_upper
+0      0  physionet_sepsis     str  ...  12.453949  29.593555   42.047504
+
+[1 rows x 9 columns]
+@*%$$$$$    upper_ae: [0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.07114063 0.08830873
+ 0.06616137 0.10365735 0.14992448 0.11904893 0.31269297 0.06521739
+ 0.22659206 0.13287659 0.06521739 0.42765446 0.40921843 0.47015625
+ 0.50306153 0.32419635 0.33047897 0.33893205 0.50865967 0.42668578
+ 0.40262104 0.42226845 0.34359755 0.19396724]
+@*%$$$$$    lower_ae: [0.25762948 0.29010605 0.28260084 0.28763194 0.25791135 0.2416708
+ 0.22766252 0.23329255 0.22658855 0.20611332 0.21801365 0.22776395
+ 0.2240945  0.19777713 0.21753987 0.22812008 0.23719495 0.22841436
+ 0.21595383 0.31700134 0.33399013 0.29472174 0.37733485 0.39513472
+ 0.37309895 0.41085979 0.45793731 0.42593946 0.61944625 0.37077908
+ 0.53566073 0.44213709 0.34579768 0.73894172 0.7212784  0.78300984
+ 0.81633525 0.63836566 0.64495634 0.65414949 0.82424272 0.74358541
+ 0.72012578 0.7398645  0.66176416 0.51390644]
+[LCB_nn_curr, UCB_nn_curr]: [0.5314562833923352, 0.7704427333268257]
+Selecting the best expert on average for p106715 @@@@~~~
+Selecting the best expert on hourly basis for p106715 @@@@@@@~~~
+~~~~~~~~~~At trial # 0 and alpha=0.15000000000000002~~~~~~~~~~~~~~
+**********Runnning Ensemble ......
+num_unique_resid: 46
+size of resid_strided: (46, 1426)
+~~~~~~~~~~~~Finish Computing 46 UNIQUE Prediction Intervals, took 0.06971073150634766 secs.~~~~~~~~~~~~
+size of width_left: 46
+Average Coverage is 0.0
+Average Width is 21.713160116447376
+-------------------------------------
+  itrial          dataname  muh_fun  ... avg_width mean_lower  mean_upper
+0      0  physionet_sepsis  RidgeCV  ...  21.71316  26.277128   47.990288
+
+[1 rows x 9 columns]
+@*%$$$$$    upper_ae: [0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739]
+@*%$$$$$    lower_ae: [0.42576434 0.50796802 0.47562105 0.45930948 0.47431387 0.46687284
+ 0.48645973 0.47105775 0.46723905 0.49515068 0.44229119 0.41069015
+ 0.38829975 0.35244199 0.38133575 0.40856936 0.36847304 0.36476832
+ 0.3941138  0.48010655 0.49470681 0.49173898 0.47099358 0.51844538
+ 0.49980705 0.49469965 0.53354728 0.56393624 0.50630924 0.55011836
+ 0.5834429  0.57173193 0.54646434 0.5737663  0.57948846 0.57405792
+ 0.57924109 0.55734293 0.56512174 0.55722931 0.57065113 0.54235079
+ 0.51946837 0.5321392  0.54920114 0.47602557]
+[LCB_ridge_curr, UCB_ridge_curr]: [0.5017722144728167, 0.9347826086956522]
+**********Runnning Ensemble ......
+num_unique_resid: 46
+size of resid_strided: (46, 1426)
+~~~~~~~~~~~~Finish Computing 46 UNIQUE Prediction Intervals, took 0.07285809516906738 secs.~~~~~~~~~~~~
+size of width_left: 46
+Average Coverage is 0.0
+Average Width is 7.883767445714581
+-------------------------------------
+  itrial          dataname  ... mean_lower mean_upper
+0      0  physionet_sepsis  ...  40.116233       48.0
+
+[1 rows x 9 columns]
+@*%$$$$$    upper_ae: [0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739]
+@*%$$$$$    lower_ae: [0.20214465 0.28215714 0.28644896 0.21712848 0.15180597 0.15274902
+ 0.14466307 0.14990215 0.15792195 0.17956329 0.14466307 0.14466307
+ 0.14466307 0.14466307 0.14466307 0.14466307 0.15838456 0.16609479
+ 0.18730638 0.22443835 0.21844503 0.18812119 0.20214082 0.21278614
+ 0.19849914 0.17777759 0.21545025 0.2242099  0.26740114 0.21877877
+ 0.2319146  0.20386236 0.16843906 0.19443729 0.22469559 0.22051942
+ 0.21263341 0.203216   0.2049006  0.20518918 0.22972902 0.18526643
+ 0.19247807 0.18796397 0.18049744 0.18572784]
+[LCB_rf_curr, UCB_rf_curr]: [0.8035964077907622, 0.9347826086956522]
+**********Runnning Ensemble ......
+num_unique_resid: 46
+size of resid_strided: (46, 1426)
+~~~~~~~~~~~~Finish Computing 46 UNIQUE Prediction Intervals, took 0.06898736953735352 secs.~~~~~~~~~~~~
+size of width_left: 46
+Average Coverage is 0.0
+Average Width is 5.607869969382881
+-------------------------------------
+  itrial          dataname       muh_fun  ... avg_width mean_lower  mean_upper
+0      0  physionet_sepsis  XGBRegressor  ...   5.60787   42.39213        48.0
+
+[1 rows x 9 columns]
+@*%$$$$$    upper_ae: [0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739]
+@*%$$$$$    lower_ae: [0.12973571 0.22892007 0.22945013 0.19670348 0.12735073 0.12831776
+ 0.12842771 0.12914926 0.12649244 0.14723486 0.12574132 0.1245454
+ 0.1245454  0.1245454  0.1245454  0.1245454  0.1245454  0.1245454
+ 0.1245454  0.131438   0.13711367 0.13344956 0.13045251 0.13883928
+ 0.13302413 0.13575014 0.13217797 0.14542399 0.14395136 0.12935709
+ 0.14486382 0.13961318 0.15714259 0.1549765  0.1521654  0.14998501
+ 0.1769474  0.16728391 0.16217433 0.13937873 0.16880216 0.16867863
+ 0.16589813 0.13371726 0.12414495 0.11723363]
+[LCB_xgb_curr, UCB_xgb_curr]: [0.8542071317631013, 0.9347826086956522]
+**********Runnning Ensemble ......
+num_unique_resid: 46
+size of resid_strided: (46, 1426)
+~~~~~~~~~~~~Finish Computing 46 UNIQUE Prediction Intervals, took 0.07237076759338379 secs.~~~~~~~~~~~~
+size of width_left: 46
+Average Coverage is 0.0
+Average Width is 21.963337970007547
+-------------------------------------
+  itrial          dataname  muh_fun  ...  avg_width mean_lower  mean_upper
+0      0  physionet_sepsis  LassoCV  ...  21.963338  26.024011   47.987349
+
+[1 rows x 9 columns]
+@*%$$$$$    upper_ae: [0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739]
+@*%$$$$$    lower_ae: [0.43249423 0.51779262 0.48400645 0.46487638 0.47874217 0.47360524
+ 0.49399141 0.47908753 0.47024511 0.50278219 0.44788565 0.41544227
+ 0.39151375 0.35669249 0.38386031 0.41257885 0.37115623 0.36729273
+ 0.39801406 0.48466865 0.50065922 0.49906611 0.47568394 0.52449041
+ 0.50520451 0.5015249  0.53854973 0.56995696 0.51183905 0.55625308
+ 0.5895752  0.57787786 0.55318155 0.58104625 0.5852262  0.58019911
+ 0.58547    0.56402406 0.56965629 0.56160109 0.57423197 0.54880663
+ 0.52391858 0.53683173 0.5555143  0.47887235]
+[LCB_lasso_curr, UCB_lasso_curr]: [0.4962206678618317, 0.9347826086956522]
+**********Runnning Ensemble ......
+num_unique_resid: 46
+size of resid_strided: (46, 1426)
+~~~~~~~~~~~~Finish Computing 46 UNIQUE Prediction Intervals, took 0.07096481323242188 secs.~~~~~~~~~~~~
+size of width_left: 46
+Average Coverage is 0.0
+Average Width is 10.322480538007273
+-------------------------------------
+  itrial          dataname muh_fun  ...  avg_width mean_lower  mean_upper
+0      0  physionet_sepsis     str  ...  10.322481   31.20709   41.529571
+
+[1 rows x 9 columns]
+@*%$$$$$    upper_ae: [0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.09125848 0.10844721
+ 0.0856001  0.12280169 0.16947775 0.13890182 0.33284364 0.08368517
+ 0.24782905 0.15326686 0.06521739 0.44867951 0.43003031 0.49150822
+ 0.52426285 0.34549222 0.35017171 0.358686   0.52831854 0.44733236
+ 0.4233277  0.44268454 0.36384111 0.215836  ]
+@*%$$$$$    lower_ae: [0.22105518 0.25353175 0.24602654 0.25105765 0.22133705 0.2050965
+ 0.19108822 0.19671825 0.19001426 0.16953902 0.18143935 0.19118965
+ 0.1875202  0.16120283 0.18096557 0.19154579 0.20062065 0.19184006
+ 0.17937953 0.28042704 0.29639931 0.25906906 0.34174884 0.35954871
+ 0.33751295 0.37527378 0.4223513  0.39186322 0.58629077 0.33762359
+ 0.50250524 0.4089816  0.3126422  0.70578623 0.68812291 0.74985435
+ 0.78317976 0.60521018 0.61180085 0.62099401 0.79108723 0.71042992
+ 0.6869703  0.70670902 0.62860867 0.48075095]
+[LCB_nn_curr, UCB_nn_curr]: [0.5621098950342022, 0.7578305791096589]
+Selecting the best expert on average for p106715 @@@@~~~
+Selecting the best expert on hourly basis for p106715 @@@@@@@~~~
+~~~~~~~~~~At trial # 0 and alpha=0.2~~~~~~~~~~~~~~
+**********Runnning Ensemble ......
+num_unique_resid: 46
+size of resid_strided: (46, 1426)
+~~~~~~~~~~~~Finish Computing 46 UNIQUE Prediction Intervals, took 0.07009363174438477 secs.~~~~~~~~~~~~
+size of width_left: 46
+Average Coverage is 0.0
+Average Width is 16.941403143769804
+-------------------------------------
+  itrial          dataname  muh_fun  ...  avg_width mean_lower  mean_upper
+0      0  physionet_sepsis  RidgeCV  ...  16.941403  30.790745   47.732148
+
+[1 rows x 9 columns]
+@*%$$$$$    upper_ae: [0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739]
+@*%$$$$$    lower_ae: [0.32822233 0.41042601 0.37807903 0.36176746 0.37677185 0.36933083
+ 0.38891771 0.37351573 0.36969703 0.39760867 0.34474917 0.31314813
+ 0.29075773 0.25489997 0.28379373 0.31102734 0.27093102 0.2672263
+ 0.29657179 0.38256454 0.3971648  0.39419696 0.37345156 0.42090337
+ 0.40226504 0.39715763 0.43600526 0.46639423 0.40876722 0.45257634
+ 0.48590088 0.47418992 0.44892232 0.47554932 0.48127149 0.47584095
+ 0.47950383 0.45747216 0.46506279 0.45717035 0.47059218 0.44229184
+ 0.41940941 0.43208024 0.44914219 0.37596662]
+[LCB_ridge_curr, UCB_ridge_curr]: [0.5989278566972234, 0.9347826086956522]
+**********Runnning Ensemble ......
+num_unique_resid: 46
+size of resid_strided: (46, 1426)
+~~~~~~~~~~~~Finish Computing 46 UNIQUE Prediction Intervals, took 0.07028532028198242 secs.~~~~~~~~~~~~
+size of width_left: 46
+Average Coverage is 0.0
+Average Width is 5.816017805753809
+-------------------------------------
+  itrial          dataname  ... mean_lower mean_upper
+0      0  physionet_sepsis  ...  42.183982       48.0
+
+[1 rows x 9 columns]
+@*%$$$$$    upper_ae: [0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739]
+@*%$$$$$    lower_ae: [0.10695266 0.18696515 0.19125698 0.12193649 0.11409556 0.11503862
+ 0.10695266 0.11219174 0.12021154 0.14185288 0.10695266 0.10695266
+ 0.10695266 0.10695266 0.10695266 0.10695266 0.12067415 0.12838438
+ 0.14959597 0.18672794 0.18073462 0.15041078 0.16342079 0.17455056
+ 0.15892167 0.13820012 0.17512598 0.18169133 0.22508157 0.17636921
+ 0.18950504 0.16145279 0.12674739 0.15145624 0.18132933 0.17760255
+ 0.16951647 0.16044742 0.16359985 0.16388842 0.18804492 0.14171446
+ 0.14872463 0.14421053 0.136744   0.1419744 ]
+[LCB_rf_curr, UCB_rf_curr]: [0.8487293681621356, 0.9347826086956522]
+**********Runnning Ensemble ......
+num_unique_resid: 46
+size of resid_strided: (46, 1426)
+~~~~~~~~~~~~Finish Computing 46 UNIQUE Prediction Intervals, took 0.07071638107299805 secs.~~~~~~~~~~~~
+size of width_left: 46
+Average Coverage is 0.0
+Average Width is 2.7457733674239035
+-------------------------------------
+  itrial          dataname       muh_fun  ... avg_width mean_lower  mean_upper
+0      0  physionet_sepsis  XGBRegressor  ...  2.745773  45.254227        48.0
+
+[1 rows x 9 columns]
+@*%$$$$$    upper_ae: [0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739]
+@*%$$$$$    lower_ae: [0.07269316 0.10551965 0.10604971 0.07330306 0.07030818 0.07127521
+ 0.07138516 0.07210671 0.06944989 0.09019231 0.06869877 0.06750285
+ 0.06750285 0.06750285 0.06750285 0.06750285 0.06750285 0.06750285
+ 0.06750285 0.07439545 0.08007112 0.07640701 0.07340996 0.08179673
+ 0.07598158 0.07870759 0.07324188 0.08658374 0.08433512 0.06962782
+ 0.0843719  0.07809552 0.09649553 0.09374555 0.09273398 0.09234032
+ 0.1195338  0.1093552  0.10433704 0.08154144 0.11096487 0.11008323
+ 0.10730273 0.07512186 0.06554954 0.06521739]
+[LCB_xgb_curr, UCB_xgb_curr]: [0.9170508900566938, 0.9347826086956522]
+**********Runnning Ensemble ......
+num_unique_resid: 46
+size of resid_strided: (46, 1426)
+~~~~~~~~~~~~Finish Computing 46 UNIQUE Prediction Intervals, took 0.06923460960388184 secs.~~~~~~~~~~~~
+size of width_left: 46
+Average Coverage is 0.0
+Average Width is 17.35624107338725
+-------------------------------------
+  itrial          dataname  muh_fun  ...  avg_width mean_lower  mean_upper
+0      0  physionet_sepsis  LassoCV  ...  17.356241  30.383207   47.739449
+
+[1 rows x 9 columns]
+@*%$$$$$    upper_ae: [0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739]
+@*%$$$$$    lower_ae: [0.33908646 0.42438484 0.39059867 0.37146861 0.38533439 0.38019747
+ 0.40058364 0.38567976 0.37683733 0.40937441 0.35447787 0.32203449
+ 0.29810597 0.26328471 0.29045254 0.31917107 0.27774845 0.27388496
+ 0.30460628 0.39126087 0.40725144 0.40565833 0.38227616 0.43108264
+ 0.41179673 0.40811712 0.44514195 0.47654918 0.41843127 0.4628453
+ 0.49616742 0.48447008 0.45977377 0.48413824 0.48831819 0.4832911
+ 0.48728319 0.46614879 0.47091203 0.46285683 0.47548771 0.45006237
+ 0.42517432 0.43808747 0.45677004 0.38012809]
+[LCB_lasso_curr, UCB_lasso_curr]: [0.590167751940283, 0.9347826086956522]
+**********Runnning Ensemble ......
+num_unique_resid: 46
+size of resid_strided: (46, 1426)
+~~~~~~~~~~~~Finish Computing 46 UNIQUE Prediction Intervals, took 0.07273697853088379 secs.~~~~~~~~~~~~
+size of width_left: 46
+Average Coverage is 0.0
+Average Width is 9.564292738570147
+-------------------------------------
+  itrial          dataname muh_fun  ... avg_width mean_lower  mean_upper
+0      0  physionet_sepsis     str  ...  9.564293  31.319799   40.884091
+
+[1 rows x 9 columns]
+@*%$$$$$    upper_ae: [0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06698699 0.06521739 0.11277521 0.13044841
+ 0.10824875 0.14588468 0.19285524 0.162481   0.35700204 0.10824912
+ 0.27272867 0.17879547 0.08210428 0.47406583 0.45548872 0.51652205
+ 0.54869076 0.37004263 0.37604431 0.38472958 0.55438715 0.47331859
+ 0.44944149 0.46869735 0.39016344 0.24189259]
+@*%$$$$$    lower_ae: [0.21750954 0.24998611 0.24248091 0.24751201 0.21779141 0.20155086
+ 0.18754258 0.19317262 0.18646862 0.16599339 0.17789371 0.18764401
+ 0.18397456 0.15765719 0.17741993 0.18800015 0.19707501 0.18829442
+ 0.17583389 0.2768814  0.2938702  0.25660254 0.33996749 0.35776736
+ 0.3357316  0.37349243 0.42056995 0.39026164 0.58483011 0.33616293
+ 0.50104458 0.40752094 0.31118154 0.70432557 0.68666225 0.74839369
+ 0.78171911 0.60374952 0.61034019 0.61953335 0.78962657 0.70896926
+ 0.68550964 0.70524836 0.62714801 0.47929029]
+[LCB_nn_curr, UCB_nn_curr]: [0.5638799130305685, 0.7419721121275713]
+Selecting the best expert on average for p106715 @@@@~~~
+Selecting the best expert on hourly basis for p106715 @@@@@@@~~~
+~~~~~~~~~~At trial # 0 and alpha=0.25~~~~~~~~~~~~~~
+**********Runnning Ensemble ......
+num_unique_resid: 46
+size of resid_strided: (46, 1426)
+~~~~~~~~~~~~Finish Computing 46 UNIQUE Prediction Intervals, took 0.06924319267272949 secs.~~~~~~~~~~~~
+size of width_left: 46
+Average Coverage is 0.0
+Average Width is 13.36363251416684
+-------------------------------------
+  itrial          dataname  muh_fun  ...  avg_width mean_lower  mean_upper
+0      0  physionet_sepsis  RidgeCV  ...  13.363633  34.249865   47.613498
+
+[1 rows x 9 columns]
+@*%$$$$$    upper_ae: [0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06807616 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739]
+@*%$$$$$    lower_ae: [0.25326779 0.33547146 0.30312449 0.28681292 0.30181731 0.29437628
+ 0.31396317 0.29856119 0.29474249 0.32265413 0.26979463 0.23819359
+ 0.21580319 0.17994543 0.20883919 0.2360728  0.19597648 0.19227176
+ 0.22161725 0.30761    0.32221025 0.31924242 0.29849702 0.34594882
+ 0.32731049 0.32220309 0.36105072 0.39143968 0.33381268 0.3776218
+ 0.41094634 0.39923537 0.37396778 0.40078415 0.40587214 0.39919567
+ 0.403956   0.38229128 0.38905249 0.38116006 0.39458189 0.36628155
+ 0.34339912 0.35606995 0.3731319  0.29995632]
+[LCB_ridge_curr, UCB_ridge_curr]: [0.6729626915296607, 0.9347191303300041]
+**********Runnning Ensemble ......
+num_unique_resid: 46
+size of resid_strided: (46, 1426)
+~~~~~~~~~~~~Finish Computing 46 UNIQUE Prediction Intervals, took 0.07284045219421387 secs.~~~~~~~~~~~~
+size of width_left: 46
+Average Coverage is 0.0
+Average Width is 4.342102658383561
+-------------------------------------
+  itrial          dataname  ... mean_lower mean_upper
+0      0  physionet_sepsis  ...  43.654894  47.996997
+
+[1 rows x 9 columns]
+@*%$$$$$    upper_ae: [0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739]
+@*%$$$$$    lower_ae: [0.07488648 0.15489897 0.15919079 0.0898703  0.08202937 0.08297243
+ 0.07488648 0.08012556 0.08814535 0.10978669 0.07488648 0.07488648
+ 0.07488648 0.07488648 0.07488648 0.07488648 0.08860797 0.0963182
+ 0.1173884  0.15452037 0.14785791 0.11753408 0.13099852 0.1418598
+ 0.12721265 0.10606686 0.14345612 0.15211572 0.19489317 0.14598871
+ 0.15899974 0.1309475  0.09488558 0.12037429 0.15035886 0.1461942
+ 0.13721873 0.1276507  0.13051199 0.13017766 0.15448655 0.11043168
+ 0.11748322 0.11196846 0.10371377 0.10877288]
+[LCB_rf_curr, UCB_rf_curr]: [0.8798262010097881, 0.9347826086956522]
+**********Runnning Ensemble ......
+num_unique_resid: 46
+size of resid_strided: (46, 1426)
+~~~~~~~~~~~~Finish Computing 46 UNIQUE Prediction Intervals, took 0.07197356224060059 secs.~~~~~~~~~~~~
+size of width_left: 46
+Average Coverage is 0.0
+Average Width is 1.7448983567012815
+-------------------------------------
+  itrial          dataname       muh_fun  ... avg_width mean_lower  mean_upper
+0      0  physionet_sepsis  XGBRegressor  ...  1.744898  46.255102        48.0
+
+[1 rows x 9 columns]
+@*%$$$$$    upper_ae: [0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739]
+@*%$$$$$    lower_ae: [0.06521739 0.08322721 0.08375727 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06789987 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.07690109 0.0746072  0.07325109 0.07303988
+ 0.10024132 0.08929697 0.08380767 0.06521739 0.0904355  0.08936698
+ 0.08585159 0.06521739 0.06521739 0.06521739]
+[LCB_xgb_curr, UCB_xgb_curr]: [0.9293394978902348, 0.9347826086956522]
+**********Runnning Ensemble ......
+num_unique_resid: 46
+size of resid_strided: (46, 1426)
+~~~~~~~~~~~~Finish Computing 46 UNIQUE Prediction Intervals, took 0.07066655158996582 secs.~~~~~~~~~~~~
+size of width_left: 46
+Average Coverage is 0.0
+Average Width is 13.64575489858555
+-------------------------------------
+  itrial          dataname  muh_fun  ...  avg_width mean_lower  mean_upper
+0      0  physionet_sepsis  LassoCV  ...  13.645755  33.962499   47.608254
+
+[1 rows x 9 columns]
+@*%$$$$$    upper_ae: [0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06916386 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739]
+@*%$$$$$    lower_ae: [0.26161253 0.34691091 0.31312474 0.29399468 0.30786046 0.30272354
+ 0.32310971 0.30820583 0.2993634  0.33190048 0.27700394 0.24456057
+ 0.22063204 0.18581078 0.21297861 0.24169714 0.20027452 0.19641103
+ 0.22713236 0.31378694 0.32977751 0.32818441 0.30480223 0.35360871
+ 0.3343228  0.33064319 0.36766802 0.39907525 0.34095735 0.38537137
+ 0.41869349 0.40699615 0.3810209  0.4072191  0.41068668 0.40441244
+ 0.40700002 0.38483166 0.39261906 0.38456386 0.39719474 0.3717694
+ 0.34688135 0.3597945  0.37847707 0.30183512]
+[LCB_lasso_curr, UCB_lasso_curr]: [0.666837503034687, 0.9346942799804211]
+**********Runnning Ensemble ......
+num_unique_resid: 46
+size of resid_strided: (46, 1426)
+~~~~~~~~~~~~Finish Computing 46 UNIQUE Prediction Intervals, took 0.08466196060180664 secs.~~~~~~~~~~~~
+size of width_left: 46
+Average Coverage is 0.0
+Average Width is 7.429949698032529
+-------------------------------------
+  itrial          dataname muh_fun  ... avg_width mean_lower  mean_upper
+0      0  physionet_sepsis     str  ...   7.42995  34.357997   41.787947
+
+[1 rows x 9 columns]
+@*%$$$$$    upper_ae: [0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739 0.06521739
+ 0.06521739 0.06521739 0.06521739 0.06521739 0.08243646 0.09893337
+ 0.07538201 0.11250955 0.15920786 0.12845805 0.32260322 0.07335209
+ 0.23773568 0.14392526 0.06521739 0.43840132 0.42013735 0.48104392
+ 0.51324391 0.33438425 0.34077605 0.34978452 0.51922247 0.43786517
+ 0.41364443 0.43186132 0.35272467 0.20470016]
+@*%$$$$$    lower_ae: [0.15484938 0.18732595 0.17982074 0.18485185 0.15513125 0.1388907
+ 0.12488242 0.13051245 0.12380846 0.10333322 0.11523355 0.12498385
+ 0.1213144  0.09499703 0.11475977 0.12533999 0.13441485 0.12541737
+ 0.11276625 0.21381376 0.23065621 0.19187721 0.2747501  0.29254997
+ 0.27045391 0.30821474 0.3551689  0.32469205 0.51919029 0.2702523
+ 0.43513395 0.34114324 0.24443646 0.63639558 0.61813747 0.67986891
+ 0.71299201 0.53390527 0.53940636 0.54801633 0.71772624 0.63654961
+ 0.6129345  0.62936408 0.54993208 0.40180801]
+[LCB_nn_curr, UCB_nn_curr]: [0.6226469966566377, 0.7640767485976102]
+Selecting the best expert on average for p106715 @@@@~~~
+Selecting the best expert on hourly basis for p106715 @@@@@@@~~~
+# 0 patients already tested! ......
+
+
+-------------------------------------------
+Updating the training dataset ..........
+~~~~~~Excution time for # p106715: 513.910444021225 seconds~~~~~~
+
+
+
+========================================================
+
+
+
+=======Processing patient 1th patient: p014397====================
+        No refitting, saved "ridge" models will be used!!!
+Predicting hours to sepsis ........
+multiprocessing.pool.RemoteTraceback: 
+"""
+Traceback (most recent call last):
+  File "/nethome/azhou60/.conda/envs/py37/lib/python3.7/multiprocessing/pool.py", line 121, in worker
+    result = (True, func(*args, **kwds))
+  File "/nethome/azhou60/.conda/envs/py37/lib/python3.7/multiprocessing/pool.py", line 44, in mapstar
+    return list(map(*args))
+  File "/usr/scratch1/azhou60/CPBandit_sepsis/PI_Sepsysolcp.py", line 223, in fit_bootstrap_models_online_single
+    boot_predictions_b = model.predict(np.r_[self.X_train, self.X_predict]).flatten() # to one dimension
+  File "/nethome/azhou60/.conda/envs/py37/lib/python3.7/site-packages/sklearn/linear_model/_base.py", line 362, in predict
+    return self._decision_function(X)
+  File "/nethome/azhou60/.conda/envs/py37/lib/python3.7/site-packages/sklearn/linear_model/_base.py", line 343, in _decision_function
+    check_is_fitted(self)
+  File "/nethome/azhou60/.conda/envs/py37/lib/python3.7/site-packages/sklearn/utils/validation.py", line 1222, in check_is_fitted
+    raise NotFittedError(msg % {"name": type(estimator).__name__})
+sklearn.exceptions.NotFittedError: This RidgeCV instance is not fitted yet. Call 'fit' with appropriate arguments before using this estimator.
+"""
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "cpbandit_m_args.py", line 540, in <module>
+    main()
+  File "cpbandit_m_args.py", line 537, in main
+    cpbanit_player._start_game()
+  File "cpbandit_m_args.py", line 311, in _start_game
+    cp_EnbPI.fit_bootstrap_models_online_multi(B, miss_test_idx, Isrefit, model_name = expert, max_hours = max_hours)
+  File "/usr/scratch1/azhou60/CPBandit_sepsis/PI_Sepsysolcp.py", line 301, in fit_bootstrap_models_online_multi
+    results = pool.map(self.fit_bootstrap_models_online_single, args_list)
+  File "/nethome/azhou60/.conda/envs/py37/lib/python3.7/multiprocessing/pool.py", line 268, in map
+    return self._map_async(func, iterable, mapstar, chunksize).get()
+  File "/nethome/azhou60/.conda/envs/py37/lib/python3.7/multiprocessing/pool.py", line 657, in get
+    raise self._value
+sklearn.exceptions.NotFittedError: This RidgeCV instance is not fitted yet. Call 'fit' with appropriate arguments before using this estimator.

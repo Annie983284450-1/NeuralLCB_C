@@ -155,14 +155,15 @@ class SepsisData(object):
         if Is_window:
             # abandon the 0-1-0 patients and treat as error
             df = pd.read_csv(f'./data/SepsisData/fully_imputed_8windowed_max48_updated.csv')
-
+            # Drop the column 'HospAdmTim' as per your requirement
+            df = df.drop(['HospAdmTime'], axis=1)
             num_test_pat_septic_win =10
             num_train_sepsis_pat_win = 100
             # Balanced training samples ratio (1:1): This can help the model learn to recognize septic cases better 
             # but it may affect generalization, especially if the real-world incidence of sepsis is low.
             num_train_nosepsis_pat_win = num_train_sepsis_pat_win 
             # Maintain Real-World Distribution for testing dataset
-            num_test_pat_noseptic_win = math.floor(num_test_pat_septic_win*12)
+            num_test_pat_noseptic_win = math.floor(num_test_pat_septic_win * 12)
 
 
             sepsis_train_wins = np.load('./data/SepsisData/sepsis_train_wins.npy')
@@ -180,13 +181,13 @@ class SepsisData(object):
             sepsis_train_wins = sepsis_train_wins[0:num_train_sepsis_pat_win]
             nosepsis_train_wins = nosepsis_train_wins[0:num_train_nosepsis_pat_win]
             test_septic_wins =  test_septic_wins[0:num_test_pat_septic_win]
-            test_noseptic_wins =  test_noseptic_wins[num_test_pat_noseptic_win]
+            test_noseptic_wins =  test_noseptic_wins[0:num_test_pat_noseptic_win]
             test_wins = []
             train_wins = []
-            print(f'sepsis_train_wins  = {sepsis_train_wins }')
-            print(f'nosepsis_train_wins = {nosepsis_train_wins }')
-            print(f'test_septic_wins  = {test_septic_wins }')
-            print(f'test_noseptic_wins = {test_noseptic_wins }')
+            # print(f'sepsis_train_wins  = {sepsis_train_wins }')
+            # print(f'nosepsis_train_wins = {nosepsis_train_wins }')
+            # print(f'test_septic_wins  = {test_septic_wins }')
+            # print(f'test_noseptic_wins = {test_noseptic_wins }')
             # print(f'sepsis_train_wins.type = {sepsis_train_wins.type}')
             # print(f'nosepsis_train_wins.type = {nosepsis_train_wins.type}')
             # print(f'test_septic_wins.type = {test_septic_wins.type}')
@@ -232,9 +233,6 @@ class SepsisData(object):
 
         train_df = train_df[:min(num_contexts, len(train_df))].reset_index(drop=True)
         test_df = test_df[:min(num_test_contexts, len(test_df))].reset_index(drop=True)
-
-
-
         
         # Extract labels (SepsisLabel) and drop it from the feature set
         train_labels = train_df['SepsisLabel'].to_numpy()

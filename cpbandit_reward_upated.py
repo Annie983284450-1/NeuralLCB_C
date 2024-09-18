@@ -100,19 +100,26 @@ class CPBandit:
         start_nosepsis_train = 0
         start_sepsis_train = 0
 
-
-        win_size = 8
+        sepsis_full = pd.read_csv(f'./SepsisData/fully_imputed.csv.csv')
+        # win_size = 8
         # abandon the 0-1-0 patients and treat as error
-        sepsis_full = pd.read_csv(f'../cpbanditsepsis_experiements/Data/fully_imputed_8windowed_max48_updated.csv')
-        sepsis_train_wins = np.load('../cpbanditsepsis_experiements/Data/sepsis_train_wins.npy')
+        # sepsis_full = pd.read_csv(f'../cpbanditsepsis_experiements/Data/fully_imputed_8windowed_max48_updated.csv')
+ 
+        # sepsis_train_wins = np.load('./SepsisData/sepsis_train_wins.npy')
+        sepsis_train_wins = np.load('./SepsisData/sepsis_train_wins.npy')
+
         sepsis_train_wins = sepsis_train_wins.tolist()
-        nosepsis_train_wins = np.load('../cpbanditsepsis_experiements/Data/nosepsis_train_wins.npy')
+        # nosepsis_train_wins = np.load('../cpbanditsepsis_experiements/Data/nosepsis_train_wins.npy')
+        nosepsis_train_wins = np.load('./SepsisData/nosepsis_train_wins.npy')
         nosepsis_train_wins = nosepsis_train_wins.tolist()
 
         
-        test_septic_wins = np.load('../cpbanditsepsis_experiements/Data/test_septic_wins.npy')
+        # test_septic_wins = np.load('../cpbanditsepsis_experiements/Data/test_septic_wins.npy')
+        test_septic_wins = np.load('./SepsisData/test_septic_wins.npy')
         test_septic_wins = test_septic_wins.tolist()
-        test_noseptic_wins = np.load('../cpbanditsepsis_experiements/Data/test_noseptic_wins.npy')
+        # test_noseptic_wins = np.load('../cpbanditsepsis_experiements/Data/test_noseptic_wins.npy')
+        test_noseptic_wins = np.load('./SepsisData/test_noseptic_wins.npy')
+
         test_noseptic_wins = test_noseptic_wins.tolist()
         num_test_pat_noseptic_win = math.floor(self.num_test_pat_win*12)
 
