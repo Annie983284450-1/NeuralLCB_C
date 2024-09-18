@@ -284,6 +284,7 @@ class ApproxNeuraLCBV2_cp(BanditAlgorithm):
         Y_lower = PIs_df['lower'].values
 
         # Print the prediction intervals
-        print(f'Prediction Intervals: Lower Bound: {Y_lower}, Upper Bound: {Y_upper}')
+        print(f'Prediction Intervals:')
+        print(f'Lower Bound: {Y_lower}, Upper Bound: {Y_upper}')
         
         return self.pred_interval_centers

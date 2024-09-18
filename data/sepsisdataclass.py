@@ -15,6 +15,7 @@ if neruallcb_path not in sys.path:
 import numpy as np 
 import pandas as pd 
 from core.utils import sample_offline_policy
+import math
 
 
 # import tensorflow as tf
@@ -149,28 +150,86 @@ class SepsisData(object):
         self.pi = pi
         self.eps = eps
         self.subset_r = subset_r
-        train_patients_file = './data/SepsisData/train_set.npy'
-        test_patients_file = './data/SepsisData/test_set.npy'
-        # Load train and test patient IDs
-        train_patients = np.load(train_patients_file, allow_pickle=True)
-        test_patients = np.load(test_patients_file, allow_pickle=True)
 
-        train_patients_ids = [patient.replace('.psv', '') for patient in train_patients]
-        test_patients_ids = [patient.replace('.psv', '') for patient in test_patients]
+        Is_window = True
+        if Is_window:
+            # abandon the 0-1-0 patients and treat as error
+            df = pd.read_csv(f'./data/SepsisData/fully_imputed_8windowed_max48_updated.csv')
 
-        file_name = './data/SepsisData/fully_imputed.csv'
-        # Load dataset
-        df = pd.read_csv(file_name)
+            num_test_pat_septic_win =10
+            num_train_sepsis_pat_win = 100
+            # Balanced training samples ratio (1:1): This can help the model learn to recognize septic cases better 
+            # but it may affect generalization, especially if the real-world incidence of sepsis is low.
+            num_train_nosepsis_pat_win = num_train_sepsis_pat_win 
+            # Maintain Real-World Distribution for testing dataset
+            num_test_pat_noseptic_win = math.floor(num_test_pat_septic_win*12)
 
-        # Drop the column 'HospAdmTim' as per your requirement
-        df = df.drop(['HospAdmTime'], axis=1)
-        # print(f'df.head():{df.head()}')
-        
-        # print(f'train_patients:{train_patients_ids}')
-        # print(f'test_patients:{test_patients_ids}')
-        # Separate dataset into train and test sets based on patient IDs
-        train_df = df[df['pat_id'].isin(train_patients_ids)]
-        test_df = df[df['pat_id'].isin(test_patients_ids)]
+
+            sepsis_train_wins = np.load('./data/SepsisData/sepsis_train_wins.npy')
+            sepsis_train_wins = sepsis_train_wins.tolist()
+            nosepsis_train_wins = np.load('./data/SepsisData/nosepsis_train_wins.npy')
+            nosepsis_train_wins = nosepsis_train_wins.tolist()
+
+            
+            test_septic_wins = np.load('./data/SepsisData/test_septic_wins.npy')
+            test_septic_wins = test_septic_wins.tolist()
+            test_noseptic_wins = np.load('./data/SepsisData/test_noseptic_wins.npy')
+            test_noseptic_wins = test_noseptic_wins.tolist()
+            
+
+            sepsis_train_wins = sepsis_train_wins[0:num_train_sepsis_pat_win]
+            nosepsis_train_wins = nosepsis_train_wins[0:num_train_nosepsis_pat_win]
+            test_septic_wins =  test_septic_wins[0:num_test_pat_septic_win]
+            test_noseptic_wins =  test_noseptic_wins[num_test_pat_noseptic_win]
+            test_wins = []
+            train_wins = []
+            print(f'sepsis_train_wins  = {sepsis_train_wins }')
+            print(f'nosepsis_train_wins = {nosepsis_train_wins }')
+            print(f'test_septic_wins  = {test_septic_wins }')
+            print(f'test_noseptic_wins = {test_noseptic_wins }')
+            # print(f'sepsis_train_wins.type = {sepsis_train_wins.type}')
+            # print(f'nosepsis_train_wins.type = {nosepsis_train_wins.type}')
+            # print(f'test_septic_wins.type = {test_septic_wins.type}')
+            # print(f'test_noseptic_wins.type = {test_noseptic_wins.type}')
+            train_wins = sepsis_train_wins + nosepsis_train_wins
+            test_wins = test_septic_wins + test_noseptic_wins
+            train_df = df[df['pat_id'].isin(train_wins)]
+            test_df = df[df['pat_id'].isin(test_wins)]
+            # train_df = train_df[:min(num_contexts, len(train_df))].reset_index(drop=True)
+            # test_df = test_df[:min(num_test_contexts, len(test_df))].reset_index(drop=True)
+
+
+        else:    
+            file_name = './data/SepsisData/fully_imputed.csv'
+            # file_name = './data/SepsisData/fully_imputed_8windowed_max48_updated.csv'
+            # Load dataset
+            df = pd.read_csv(file_name)
+            train_patients_file = './data/SepsisData/train_set.npy'
+            test_patients_file = './data/SepsisData/test_set.npy'
+
+
+
+
+            # Load train and test patient IDs
+            train_patients = np.load(train_patients_file, allow_pickle=True)
+            test_patients = np.load(test_patients_file, allow_pickle=True)
+
+            train_patients_ids = [patient.replace('.psv', '') for patient in train_patients]
+            test_patients_ids = [patient.replace('.psv', '') for patient in test_patients]
+
+
+
+            # Drop the column 'HospAdmTim' as per your requirement
+            df = df.drop(['HospAdmTime'], axis=1)
+            # print(f'df.head():{df.head()}')
+            
+            # print(f'train_patients:{train_patients_ids}')
+            # print(f'test_patients:{test_patients_ids}')
+            # Separate dataset into train and test sets based on patient IDs
+            train_df = df[df['pat_id'].isin(train_patients_ids)]
+            test_df = df[df['pat_id'].isin(test_patients_ids)]
+
+
         train_df = train_df[:min(num_contexts, len(train_df))].reset_index(drop=True)
         test_df = test_df[:min(num_test_contexts, len(test_df))].reset_index(drop=True)
 
@@ -216,7 +275,7 @@ class SepsisData(object):
         """
         Reset the dataset using random indices for simulation purposes.
         """
-        print(f'^^^^^^^^^^^ Running reset_data() ^^^^^^^^^^^^^')
+        print(f'^^^^^^^^^^^ Running SepsisData.reset_data() ^^^^^^^^^^^^^')
         # No shuffling or leakage is allowed since we are grouping by patient ID
         train_indices = np.arange(self.num_train_samples)
         test_indices = np.arange(self.num_test_samples)
@@ -234,10 +293,10 @@ class SepsisData(object):
         
         dataset = (contexts, actions, rewards, test_contexts, mean_test_rewards)
 
-        print(f'^^^^^^^^^^^ After running reset_data() ^^^^^^^^^^^^^')
-        print(f'contexts.shape:{contexts.shape}')
-        print(f'actions.shape:{actions.shape}')
-        print(f'rewards.shape:{rewards.shape}')
+        # print(f'^^^^^^^^^^^ After running SepsisData.reset_data() ^^^^^^^^^^^^^')
+        # print(f'contexts.shape:{contexts.shape}')
+        # print(f'actions.shape:{actions.shape}')
+        # print(f'rewards.shape:{rewards.shape}')
         return dataset
     
 

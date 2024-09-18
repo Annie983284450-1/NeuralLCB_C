@@ -117,9 +117,16 @@ flags.DEFINE_string('policy', 'eps-greedy', 'Offline policy, eps-greedy/subset')
 # flags.DEFINE_string('policy', 'online', 'Offline policy, eps-greedy/subset')
 flags.DEFINE_float('eps', 0.1, 'Probability of selecting a random action in eps-greedy')
 flags.DEFINE_float('subset_r', 0.5, 'The ratio of the action spaces to be selected in offline data')
+
+
+num_train_sepsis_pat_win = 50
+num_test_pat_septic_win =5
+print(f'num_train_sepsis_pat_win === {num_train_sepsis_pat_win}')
+print(f'num_test_pat_septic_win === {num_test_pat_septic_win}')
+
 # this might only corresponding to a few hundreds patients
-flags.DEFINE_integer('num_contexts', 1500, 'Number of contexts for training.') 
-flags.DEFINE_integer('num_test_contexts', 1000, 'Number of contexts for test.') 
+flags.DEFINE_integer('num_contexts', num_train_sepsis_pat_win*48*2, 'Number of contexts for training.') 
+flags.DEFINE_integer('num_test_contexts', num_test_pat_septic_win*48*13, 'Number of contexts for test.') 
 
 # flags.DEFINE_integer('num_contexts', 500, 'Number of contexts for training.') 
 # flags.DEFINE_integer('num_test_contexts', 100, 'Number of contexts for test.') 
@@ -248,7 +255,8 @@ def main(unused_argv):
     data_prefix = '{}_d={}_a={}_pi={}_std={}'.format(FLAGS.data_type, \
             context_dim, num_actions, policy_prefix, data.noise_std)
 
-    res_dir = os.path.join('results', data_prefix) 
+    # res_dir = os.path.join('results', data_prefix) 
+    res_dir = os.path.join(f'results/trainwins{num_train_sepsis_pat_win}testwins{num_test_pat_septic_win}', data_prefix) 
 
     if not os.path.exists(res_dir):
         os.makedirs(res_dir)
