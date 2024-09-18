@@ -15,6 +15,8 @@ if neruallcb_path not in sys.path:
 import numpy as np 
 import pandas as pd 
 from core.utils import sample_offline_policy
+
+
 # import tensorflow as tf
 
 def one_hot(df, cols):
@@ -191,7 +193,7 @@ class SepsisData(object):
         # Convert the classification problem into a contextual bandit problem
         self.train_contexts, self.train_rewards = classification_to_bandit_problem_sepsis(train_contexts, train_labels,train_df,  num_actions)
         self.test_contexts, self.test_rewards = classification_to_bandit_problem_sepsis(test_contexts, test_labels, test_df, num_actions)
-        print('////////////. AAAAAAAAfter running classification_to_bandit_problem_sepsis().........../////////')
+        print('////////////AAAAAAAAfter running classification_to_bandit_problem_sepsis().........../////////')
         
 
         print(f'train_rewards.shape:{self.train_rewards.shape}')
@@ -214,6 +216,7 @@ class SepsisData(object):
         """
         Reset the dataset using random indices for simulation purposes.
         """
+        print(f'^^^^^^^^^^^ Running reset_data() ^^^^^^^^^^^^^')
         # No shuffling or leakage is allowed since we are grouping by patient ID
         train_indices = np.arange(self.num_train_samples)
         test_indices = np.arange(self.num_test_samples)
@@ -230,6 +233,11 @@ class SepsisData(object):
         actions = sample_offline_policy(mean_rewards, self.num_train_samples, self.num_actions, self.pi, self.eps, self.subset_r, contexts, rewards)
         
         dataset = (contexts, actions, rewards, test_contexts, mean_test_rewards)
+
+        print(f'^^^^^^^^^^^ After running reset_data() ^^^^^^^^^^^^^')
+        print(f'contexts.shape:{contexts.shape}')
+        print(f'actions.shape:{actions.shape}')
+        print(f'rewards.shape:{rewards.shape}')
         return dataset
     
 

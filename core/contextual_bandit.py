@@ -56,7 +56,10 @@ def contextual_bandit_runner(algos, data, \
         for algo in algos:
             #  ApproxNeuraLCBV2.reset(self, seed)
             # sim*1111 is the random seed
+            print(f'~~~~~~~~~~~~~~~Before algo.reset()~~~~~~~~~~~~~~~~~~~~~~~')
+            print(f'cmab.rewards.shape:{cmab.rewards.shape}')
             algo.reset(sim * 1111)
+    
         # initialize an empty list for each algorithm
         subopts = [
             [] for _ in range(len(algos))
@@ -81,7 +84,7 @@ def contextual_bandit_runner(algos, data, \
         # the width of the progeress bar in tdqm() is measured by characters
         # update the neural network each time there is a new context
         for i in tqdm(range(cmab.num_contexts),ncols=75):
-            print(f'!!!!!! @#$@ ROUND {i} @#$@ !!!!!!')
+            print(f'!!!@ ROUND{i}!@ ROUND{i}!! @#$@ ROUND {i} @#@ ROUND{i}$@ !!!!!!')
 
             # start_time = timeit()
             start_time = time.time()
@@ -96,9 +99,15 @@ def contextual_bandit_runner(algos, data, \
             c,a,r = cmab.get_data(i) 
             print()
             print(f'!!!!!!!!!!!!{i}-th data point !!!!!!!!')
-            print(f'c = {c}')
-            print(f'a = {a}')
-            print(f'r = {r}')
+            # print(f'!!!!!!!!!!data shapes got from get_data({i})!!!!!!!!!!')
+            # print(f'c.shape = {c.shape}')
+            # print(f'a.shape = {a.shape}')
+            # print(f'r.shape = {r.shape}')
+            '''
+            c.shape = (1, 13)
+            a.shape = (1,)
+            r.shape = (1, 1)            
+            '''
 
             for j,algo in enumerate(algos): 
     # def update_buffer(self, contexts, actions, rewards): 
@@ -149,9 +158,10 @@ def contextual_bandit_runner(algos, data, \
                                 print('     opt_rate: {} | pred_rate: {}'.format(opt_stats, sel_stats))
                                 ### @@@@ bugs came from here: IndexError: list index out of range
                                 # monitor(context, action, reward)
-                                results_cp = algo.monitor(c, a, r)
+                                # results_cp = algo.monitor(c, a, r)
+                                algo.monitor(c, a, r)
                                 # results_cp = algo.monitor_loo(c, a, r)
-                                print(f'results_cp:{results_cp}')
+                                # print(f'results_cp:{results_cp}')
 
                     subopts[j].append(test_subopt) 
                     act_errs[j].append(1 - action_acc) 
@@ -207,6 +217,7 @@ class OfflineContextualBandit(object):
     def get_data(self, number): 
         ind = self.order[number]
         a = self.actions[ind]
+        # The expression self.rewards[ind:ind+1, a:a+1] is used to select the reward for the chosen action
         return self.contexts[ind:ind+1], self.actions[ind:ind+1], self.rewards[ind:ind+1, a:a+1] 
 
  

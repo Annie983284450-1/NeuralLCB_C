@@ -73,6 +73,7 @@ class NeuralBanditModel(NeuralNetwork):
         '''
         # transform(f, [,apply_rng]) trandform a function using Haiku modules into a pair of pure functions
         # without_apply_rng() remove the rng argument from the apply function, See out_impure_fn(self, params, context), where nn is apply()
+        
         self.nn = hk.without_apply_rng(hk.transform(self.net_impure_fn))
         # When you apply jax.jit to a function, JAX traces the function, captures the operations performed in it, 
         # and compiles them into an optimized sequence of instructions that can run on GPU or TPU
@@ -340,6 +341,9 @@ class NeuralBanditModelV2(NeuralBanditModel):
     def build_model(self):
         """Transform impure functions into pure functions and apply JAX tranformations."""
         #hk.transform will return 2 separate functions: init() and apply()
+
+        print(f'%%%%%%%%%%%%. Running NeuralBanditModelV2.build_model(). %%%%%%%%%%%%.')
+
         self.nn = hk.without_apply_rng(hk.transform(self.net_impure_fn))
         # self.out returns the predictions of the neural networks
         self.out = jax.jit(self.out_impure_fn) 
@@ -372,6 +376,7 @@ class NeuralBanditModelV2(NeuralBanditModel):
         Args:
             convoluted_contexts: (None, self.hparams.context_dim * num_actions)
         """
+        print(f'%%%%%%%%%%%%. Running NeuralBanditModelV2.net_impure_fn(). %%%%%%%%%%%%.')
         net_structure = []
         for num_units in self.hparams.layer_sizes:
             net_structure.append(
@@ -402,6 +407,7 @@ class NeuralBanditModelV2(NeuralBanditModel):
         type(out_network):Traced<ShapedArray(float32[1,1])>with<DynamicJaxprTrace(level=1/0)>
         out_network:Traced<ShapedArray(float32[1,1])>with<DynamicJaxprTrace(level=1/0)>
         '''
+        print(f'%%%%%%%%%%%%. Running NeuralBanditModelV2.out_impure_fn(). %%%%%%%%%%%%.')
         out_network = self.nn.apply(params, contexts, actions)
         # print(f'type(out_network):{out_network}')
         # print(f'out_network:{out_network}')
@@ -447,6 +453,8 @@ class NeuralBanditModelV2(NeuralBanditModel):
         [[0, 1, 0]]   # Action 1 encoded
         ]
         '''
+        print(f'%%%%%%%%%%%%. Running NeuralBanditModelV2.grad_out_impure_fn(). %%%%%%%%%%%%.')
+
         acts = jax.nn.one_hot(actions, self.hparams.num_actions)[:,None,:]
         '''
         This line creates a tensor ker which is a 3-dimensional identity matrix 
@@ -538,20 +546,26 @@ class NeuralBanditModelV2(NeuralBanditModel):
             actions: An array of actions, (None,)
             rewards: An array of rewards for the chosen actions, (None,)
         """
+        print(f'#######Before Running loss_impure_fn in NeuralBanditModelV2...........')
+        # print("Predictions shape:", preds.shape)
+        print("Rewards shape:", rewards.shape)
+
         preds = self.out(params, contexts, actions) 
         print(f'#######Running loss_impure_fn in NeuralBanditModelV2...........')
         print("Predictions shape:", preds.shape)
         print("Rewards shape:", rewards.shape)
         # sys.exit()
-
-
-        # squared_loss = 0.5 * jnp.mean( jnp.square(preds.ravel() - rewards.ravel()) )
-        # reg_loss = 0.5 * self.hparams.lambd * sum(
-        #         jnp.sum(jnp.square(param)) for param in jax.tree_leaves(params) 
-        #     )
+        debugging = False
+        # debugging = True
+        if debugging == False:
+            squared_loss = 0.5 * jnp.mean( jnp.square(preds.ravel() - rewards.ravel()) )
+            reg_loss = 0.5 * self.hparams.lambd * sum(
+                    jnp.sum(jnp.square(param)) for param in jax.tree_leaves(params) 
+                )
+        else:
         # debugging
-        squared_loss = 0.05 
-        reg_loss =  0
+            squared_loss = 0.05 
+            reg_loss =  0
         return squared_loss + reg_loss 
 
     def clone(self):
@@ -580,7 +594,7 @@ class NeuralBanditModelV2(NeuralBanditModel):
             rewards: An array of rewards for the chosen actions, (None,)
         """
         # The gradient of the loss function with respect to the parameters (grads = jax.grad(self.loss)) is computed, and the optimizer (like Adam) updates the parameters accordingly.
-        print(f'#######Running update_impure_fn in NeuralBanditModelV2...........')
+        print(f'##### Before Running update_impure_fn in NeuralBanditModelV2...........')
         # print("Predictions shape:", preds.shape)
         print("Rewards shape:", rewards.shape)
         grads = jax.grad(self.loss)(params, contexts, actions, rewards )
@@ -608,6 +622,7 @@ class NeuralBanditModelV2(NeuralBanditModel):
                 y: (batch_size, )
             """
             # flags.DEFINE_bool('data_rand', True, 'Where randomly sample a data batch or  use the latest samples in the buffer' )
+            print(f'step:{step}')
             x,a,y = data.get_batch(self.hparams.batch_size, self.hparams.data_rand) #(None,d), (None,), (None,)
             # x,a,y = data.get_batch_with_weights(self.hparams.batch_size)
             # print(f'(x,a,y) from get_batch():')

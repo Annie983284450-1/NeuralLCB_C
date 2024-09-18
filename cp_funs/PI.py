@@ -27,6 +27,9 @@ import multiprocessing
 import dill
 import cp_funs.utils_cp as util
 multiprocessing.get_context().Process().Pickle = dill
+import importlib
+import core.bandit_dataset
+importlib.reload(core.bandit_dataset)
 from core.bandit_dataset import BanditDataset
 import copy
 

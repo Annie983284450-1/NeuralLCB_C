@@ -53,6 +53,8 @@ class ApproxNeuraLCBV2_cp(BanditAlgorithm):
         self.diag_Lambda = [jnp.ones(self.nn.num_params) * self.hparams.lambd0 for _ in range(self.hparams.num_actions)]
         # self.nn.reset(seed) # with NeuralBanditV2()
         self.data.reset()
+        print(f'~~~~~~~!!!!!! After running algo.reset()~!!!!!!!!!!~~~~~~~~~~')
+        print(f'self.data.rewards.shape:{self.data.rewards}')
         self.prediction_interval_model = None
     # line 5 in NeuraLCB_Bmode
     def sample_action(self, contexts):
@@ -97,6 +99,10 @@ class ApproxNeuraLCBV2_cp(BanditAlgorithm):
     
  
     def update_buffer(self, contexts, actions, rewards): 
+        print(f'!!!!!!!!!!data shapes before update_buffer() !!!!!!!!!!')
+        print(f'c.shape = {contexts.shape}')
+        print(f'a.shape = {actions.shape}')
+        print(f'r.shape = {rewards.shape}')
         self.data.add(contexts, actions, rewards)
     
     def update(self, contexts, actions, rewards):
@@ -123,6 +129,8 @@ class ApproxNeuraLCBV2_cp(BanditAlgorithm):
 
         loo_preds = self.get_loo_params(contexts, actions, rewards)
         print(f'LOO predictions (self.pred_interval_centers): {loo_preds}')
+
+
 
     # def monitor_loo(self, contexts=None, actions=None, rewards=None):
     #     print(f'running monitor() of algo ApproxNeuraLCBV2 .......')
@@ -261,7 +269,7 @@ class ApproxNeuraLCBV2_cp(BanditAlgorithm):
 
         # Calculate conformal prediction intervals using bootstrapping
         miss_test_idx = []  # You can customize this based on your data handling
-        B = 15  # Number of bootstrap samples, adjust this as needed
+        B = 0  # Number of bootstrap samples, adjust this as needed
         alpha = 0.1  # Confidence level for prediction intervals
 
         # Fit bootstrap models and compute intervals

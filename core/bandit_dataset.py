@@ -27,6 +27,56 @@ class BanditDataset(object):
         self.actions = None 
         self.rewards = None 
 
+    def add_with_onehot(self, context, action, reward):
+        """Add one or multiple samples to the buffer. 
+
+        Args:
+            context: An array of d-dimensional contexts, (None, context_dim)
+            action: An array of integers in [0, K-1] representing the chosen action, (None,1)
+            reward: An array of real numbers representing the reward for (context, action), (None,1)
+             
+     
+        """
+        # the use of JAX allows for Jax's accelerated computing capabilities
+        #  The -1 argument tells numpy or JAX to automatically calculate the number of rows such that the total size of the array remains constant. 
+        # each row has self.conext_dim columns
+        c = context.reshape(-1, self.context_dim) 
+        if self.contexts is None: # first batch of context is being added
+            self.contexts = c 
+        else:  #  vertically stack the existing contexts with new batch of contexts (c)
+            self.contexts = jnp.vstack((self.contexts, c))
+        
+        # action.ravel() would flatten action array
+        # jax.nn.one_hot(action.ravel(), self.num_actions) converts each action into a one-hot encoded vector
+        # where the length of each vector is equal to "num_actions" 
+        '''
+        if action = [0,1,0,1]
+        jax.nn.one_hot(action.ravel(), self.num_actions)  = 
+        [
+        [1,0],
+        [0,1],
+        [1,0],
+        [0,1]
+        ]
+        reward.reshape(-1,1):
+        This reshapes the reward array into a 2D array with one column. 
+        The -1 instructs the reshape operation to automatically determine the number of rows based on the length of reward, 
+        ensuring that each reward value gets its own row.
+        '''
+        print(f'&&&&&&&&&&&& adding new (c,a,r)')
+        r = jax.nn.one_hot(action.ravel(), self.num_actions) * reward.reshape(-1,1)
+        print(f'%%%%%%%%% reward.shape after nn_one_hot: {r.shape} %%%%%%%%%')
+        # similar as adding contexts
+        if self.rewards is None: 
+            self.rewards = r 
+        else: 
+            self.rewards = jnp.vstack((self.rewards, r)) 
+
+        if self.actions is None: 
+            self.actions = action.reshape(-1,1) 
+        else:
+            self.actions = jnp.vstack((self.actions, action.reshape(-1,1)))
+
     def add(self, context, action, reward):
         """Add one or multiple samples to the buffer. 
 
@@ -63,20 +113,31 @@ class BanditDataset(object):
         The -1 instructs the reshape operation to automatically determine the number of rows based on the length of reward, 
         ensuring that each reward value gets its own row.
         '''
+        print(f'&&&&&&&&&&&& adding new (c,a,r)')
         r = jax.nn.one_hot(action.ravel(), self.num_actions) * reward.reshape(-1,1)
+        # r = reward.reshape(-1, 1)  # This ensures the reward is stored as (n, 1), either 1 or 0
+        # print(f'%%%%%%%%% reward.shape after reshape: {r.shape} %%%%%%%%%')
+        print(f'%%%%%%%%% reward.shape after nn_one_hot: {r.shape} %%%%%%%%%')
         # similar as adding contexts
         if self.rewards is None: 
             self.rewards = r 
         else: 
             self.rewards = jnp.vstack((self.rewards, r)) 
 
+        # Reshape and store the action
+        action = action.reshape(-1, 1)  # Ensure the action is stored as (n, 1)
         if self.actions is None: 
             self.actions = action.reshape(-1,1) 
         else:
             self.actions = jnp.vstack((self.actions, action.reshape(-1,1)))
 
+        print(f'&&&&&&&&&&&& After adding new (c,a,r)')
+        print(f'&&&&&&& context.shape: {self.contexts.shape}')
+        print(f'&&&&&&& action.shape: {self.actions.shape}')
+        print(f'&&&&&&& reward.shape:{self.rewards.shape}')
 
-    
+
+
     def get_batch_with_weights(self, batch_size):
         """
         Return:
@@ -132,16 +193,31 @@ class BanditDataset(object):
             a: (batch_size, )
             y: (batch_size, )
         """        
-        print(f'................. Testing get_batch().................')
         self.contexts = jnp.array(self.contexts)
         self.actions = jnp.array(self.actions)
-        self.rewards = jnp.array(self.rewards)
+        self.rewards = jnp.array(self.rewards)        
+        # print(f'||||||||||||||||||||data shapes before runing get_batch():')
+        # print(f'self.contexts.shape:{self.contexts.shape}')
+        # print(f'self.actions.shape:{self.actions.shape}')
+        # print(f'self.rewards.shape:{self.rewards.shape}')
+        print(f'................. Start Running get_batch().................')
+
         # available_samples
         n = self.num_samples 
         
         assert n > 0 
+        # if rand:
+        #     if self.buffer_s == -1:
+        #         ind = np.random.choice(n, batch_size) 
+        #     else: 
+        #         ind = np.random.choice(range(max(0, n - self.buffer_s), n), batch_size)
+        # else:
+        #     ind = range(n - batch_size,n)
+
+
         if rand:
             if self.buffer_s == -1:
+                
                 ind = np.random.choice(range(n), min(batch_size, n), replace=False)
                 # ind = np.random.choice(n, batch_size) 
             else: 
@@ -152,16 +228,40 @@ class BanditDataset(object):
             ind = range(n - batch_size,n)
         a = self.actions[ind,:].ravel().astype(int)
         rewards_batch = self.rewards[ind, :]  # First select the rows using ind
-        rewards_selected = rewards_batch[:, a]
+        rewards_selected = rewards_batch[np.arange(len(a)), a].reshape(-1, 1)
+        '''
+        debug log
+        ||||||||||||||||||||data shapes AFTER runing get_batch():
+        context_batch shape:(32, 13)
+        a = self.actions[ind,:].ravel().astype(int):(32,)
+        rewards_batch shape:(32, 1)
+        Rewards selected shape: (32, 32)
+        step:62
+        a is a 1D array of shape (32,), containing the chosen actions for each context.
+        When you use rewards_batch[:, a], 
+        you are selecting multiple columns (corresponding to the actions in a) for each row, 
+        which results in a shape of (32, 32).
+
+        '''
+        # rewards_selected = rewards_batch[:, a]
+        
         context_batch = self.contexts[ind, :]
         # Debugging: print the shapes to verify consistency
         # print("Context batch shape:", context_batch.shape)
         # print("Actions shape:", a.shape)
         # print(f'actions:{a}')
         # print("Rewards batch shape:", rewards_batch.shape)
-        print("Rewards selected shape:", rewards_selected.shape)
+
+        # print(f'||||||||||||||||||||data shapes AFTER runing get_batch():')
+        # print(f'context_batch shape:{context_batch.shape}')
+        # print(f'a = self.actions[ind,:].ravel().astype(int):{a.shape}')
+        # print(f'rewards_batch shape:{rewards_batch.shape}')
+        # print("Rewards selected shape:", rewards_selected.shape)
+        print(f'|||||||||||||||||||| get_batch() finished!!!!!!!!!!!!!!!!')
         
         return context_batch, a, rewards_selected 
+
+        # return context_batch, a, rewards_batch
 
 
     @property 
