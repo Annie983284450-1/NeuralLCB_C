@@ -70,7 +70,10 @@ class prediction_interval():
           Train B bootstrap estimators from subsets of (X_train, Y_train), compute aggregated predictors, and compute the residuals
         '''
         n = len(self.X_train)  
-        n1 = len(self.X_predict)  
+        n1 = len(self.X_predict)
+        print('============Size of X_train and X_predict:')
+        print(f'~~~~~n === {n}')
+        print(f'~~~~~n1 ==={n1}')
         boot_samples_idx = util.generate_bootstrap_samples(n,n,B)
         # hold predictions from each f^b, for the whole datatset
         boot_predictions = np.zeros((B, (n+n1)), dtype=float)
@@ -222,6 +225,11 @@ class prediction_interval():
             PIs.append(PI)
 
             # Calculate coverage and width
+            print(' =====. Debugging =====. ')
+            print("Shape of PI['lower']:", PI['lower'].shape)
+            print("Shape of PI['upper']:", PI['upper'].shape)
+            print("Shape of self.Y_predict:", self.Y_predict.shape)
+
             mean_coverage = ((PI['lower'] <= self.Y_predict) & (PI['upper'] >= self.Y_predict)).mean()
             mean_width = (PI['upper'] - PI['lower']).mean()
             lower_mean = PI['lower'].mean()

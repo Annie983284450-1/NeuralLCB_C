@@ -646,8 +646,8 @@ class NeuralBanditModelV2(NeuralBanditModel):
 
                 cost = self.loss(params, x,a,y)
                 print('{} | step: {} | loss: {}'.format(self.name, step, cost))
-            if step ==0 or num_steps-1:
-                print(f'$$$$$$$$$ Number step-{step} of NeuralBanditModelV2.train() Finished $$$$$$$$$')       
+            # if step == 0 or step == num_steps-1:
+            #     print(f'$$$$$$$$$ Number step-{step} of NeuralBanditModelV2.train() Finished $$$$$$$$$')       
         
         self.params, self.opt_state = params, opt_state
         # print(f'self.params:{self.params}')

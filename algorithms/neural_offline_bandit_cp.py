@@ -290,7 +290,7 @@ class ApproxNeuraLCBV2_cp(BanditAlgorithm):
         # # Print the prediction intervals
         # print(f'Prediction Intervals:')
         # print(f'Lower Bound: {Y_lower}, Upper Bound: {Y_upper}')
-        PIs_df, results = self.prediction_interval_model.run_experiments(alpha=0.05, stride=10, methods=['Ensemble'] )
+        PIs_df, results = self.prediction_interval_model.run_experiments(alpha=0.05, stride=1, methods=['Ensemble'] )
         print(f'%%%%%%%%%%%~~~~~~~~~`~~~conformal prediction average results: ')
         print({results})
 
