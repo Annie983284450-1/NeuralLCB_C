@@ -119,14 +119,17 @@ flags.DEFINE_float('eps', 0.1, 'Probability of selecting a random action in eps-
 flags.DEFINE_float('subset_r', 0.5, 'The ratio of the action spaces to be selected in offline data')
 
 
-num_train_sepsis_pat_win = 50
-num_test_pat_septic_win =5
+num_train_sepsis_pat_win = 10
+num_test_pat_septic_win = 1
+win_size= 8 
 print(f'num_train_sepsis_pat_win === {num_train_sepsis_pat_win}')
 print(f'num_test_pat_septic_win === {num_test_pat_septic_win}')
 
 # this might only corresponding to a few hundreds patients
-flags.DEFINE_integer('num_contexts', num_train_sepsis_pat_win*48*2, 'Number of contexts for training.') 
-flags.DEFINE_integer('num_test_contexts', num_test_pat_septic_win*48*13, 'Number of contexts for test.') 
+flags.DEFINE_integer('num_contexts', num_train_sepsis_pat_win*win_size*2, 'Number of contexts for training.') 
+flags.DEFINE_integer('num_test_contexts', num_test_pat_septic_win*win_size*13, 'Number of contexts for test.') 
+flags.DEFINE_integer('num_train_sepsis_pat_win', num_train_sepsis_pat_win , 'Number of septic windows for training.') 
+flags.DEFINE_integer('num_test_pat_septic_win', num_test_pat_septic_win, 'Number of septic windows for testing.') 
 
 # flags.DEFINE_integer('num_contexts', 500, 'Number of contexts for training.') 
 # flags.DEFINE_integer('num_test_contexts', 100, 'Number of contexts for test.') 
@@ -178,6 +181,8 @@ def main(unused_argv):
     elif FLAGS.policy == 'online':
         policy_prefix = '{}{}'.format(FLAGS.policy, FLAGS.eps) 
     else:
+
+
         raise NotImplementedError('{} not implemented'.format(FLAGS.policy))
 
 # different datasets
@@ -188,11 +193,23 @@ def main(unused_argv):
     if FLAGS.data_type in dataclasses:
         # so actually this is returning a class not a string
         DataClass = dataclasses[FLAGS.data_type]
-        data = DataClass(num_contexts=FLAGS.num_contexts, 
-                    num_test_contexts=FLAGS.num_test_contexts,
-                    pi = FLAGS.policy, 
-                    eps = FLAGS.eps, 
-                    subset_r = FLAGS.subset_r) 
+        if FLAGS.data_type == 'sepsis':
+
+            data = DataClass(                
+                        num_train_sepsis_pat_win= FLAGS.num_train_sepsis_pat_win,
+                        num_test_pat_septic_win= FLAGS.num_test_pat_septic_win, 
+                        num_contexts=FLAGS.num_contexts, 
+                        num_test_contexts=FLAGS.num_test_contexts,
+                        pi = FLAGS.policy, 
+                        eps = FLAGS.eps, 
+                        subset_r = FLAGS.subset_r, ) 
+        else:
+
+            data = DataClass(num_contexts=FLAGS.num_contexts, 
+                        num_test_contexts=FLAGS.num_test_contexts,
+                        pi = FLAGS.policy, 
+                        eps = FLAGS.eps, 
+                        subset_r = FLAGS.subset_r) 
     else:
         raise NotImplementedError
     # sys.exit()
@@ -238,7 +255,13 @@ def main(unused_argv):
         'num_steps': FLAGS.num_steps, 
         'buffer_s': FLAGS.buffer_s, 
         'data_rand': FLAGS.data_rand,
-        'debug_mode': 'full' # simple/full
+        'debug_mode': 'full', # simple/full
+        'num_train_sepsis_pat_win': FLAGS.num_train_sepsis_pat_win,
+        'num_test_pat_septic_win': FLAGS.num_test_pat_septic_win,
+        'data_type':FLAGS.data_type,
+        # 'policy_prefix', policy_prefix,
+
+
     })
 
     lin_hparams = edict(
@@ -252,16 +275,19 @@ def main(unused_argv):
         }
     )
 
+
+
     data_prefix = '{}_d={}_a={}_pi={}_std={}'.format(FLAGS.data_type, \
             context_dim, num_actions, policy_prefix, data.noise_std)
 
     # res_dir = os.path.join('results', data_prefix) 
-    res_dir = os.path.join(f'results/trainwins{num_train_sepsis_pat_win}testwins{num_test_pat_septic_win}', data_prefix) 
+    res_dir = os.path.join(f'results/trainwins_{num_train_sepsis_pat_win}_testwins_{num_test_pat_septic_win}', data_prefix) 
+    flags.DEFINE_string('res_dir', res_dir, 'final average result path')
 
     if not os.path.exists(res_dir):
         os.makedirs(res_dir)
 
-       
+    
 
     #================================================================
     # Algorithms 
@@ -273,7 +299,7 @@ def main(unused_argv):
                 # UniformSampling(lin_hparams),
                 # NeuralGreedyV2(hparams, update_freq = FLAGS.update_freq), 
                 # class ApproxNeuraLCBV2(BanditAlgorithm)
-                ApproxNeuraLCBV2_cp(hparams, update_freq = FLAGS.update_freq)
+                ApproxNeuraLCBV2_cp(hparams, res_dir = FLAGS.res_dir, update_freq = FLAGS.update_freq)
                 # ApproxNeuraLCBV2(hparams, update_freq = FLAGS.update_freq)
             ]
 
@@ -342,7 +368,7 @@ def main(unused_argv):
     # this is the core function that run all the experiments
     print(f'starting contextual_bandit_runner() ......')
     start  =  time.time()
-    regrets, errs = contextual_bandit_runner(algos, data, FLAGS.num_sim, FLAGS.update_freq, FLAGS.test_freq, FLAGS.verbose, FLAGS.debug, FLAGS.normalize, file_name)
+    regrets, errs = contextual_bandit_runner(algos, data, FLAGS.num_sim, FLAGS.update_freq, FLAGS.test_freq, FLAGS.verbose, FLAGS.debug, FLAGS.normalize, file_name, res_dir )
  
     np.savez(file_name, regrets=regrets, errs=errs)
     print(f'total time for contextual bandit runner: {time.time()-start} seconds')

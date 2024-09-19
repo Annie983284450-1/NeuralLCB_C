@@ -32,7 +32,7 @@ def action_accuracy(pred_actions, opt_actions):
  
 # this is the final function 
 def contextual_bandit_runner(algos, data, \
-            num_sim, update_freq, test_freq, verbose, debug, normalize, save_path=None):
+            num_sim, update_freq, test_freq, verbose, debug, normalize, save_path=None, res_dir = None):
     """Run an offline contextual bandit problem on a set of algorithms in the same dataset. 
 
     Args:
@@ -56,8 +56,8 @@ def contextual_bandit_runner(algos, data, \
         for algo in algos:
             #  ApproxNeuraLCBV2.reset(self, seed)
             # sim*1111 is the random seed
-            print(f'~~~~~~~~~~~~~~~Before algo.reset()~~~~~~~~~~~~~~~~~~~~~~~')
-            print(f'cmab.rewards.shape:{cmab.rewards.shape}')
+            # print(f'~~~~~~~~~~~~~~~Before algo.reset()~~~~~~~~~~~~~~~~~~~~~~~')
+            # print(f'cmab.rewards.shape:{cmab.rewards.shape}')
             algo.reset(sim * 1111)
     
         # initialize an empty list for each algorithm
@@ -84,6 +84,10 @@ def contextual_bandit_runner(algos, data, \
         # the width of the progeress bar in tdqm() is measured by characters
         # update the neural network each time there is a new context
         for i in tqdm(range(cmab.num_contexts),ncols=75):
+            if i == 0:
+                # Open in write mode to truncate the file
+                with open(res_dir+'/final_all_results_avg.csv', 'w') as f:
+                    pass  # Just opening in 'w' mode truncates the file
             print(f'!!!@ ROUND{i}!@ ROUND{i}!! @#$@ ROUND {i} @#@ ROUND{i}$@ !!!!!!')
 
             # start_time = timeit()

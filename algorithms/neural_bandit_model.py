@@ -622,7 +622,7 @@ class NeuralBanditModelV2(NeuralBanditModel):
                 y: (batch_size, )
             """
             # flags.DEFINE_bool('data_rand', True, 'Where randomly sample a data batch or  use the latest samples in the buffer' )
-            print(f'step:{step}')
+
             x,a,y = data.get_batch(self.hparams.batch_size, self.hparams.data_rand) #(None,d), (None,), (None,)
             # x,a,y = data.get_batch_with_weights(self.hparams.batch_size)
             # print(f'(x,a,y) from get_batch():')
@@ -646,7 +646,8 @@ class NeuralBanditModelV2(NeuralBanditModel):
 
                 cost = self.loss(params, x,a,y)
                 print('{} | step: {} | loss: {}'.format(self.name, step, cost))
-            
+            if step ==0 or num_steps-1:
+                print(f'$$$$$$$$$ Number step-{step} of NeuralBanditModelV2.train() Finished $$$$$$$$$')       
         
         self.params, self.opt_state = params, opt_state
         # print(f'self.params:{self.params}')

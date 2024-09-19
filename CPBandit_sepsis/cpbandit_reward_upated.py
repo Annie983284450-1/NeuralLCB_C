@@ -100,10 +100,10 @@ class CPBandit:
         start_nosepsis_train = 0
         start_sepsis_train = 0
 
-        sepsis_full = pd.read_csv(f'./SepsisData/fully_imputed.csv.csv')
-        # win_size = 8
+        # sepsis_full = pd.read_csv(f'./SepsisData/fully_imputed.csv.csv')
+        win_size = 8
         # abandon the 0-1-0 patients and treat as error
-        # sepsis_full = pd.read_csv(f'../cpbanditsepsis_experiements/Data/fully_imputed_8windowed_max48_updated.csv')
+        sepsis_full = pd.read_csv(f'../cpbanditsepsis_experiements/Data/fully_imputed_8windowed_max48_updated.csv')
  
         # sepsis_train_wins = np.load('./SepsisData/sepsis_train_wins.npy')
         sepsis_train_wins = np.load('./SepsisData/sepsis_train_wins.npy')

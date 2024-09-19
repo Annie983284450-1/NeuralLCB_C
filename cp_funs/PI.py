@@ -39,7 +39,7 @@ class prediction_interval():
     '''
  
 
-    def __init__(self, nn_model, X_train, X_predict, Y_train, Y_predict):
+    def __init__(self, nn_model, X_train, X_predict, Y_train, Y_predict, filename):
         
         self.nn_model = nn_model
         self.X_train = X_train
@@ -62,7 +62,7 @@ class prediction_interval():
         # self.WeightCP_online_resid = np.array([])
         # self.JaB_boot_samples_idx = 0
         # self.JaB_boot_predictions = 0
-
+        self.final_result_path = filename
 
 
     def fit_bootstrap_models_online(self,  B, miss_test_idx):
@@ -197,40 +197,7 @@ class prediction_interval():
 
 
 # main function
-    def run_experiments(self, alpha, stride, data_name, itrial, true_Y_predict=[], get_plots=False, none_CP=False, methods=['Ensemble', 'ICP', 'Weighted_ICP'], max_hours=48):
-  
-        """
-        Compute the prediction intervals for online conformal prediction using Ensemble.
-        Args:
-            alpha: Confidence level (e.g., 0.05).
-            stride: Stride length for processing.
-        """
-        n = len(self.X_train)
-        n1 = len(self.Y_predict)
-
-        # Use the residuals from earlier to compute the bounds
-        out_sample_predict = self.Ensemble_pred_interval_centers
-        resid_strided = util.strided_app(self.Ensemble_online_resid[:-1], n, stride)
-        num_unique_resid = resid_strided.shape[0]
-
-        width_left = np.zeros(num_unique_resid)
-        width_right = np.zeros(num_unique_resid)
-
-        for i in range(num_unique_resid):
-            past_resid = resid_strided[i, :]
-            beta_hat_bin = util.binning(past_resid, alpha)
-            width_left[i] = np.percentile(past_resid, math.ceil(100 * beta_hat_bin))
-            width_right[i] = np.percentile(past_resid, math.ceil(100 * (1 - alpha + beta_hat_bin)))
-
-        width_left = np.repeat(width_left, stride)
-        width_right = np.repeat(width_right, stride)
-
-        # Store the lower and upper bounds for prediction intervals
-        PIs_Ensemble = pd.DataFrame(np.c_[out_sample_predict + width_left, out_sample_predict + width_right], columns=['lower', 'upper'])
-        self.Ensemble_pred_interval_ends = PIs_Ensemble
-        return PIs_Ensemble
-
-    def run_experiments(self, alpha, stride, data_name, itrial, true_Y_predict=[], methods=['Ensemble']):
+    def run_experiments(self, alpha, stride,  methods=['Ensemble']):
         """
         Run conformal prediction experiments.
         Args:
@@ -242,7 +209,7 @@ class prediction_interval():
             methods: Methods to be used for conformal prediction.
         """
         PIs = []
-        results = pd.DataFrame(columns=['itrial', 'dataname', 'method', 'train_size', 'mean_coverage', 'avg_width', 'mean_lower', 'mean_upper'])
+        results = pd.DataFrame(columns=[ 'train_size', 'mean_coverage', 'avg_width', 'mean_lower', 'mean_upper'])
         for method in methods:
             if method == 'Ensemble':
                 PI = self.compute_PIs_Ensemble_online(alpha, stride)
@@ -251,7 +218,7 @@ class prediction_interval():
                 raise NotImplementedError(f"Method {method} not implemented.")
             
             PI['alpha'] = alpha
-            PI['itrial'] = itrial
+             
             PIs.append(PI)
 
             # Calculate coverage and width
@@ -260,8 +227,12 @@ class prediction_interval():
             lower_mean = PI['lower'].mean()
             upper_mean = PI['upper'].mean()
 
-            results.loc[len(results)] = [itrial, data_name, method, len(self.X_train), mean_coverage, mean_width, lower_mean, upper_mean]
-
+            results.loc[len(results)] = [len(self.X_train), mean_coverage, mean_width, lower_mean, upper_mean]
+            final_result_path = self.filename
+            if not isinstance(new_row_all_avg, pd.DataFrame):
+                new_row_all_avg = pd.DataFrame([new_row_all_avg])
+            with open(final_result_path+'/final_all_results_avg.csv', 'a') as f:
+                new_row_all_avg.to_csv(f, header=f.tell()==0, index=False)
         return pd.concat(PIs, axis=1), results
 
 

@@ -1,6 +1,7 @@
 """Define neural offline bandit algorithms. """
 
 import math
+import pandas as pd
 import jax 
 import jax.numpy as jnp
 import optax
@@ -35,7 +36,7 @@ import cp_funs.utils_cp as utils_cp
 # the ApproxNeuraLCBV2 with conformal prediction
 class ApproxNeuraLCBV2_cp(BanditAlgorithm):
 
-    def __init__(self, hparams, update_freq=1, name='ApproxNeuraLCBV2'):
+    def __init__(self, hparams, res_dir, update_freq=1, name='ApproxNeuraLCBV2'):
         self.name = name 
         self.hparams = hparams 
         self.update_freq = update_freq
@@ -48,6 +49,7 @@ class ApproxNeuraLCBV2_cp(BanditAlgorithm):
         self.diag_Lambda = [jnp.ones(self.nn.num_params) * hparams.lambd0 for _ in range(hparams.num_actions)]
         self.pred_interval_centers = []
         self.prediction_interval_model = None
+        self.res_dir  = res_dir
 
     def reset(self, seed): 
         self.diag_Lambda = [jnp.ones(self.nn.num_params) * self.hparams.lambd0 for _ in range(self.hparams.num_actions)]
@@ -260,11 +262,12 @@ class ApproxNeuraLCBV2_cp(BanditAlgorithm):
         X_train, Y_train = self.data.contexts, self.data.rewards
         X_predict, Y_predict = contexts, rewards
 
+         
         if self.prediction_interval_model is None:
             # Initialize conformal prediction interval model if not already initialized
             self.prediction_interval_model = prediction_interval(
                 self.nn,  # The neural network model (NeuralBanditModelV2)
-                X_train, X_predict, Y_train, Y_predict
+                X_train, X_predict, Y_train, Y_predict, filename = self.res_dir
             )
 
         # Calculate conformal prediction intervals using bootstrapping
@@ -277,14 +280,23 @@ class ApproxNeuraLCBV2_cp(BanditAlgorithm):
         print(f'self.prediction_interval_centers:{self.pred_interval_centers}')
         # sys.exit()
         # Generate prediction intervals for each predicted reward
-        PIs_df = self.prediction_interval_model.compute_PIs_Ensemble_online(alpha=0.05, stride=10)
 
-        # You now have the prediction intervals in PIs_df
-        Y_upper = PIs_df['upper'].values
-        Y_lower = PIs_df['lower'].values
+        # PIs_df = self.prediction_interval_model.compute_PIs_Ensemble_online(alpha=0.05, stride=10)
 
-        # Print the prediction intervals
-        print(f'Prediction Intervals:')
-        print(f'Lower Bound: {Y_lower}, Upper Bound: {Y_upper}')
-        
+        # # You now have the prediction intervals in PIs_df
+        # Y_upper = PIs_df['upper'].values
+        # Y_lower = PIs_df['lower'].values
+
+        # # Print the prediction intervals
+        # print(f'Prediction Intervals:')
+        # print(f'Lower Bound: {Y_lower}, Upper Bound: {Y_upper}')
+        PIs_df, results = self.prediction_interval_model.run_experiments(alpha=0.05, stride=10, methods=['Ensemble'] )
+        print(f'%%%%%%%%%%%~~~~~~~~~`~~~conformal prediction average results: ')
+        print({results})
+
+
+        if not isinstance(results, pd.DataFrame):
+            results = pd.DataFrame([results])
+        with open(self.res_dir+'/final_all_results_avg.csv', 'a') as f:
+            results.to_csv(f, header=f.tell()==0, index=False)
         return self.pred_interval_centers

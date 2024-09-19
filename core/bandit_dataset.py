@@ -200,7 +200,8 @@ class BanditDataset(object):
         # print(f'self.contexts.shape:{self.contexts.shape}')
         # print(f'self.actions.shape:{self.actions.shape}')
         # print(f'self.rewards.shape:{self.rewards.shape}')
-        print(f'................. Start Running get_batch().................')
+
+        # print(f'................. Start Running get_batch().................')
 
         # available_samples
         n = self.num_samples 
@@ -257,7 +258,8 @@ class BanditDataset(object):
         # print(f'a = self.actions[ind,:].ravel().astype(int):{a.shape}')
         # print(f'rewards_batch shape:{rewards_batch.shape}')
         # print("Rewards selected shape:", rewards_selected.shape)
-        print(f'|||||||||||||||||||| get_batch() finished!!!!!!!!!!!!!!!!')
+        
+        # print(f'|||||||||||||||||||| get_batch() finished!!!!!!!!!!!!!!!!')
         
         return context_batch, a, rewards_selected 
 
