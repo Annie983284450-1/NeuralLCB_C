@@ -79,7 +79,7 @@ class ApproxNeuraLCBV2_cp(BanditAlgorithm):
 
 
                 # Use conformal predicted rewards if available, otherwise use the network's prediction
-                if len(self.pred_interval_centers) > 0:
+                if len(self.pred_interval_centesrs) > 0:
                     f = self.pred_interval_centers  # Use prediction intervals instead of NN output
                 else:
                     f = self.nn.out(self.nn.params, ctxs, actions)  # Default to the neural network output
@@ -105,12 +105,15 @@ class ApproxNeuraLCBV2_cp(BanditAlgorithm):
         print(f'c.shape = {contexts.shape}')
         print(f'a.shape = {actions.shape}')
         print(f'r.shape = {rewards.shape}')
+        
         self.data.add(contexts, actions, rewards)
+        return self.data.contexts, self.data.
     
     def update(self, contexts, actions, rewards):
         """Update the network parameters and the confidence parameter.
         
         Args:
+            Just represent one sample.
             contexts: An array of d-dimensional contexts
             actions: An array of integers in [0, K-1] representing the chosen action 
             rewards: An array of real numbers representing the reward for (context, action)
@@ -128,9 +131,20 @@ class ApproxNeuraLCBV2_cp(BanditAlgorithm):
 
         for i in range(contexts.shape[0]):
             self.diag_Lambda[actions[i]] = self.diag_Lambda[actions[i]] + jnp.square(u[i,:])
+        
+        # print(f'                Data fed into get_loo_params:%%%%%%%%%%%%')
+        # print(f'self.data.contexts.shape:{self.data.contexts.shape}')
+        # print(f'self.data.actions.shape:{self.data.actions.shape}')
+        # print(f'self.data.rewards.shape:{self.data.rewards.shape}')
 
-        loo_preds = self.get_loo_params(contexts, actions, rewards)
-        print(f'LOO predictions (self.pred_interval_centers): {loo_preds}')
+
+
+
+
+
+        # loo_preds = self.get_loo_params(self.data.contexts, self.data.actions, self.data.rewards)
+       
+        # print(f'LOO predictions (self.pred_interval_centers): {loo_preds}')
 
 
 
@@ -252,8 +266,8 @@ class ApproxNeuraLCBV2_cp(BanditAlgorithm):
             print('     r: {} | a: {} | f: {} | cnf: {} | loss: {} | param_mean: {}'.format(rewards.ravel()[0], \
                 a, preds.ravel(), \
                 cnf.ravel(), cost, jnp.mean(jnp.square(norm))))
- 
-
+    '''
+    
     def get_loo_params(self, contexts=None, actions=None, rewards=None):
     
     #Calculate conformal prediction intervals using the prediction_interval class.
@@ -281,7 +295,7 @@ class ApproxNeuraLCBV2_cp(BanditAlgorithm):
         # sys.exit()
         # Generate prediction intervals for each predicted reward
 
-        # PIs_df = self.prediction_interval_model.compute_PIs_Ensemble_online(alpha=0.05, stride=10)
+        PIs_df = self.prediction_interval_model.compute_PIs_Ensemble_online(alpha=0.05, stride=10)
 
         # # You now have the prediction intervals in PIs_df
         # Y_upper = PIs_df['upper'].values
@@ -290,7 +304,8 @@ class ApproxNeuraLCBV2_cp(BanditAlgorithm):
         # # Print the prediction intervals
         # print(f'Prediction Intervals:')
         # print(f'Lower Bound: {Y_lower}, Upper Bound: {Y_upper}')
-        PIs_df, results = self.prediction_interval_model.run_experiments(alpha=0.05, stride=1, methods=['Ensemble'] )
+
+        PIs_df, results = self.prediction_interval_model.run_experiments(alpha=0.05, stride=10, methods=['Ensemble'] )
         print(f'%%%%%%%%%%%~~~~~~~~~`~~~conformal prediction average results: ')
         print({results})
 
@@ -299,4 +314,7 @@ class ApproxNeuraLCBV2_cp(BanditAlgorithm):
             results = pd.DataFrame([results])
         with open(self.res_dir+'/final_all_results_avg.csv', 'a') as f:
             results.to_csv(f, header=f.tell()==0, index=False)
-        return self.pred_interval_centers
+        return self.pred_interval_centers    
+    '''
+
+

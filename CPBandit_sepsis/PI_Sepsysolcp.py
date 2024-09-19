@@ -499,6 +499,7 @@ class prediction_interval():
                 resid_LOO = self.Y_train[i] #-0
                 out_sample_predict[i] = np.zeros(n1) # let all Y_predict == 0 
                 num_null_bkeep = num_null_bkeep+1
+            
             self.Ensemble_online_resid = np.append(self.Ensemble_online_resid, resid_LOO)
             keep = keep+[] 
         # print(f'###Max LOO training residual is {np.max(self.Ensemble_online_resid)}')

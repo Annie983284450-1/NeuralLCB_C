@@ -123,6 +123,7 @@ start from 0.01 to 0.1 for reward is either 0 or 1 (small values)
 '''
 class SepsisData(object):
     def __init__(self,  
+                is_window,
                 num_train_sepsis_pat_win,
                 num_test_pat_septic_win,
                 num_contexts, 
@@ -155,8 +156,8 @@ class SepsisData(object):
         self.num_train_sepsis_pat_win = num_train_sepsis_pat_win
         self.num_test_pat_septic_win = num_test_pat_septic_win
 
-        Is_window = True
-        if Is_window:
+        # Is_window = True
+        if is_window:
             # abandon the 0-1-0 patients and treat as error
             df = pd.read_csv(f'./data/SepsisData/fully_imputed_8windowed_max48_updated.csv')
             # Drop the column 'HospAdmTim' as per your requirement

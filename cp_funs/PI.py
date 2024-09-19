@@ -32,17 +32,20 @@ import core.bandit_dataset
 importlib.reload(core.bandit_dataset)
 from core.bandit_dataset import BanditDataset
 import copy
-
+from algorithms.neural_offline_bandit_cp import ApproxNeuraLCBV2_cp, NeuralBanditModelV2, NeuralBanditModel
 class prediction_interval():
     '''
         Create prediction intervals using different methods (i.e., EnbPI, J+aB ICP, Weighted, Time-series)
     '''
  
 
-    def __init__(self, nn_model, X_train, X_predict, Y_train, Y_predict, filename):
+    def __init__(self, algo, cmab, filename):
         
-        self.nn_model = nn_model
-        self.X_train = X_train
+        self.nn_model = algo.nn  # NeuralBanditModelV2(opt, hparams, '{}-net'.format(name))
+
+        # reset_data() will return a form of (contexts, actions, rewards, test_contexts, mean_test_rewards) 
+        # cmab = OfflineContextualBandit(*data.reset_data(sim))
+        self.X_train = 
         self.X_predict = X_predict
         self.Y_train = Y_train
         self.Y_predict = Y_predict
@@ -72,8 +75,8 @@ class prediction_interval():
         n = len(self.X_train)  
         n1 = len(self.X_predict)
         print('============Size of X_train and X_predict:')
-        print(f'~~~~~n === {n}')
-        print(f'~~~~~n1 ==={n1}')
+        print(f'~~~~~self.X_train.shape === {self.X_train.shape}')
+        print(f'~~~~~self.X_predict.shape ==={self.X_predict.shape}')
         boot_samples_idx = util.generate_bootstrap_samples(n,n,B)
         # hold predictions from each f^b, for the whole datatset
         boot_predictions = np.zeros((B, (n+n1)), dtype=float)
@@ -87,6 +90,12 @@ class prediction_interval():
             # Clone the current neural network model
             # model = clone_model(self.nn_model)
             model = self.nn_model.clone()
+            if isinstance(data, NeuralBanditModelV2):
+                print("********* The loaded nn model is an instance of NeuralBanditModelV2.")
+            else:
+                print("*********Error!!!! The loaded nn model is not an instance of NeuralBanditModelV2.")
+
+                sys.exit()
             data = BanditDataset(model.hparams.context_dim, model.hparams.num_actions, len(self.X_train), f'{b}_th_fitdata')
             # Add the bootstrapped data into the model
             data.add(self.X_train[boot_samples_idx[b], :], np.zeros(len(boot_samples_idx[b])), self.Y_train[boot_samples_idx[b]])
@@ -95,11 +104,18 @@ class prediction_interval():
             # sys.exit()
             
             # dataset = (contexts, actions, rewards, test_contexts, mean_test_rewards)
-            print(f'*********  {b}-th Bootstrap  ****************')
+            # print(f'*********  {b}-th Bootstrap  ****************')
             print(f'data.contexts.shape:{data.contexts.shape}')
             print(f'data.rewards.shape:{data.rewards.shape}')
+
+
+            # def train(self, data, num_steps)
+
+            
             model.train(data, model.hparams.num_steps)
             # Predict using the trained model on the combined training and prediction set
+
+            # def out_impure_fn(self, params, contexts, actions):
             boot_predictions[b] = model.out(model.params, np.r_[self.X_train, self.X_predict], np.zeros((n + n1,))).flatten() # for V2
           
        
@@ -129,6 +145,7 @@ class prediction_interval():
         # Final step: Update for residuals in the prediction set
         sorted_out_sample_predict = out_sample_predict.mean(axis=0)
         resid_out_sample = self.Y_predict - sorted_out_sample_predict # length n1
+        print(f'                       resid_out_sample.shape === {resid_out_sample.shape}')
 
         if len(miss_test_idx) > 0:
             for l in range(len(miss_test_idx)):
@@ -149,15 +166,25 @@ class prediction_interval():
 
 
     def compute_PIs_Ensemble_online(self, alpha, stride):
+        print(f'                        Running compute_PIs_Ensemble_online(alpha=0.05, stride=10)-----------')
         n = len(self.X_train)
         n1 = len(self.Y_predict)
         # Now f^b and LOO residuals have been constructed from earlier using fit_bootstrap_models_online(B, miss_test_idx)
         out_sample_predict = self.Ensemble_pred_interval_centers
         start = time.time()
+        '''
+        def strided_app(a, L, S):  # Window len = L, Stride len/stepsize = S
+            nrows = ((a.size - L) // S) + 1
+            n = a.strides[0]
+            return np.lib.stride_tricks.as_strided(a, shape=(nrows, L), strides=(S * n, n))
+        L: The length of each window. This is how many consecutive elements are included in each row of the resulting matrix.
+        S: The stride or step size. This determines how far you move forward in the array to start the next window.
+        '''
         resid_strided = util.strided_app(self.Ensemble_online_resid[:-1], n, stride)
         num_unique_resid = resid_strided.shape[0]
-        print('num_unique_resid:', num_unique_resid)
-        print(f'size of resid_strided: {resid_strided.shape}')
+        print('     num_unique_resid:', num_unique_resid)
+        print(f'        size of resid_strided: {resid_strided.shape}')
+        print(f'        resid_strided:{resid_strided}')
 
         width_left = np.zeros(num_unique_resid)
         width_right = np.zeros(num_unique_resid)
@@ -190,9 +217,11 @@ class prediction_interval():
         # width_left might be negative numbers, that's normal
 
         # n1X2 data frame
+        print(f'            out_sample_predict.shape:{out_sample_predict.shape}')
         PIs_Ensemble = pd.DataFrame(np.c_[out_sample_predict+width_left,
                                           out_sample_predict+width_right], columns=['lower', 'upper'])
         self.Ensemble_pred_interval_ends = PIs_Ensemble
+        print(f'                        ~~~~~~~~~PIs_Ensemble.shape === {PIs_Ensemble.shape}')
         # print(time.time()-start)
         return PIs_Ensemble
 

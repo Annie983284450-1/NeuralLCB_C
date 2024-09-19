@@ -30,6 +30,7 @@ def action_accuracy(pred_actions, opt_actions):
     """
     return np.mean(np.asarray(pred_actions == opt_actions).astype('float32'))
  
+ 
 # this is the final function 
 def contextual_bandit_runner(algos, data, \
             num_sim, update_freq, test_freq, verbose, debug, normalize, save_path=None, res_dir = None):
@@ -118,12 +119,59 @@ def contextual_bandit_runner(algos, data, \
         # self.data.add(contexts, actions, rewards)
         # and add() is a self-defined calculation for the Bandit Dataset
         # Bandit Dataset is also self-defined
-                algo.update_buffer(c,a,r)
+                curr_contexts, curr_actions, curr_rewards = algo.update_buffer(c,a,r)
+                 
                 # Add data and update the internal state of each offline algorithm 
                 # update_freq default value 1
                 if i % algo.update_freq == 0 and algo.name != 'KernLCB':
                     # update the network parameters and confidence parameters
                     algo.update(c, a, r) 
+
+
+                    # X_train, Y_train = data.contexts, data.rewards
+                    # X_predict, Y_predict = contexts, rewards
+
+                    
+                    if  prediction_interval_model is None:
+                        # Initialize conformal prediction interval model if not already initialized
+                        prediction_interval_model = prediction_interval(
+                             algo,  # The neural network model (NeuralBanditModelV2)
+                            X_train, X_predict, Y_train, Y_predict, filename =  res_dir
+                        )
+
+                    # Calculate conformal prediction intervals using bootstrapping
+                    miss_test_idx = []  # You can customize this based on your data handling
+                    B = 0  # Number of bootstrap samples, adjust this as needed
+                    alpha = 0.1  # Confidence level for prediction intervals
+
+                    # Fit bootstrap models and compute intervals
+                    pred_interval_centers = prediction_interval_model.fit_bootstrap_models_online(B, miss_test_idx)
+                    print(f'self.prediction_interval_centers:{ pred_interval_centers}')
+                    # sys.exit()
+                    # Generate prediction intervals for each predicted reward
+
+                    PIs_df =  prediction_interval_model.compute_PIs_Ensemble_online(alpha=0.05, stride=10)
+
+                    # # You now have the prediction intervals in PIs_df
+                    # Y_upper = PIs_df['upper'].values
+                    # Y_lower = PIs_df['lower'].values
+
+                    # # Print the prediction intervals
+                    # print(f'Prediction Intervals:')
+                    # print(f'Lower Bound: {Y_lower}, Upper Bound: {Y_upper}')
+
+                    PIs_df, results = prediction_interval_model.run_experiments(alpha=0.05, stride=10, methods=['Ensemble'] )
+                    print(f'%%%%%%%%%%%~~~~~~~~~`~~~conformal prediction average results: ')
+                    print({results})
+
+
+                    if not isinstance(results, pd.DataFrame):
+                        results = pd.DataFrame([results])
+                    with open(self.res_dir+'/final_all_results_avg.csv', 'a') as f:
+                        results.to_csv(f, header=f.tell()==0, index=False)
+                    return self.pred_interval_centers 
+
+
 
                 # Test alg 
                 # test_freq default value 10

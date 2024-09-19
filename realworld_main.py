@@ -124,15 +124,23 @@ num_test_pat_septic_win = 1
 win_size= 8 
 print(f'num_train_sepsis_pat_win === {num_train_sepsis_pat_win}')
 print(f'num_test_pat_septic_win === {num_test_pat_septic_win}')
+is_window = True
+flags.DEFINE_boolean('is_window', is_window, 'to use the window sized data or not?') 
 
-# this might only corresponding to a few hundreds patients
-flags.DEFINE_integer('num_contexts', num_train_sepsis_pat_win*win_size*2, 'Number of contexts for training.') 
-flags.DEFINE_integer('num_test_contexts', num_test_pat_septic_win*win_size*13, 'Number of contexts for test.') 
 flags.DEFINE_integer('num_train_sepsis_pat_win', num_train_sepsis_pat_win , 'Number of septic windows for training.') 
 flags.DEFINE_integer('num_test_pat_septic_win', num_test_pat_septic_win, 'Number of septic windows for testing.') 
 
-# flags.DEFINE_integer('num_contexts', 500, 'Number of contexts for training.') 
-# flags.DEFINE_integer('num_test_contexts', 100, 'Number of contexts for test.') 
+    
+
+# this might only corresponding to a few hundreds patients
+if is_window:
+
+    flags.DEFINE_integer('num_contexts', num_train_sepsis_pat_win*win_size*2, 'Number of contexts for training.') 
+    flags.DEFINE_integer('num_test_contexts', num_test_pat_septic_win*win_size*13, 'Number of contexts for test.') 
+else:
+
+    flags.DEFINE_integer('num_contexts', 500, 'Number of contexts for training.') 
+    flags.DEFINE_integer('num_test_contexts', 100, 'Number of contexts for test.') 
 
 flags.DEFINE_boolean('verbose', True, 'verbose') 
 flags.DEFINE_boolean('debug', True, 'debug') 
@@ -196,6 +204,7 @@ def main(unused_argv):
         if FLAGS.data_type == 'sepsis':
 
             data = DataClass(                
+                        is_window = FLAGS.is_window,
                         num_train_sepsis_pat_win= FLAGS.num_train_sepsis_pat_win,
                         num_test_pat_septic_win= FLAGS.num_test_pat_septic_win, 
                         num_contexts=FLAGS.num_contexts, 
