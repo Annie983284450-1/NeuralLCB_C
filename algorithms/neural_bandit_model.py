@@ -336,13 +336,13 @@ class NeuralBanditModelV2(NeuralBanditModel):
         self.name = name 
         self.m = min(self.hparams.layer_sizes)
         self.build_model()
-        print('{} has {} parameters.'.format(name, self.num_params))
+        # print('{} has {} parameters.'.format(name, self.num_params))
        
     def build_model(self):
         """Transform impure functions into pure functions and apply JAX tranformations."""
         #hk.transform will return 2 separate functions: init() and apply()
 
-        print(f'%%%%%%%%%%%%. Running NeuralBanditModelV2.build_model(). %%%%%%%%%%%%.')
+        # print(f'%%%%%%%%%%%%. Running NeuralBanditModelV2.build_model(). %%%%%%%%%%%%.')
 
         self.nn = hk.without_apply_rng(hk.transform(self.net_impure_fn))
         # self.out returns the predictions of the neural networks
@@ -376,7 +376,7 @@ class NeuralBanditModelV2(NeuralBanditModel):
         Args:
             convoluted_contexts: (None, self.hparams.context_dim * num_actions)
         """
-        print(f'%%%%%%%%%%%%. Running NeuralBanditModelV2.net_impure_fn(). %%%%%%%%%%%%.')
+        # print(f'%%%%%%%%%%%%. Running NeuralBanditModelV2.net_impure_fn(). %%%%%%%%%%%%.')
         net_structure = []
         for num_units in self.hparams.layer_sizes:
             net_structure.append(
@@ -407,7 +407,7 @@ class NeuralBanditModelV2(NeuralBanditModel):
         type(out_network):Traced<ShapedArray(float32[1,1])>with<DynamicJaxprTrace(level=1/0)>
         out_network:Traced<ShapedArray(float32[1,1])>with<DynamicJaxprTrace(level=1/0)>
         '''
-        print(f'%%%%%%%%%%%%. Running NeuralBanditModelV2.out_impure_fn(). %%%%%%%%%%%%.')
+        # print(f'%%%%%%%%%%%%. Running NeuralBanditModelV2.out_impure_fn(). %%%%%%%%%%%%.')
         out_network = self.nn.apply(params, contexts, actions)
         # print(f'type(out_network):{out_network}')
         # print(f'out_network:{out_network}')
@@ -453,7 +453,7 @@ class NeuralBanditModelV2(NeuralBanditModel):
         [[0, 1, 0]]   # Action 1 encoded
         ]
         '''
-        print(f'%%%%%%%%%%%%. Running NeuralBanditModelV2.grad_out_impure_fn(). %%%%%%%%%%%%.')
+        # print(f'%%%%%%%%%%%%. Running NeuralBanditModelV2.grad_out_impure_fn(). %%%%%%%%%%%%.')
 
         acts = jax.nn.one_hot(actions, self.hparams.num_actions)[:,None,:]
         '''
@@ -492,9 +492,9 @@ class NeuralBanditModelV2(NeuralBanditModel):
         for key in grad_params:
             if key == 'linear': # extract the weights for the chosen actions only. 
                 u = grad_params[key]['w'] 
-                print(f'u:{u}')
+                # print(f'u:{u}')
                 v = jnp.sum(jnp.multiply(u, sel[:,:,:,None]), axis=2) # (None, context_dim, :)
-                print(f'v:{v}')
+                # print(f'v:{v}')
                 grads.append(v.reshape(contexts.shape[0],-1))
 
                 grads.append(grad_params[key]['b'].reshape(contexts.shape[0], -1)) 
@@ -546,14 +546,14 @@ class NeuralBanditModelV2(NeuralBanditModel):
             actions: An array of actions, (None,)
             rewards: An array of rewards for the chosen actions, (None,)
         """
-        print(f'#######Before Running loss_impure_fn in NeuralBanditModelV2...........')
+        # print(f'#######Before Running loss_impure_fn in NeuralBanditModelV2...........')
         # print("Predictions shape:", preds.shape)
-        print("Rewards shape:", rewards.shape)
+        # print("Rewards shape:", rewards.shape)
 
         preds = self.out(params, contexts, actions) 
-        print(f'#######Running loss_impure_fn in NeuralBanditModelV2...........')
-        print("Predictions shape:", preds.shape)
-        print("Rewards shape:", rewards.shape)
+        # print(f'#######Running loss_impure_fn in NeuralBanditModelV2...........')
+        # print("Predictions shape:", preds.shape)
+        # print("Rewards shape:", rewards.shape)
         # sys.exit()
         debugging = False
         # debugging = True
@@ -594,9 +594,9 @@ class NeuralBanditModelV2(NeuralBanditModel):
             rewards: An array of rewards for the chosen actions, (None,)
         """
         # The gradient of the loss function with respect to the parameters (grads = jax.grad(self.loss)) is computed, and the optimizer (like Adam) updates the parameters accordingly.
-        print(f'##### Before Running update_impure_fn in NeuralBanditModelV2...........')
+        # print(f'##### Before Running update_impure_fn in NeuralBanditModelV2...........')
         # print("Predictions shape:", preds.shape)
-        print("Rewards shape:", rewards.shape)
+        # print("Rewards shape:", rewards.shape)
         grads = jax.grad(self.loss)(params, contexts, actions, rewards )
         updates, opt_state = self.optimizer.update(grads, opt_state)
         new_params = optax.apply_updates(params, updates)

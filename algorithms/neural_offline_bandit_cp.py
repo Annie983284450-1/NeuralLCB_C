@@ -9,6 +9,7 @@ import numpy as np
 from joblib import Parallel, delayed
 from core.bandit_algorithm import BanditAlgorithm 
 from core.bandit_dataset import BanditDataset
+from tensorflow.keras.models import Sequential, clone_model
 from core.utils import inv_sherman_morrison, inv_sherman_morrison_single_sample, vectorize_tree
 
 import importlib
@@ -19,24 +20,59 @@ importlib.reload(algorithms.neural_bandit_model)
 
 from algorithms.neural_bandit_model import NeuralBanditModel, NeuralBanditModelV2
 
-
-
-import sys
  
 import importlib
 import cp_funs.PI
+
 importlib.reload(cp_funs.PI)
 from cp_funs.PI import prediction_interval
 
  
-import cp_funs.utils_cp as utils_cp
+# import cp_funs.utils_cp as util 
+import importlib
  
+import warnings
+
+import time as time
+import math
+# import matplotlib.pyplot as plt
+# from statsmodels.tsa.statespace.sarimax import SARIMAX
+# from statsmodels.tsa.statespace.exponential_smoothing import ExponentialSmoothing
+# from statsmodels.tsa.statespace.dynamic_factor_mq import DynamicFactorMQ
+# from sklearn.linear_model import LogisticRegression
+import numpy as np
+import pandas as pd
+# import os
+# import tensorflow.keras as keras
+# from tensorflow.keras.models import Sequential, clone_model
+# from tensorflow.keras.layers import Dense
+# from tensorflow.keras.layers import Dropout
+# from tensorflow.keras.optimizers import Adam
+# from tensorflow.keras.models import load_model
+# from tensorflow.keras.callbacks import EarlyStopping
+# import sys
+import tensorflow as tf
+tf.get_logger().setLevel('ERROR')
+warnings.filterwarnings("ignore")
+import multiprocessing 
+import dill
+ 
+
+multiprocessing.get_context().Process().Pickle = dill
+import importlib
+import core.bandit_dataset
+importlib.reload(core.bandit_dataset)
+from core.bandit_dataset import BanditDataset
+ 
+
+# if algorithms.neural_offline_bandit_cp import PT, PI cannot import algorithms.neural_offline_bandit_cp, there would be circular import error
+# from algorithms.neural_offline_bandit_cp import ApproxNeuraLCBV2_cp, NeuralBanditModelV2, NeuralBanditModel
 # ======================================================================
 # ========================================================================
-# the ApproxNeuraLCBV2 with conformal prediction
-class ApproxNeuraLCBV2_cp(BanditAlgorithm):
+# the ApproxNeuraLCB with conformal prediction
+class ApproxNeuraLCB_cp(BanditAlgorithm):
 
-    def __init__(self, hparams, res_dir, update_freq=1, name='ApproxNeuraLCBV2'):
+    def __init__(self, hparams, res_dir, update_freq=1, name='ApproxNeuraLCB_cp'):
         self.name = name 
         self.hparams = hparams 
         self.update_freq = update_freq
@@ -47,9 +83,17 @@ class ApproxNeuraLCBV2_cp(BanditAlgorithm):
         # data buffer for incoming data, update each round when we have a new (c,a, r)
         self.data = BanditDataset(hparams.context_dim, hparams.num_actions, hparams.buffer_s, '{}-data'.format(name))
         self.diag_Lambda = [jnp.ones(self.nn.num_params) * hparams.lambd0 for _ in range(hparams.num_actions)]
-        self.pred_interval_centers = []
+        # self.pred_interval_centers = []
         self.prediction_interval_model = None
         self.res_dir  = res_dir
+        # reset_data() will return a form of (contexts, actions, rewards, test_contexts, mean_test_rewards) 
+        # cmab = OfflineContextualBandit(*data.reset_data(sim))
+        self.Ensemble_fitted_func = []
+        self.Ensemble_online_resid = np.array([])
+        self.Ensemble_pred_interval_centers = []   
+        self.Ensemble_train_interval_centers = []  # Predicted training data centers by EnbPI
+        self.beta_hat_bins = []
+ 
 
     def reset(self, seed): 
         self.diag_Lambda = [jnp.ones(self.nn.num_params) * self.hparams.lambd0 for _ in range(self.hparams.num_actions)]
@@ -57,34 +101,46 @@ class ApproxNeuraLCBV2_cp(BanditAlgorithm):
         self.data.reset()
         print(f'~~~~~~~!!!!!! After running algo.reset()~!!!!!!!!!!~~~~~~~~~~')
         print(f'self.data.rewards.shape:{self.data.rewards}')
-        self.prediction_interval_model = None
+        # self.prediction_interval_model = None
     # line 5 in NeuraLCB_Bmode
-    def sample_action(self, contexts):
+    # here is where conformal prediction and NeuraLCB integrated together
+    def sample_action(self, test_contexts, opt_vals, opt_actions):
         # flags.DEFINE_integer('chunk_size', 500, 'Chunk size')
         # flags.DEFINE_integer('batch_size', 32, 'Batch size')
         cs = self.hparams.chunk_size
         # loo_preds = self.get_loo_params(contexts, actions, rewards)
         # print(f'LOO predictions (self.pred_interval_centers): {loo_preds}')
-        num_chunks = math.ceil(contexts.shape[0] / cs)
+        num_chunks = math.ceil(test_contexts.shape[0] / cs)
         acts = []
         for i in range(num_chunks):
-            ctxs = contexts[i * cs: (i+1) * cs,:] 
+            ctxs = test_contexts[i * cs: (i+1) * cs,:] 
             # for each chunk of context, store the lower confidence bound (lcb)
             lcb = [] 
+
+            # Calculating Lower Confidence Bound (LCB) for Each Action
+
+
             for a in range(self.hparams.num_actions):
                 # num_actions= 2
                 # a = 0 or 1
                 # actions = 0 if a =0, else 1
                 actions = jnp.ones(shape=(ctxs.shape[0],)) * a 
 
-
+                # ************************Integration********************************
                 # Use conformal predicted rewards if available, otherwise use the network's prediction
-                if len(self.pred_interval_centesrs) > 0:
-                    f = self.pred_interval_centers  # Use prediction intervals instead of NN output
-                else:
+                if len(self.Ensemble_pred_interval_centers) == 0:
+                    print(f'!!!! Prediction intervals not available at current stage!!! self.Ensemble_pred_interval_centers == None')
                     f = self.nn.out(self.nn.params, ctxs, actions)  # Default to the neural network output
-
-
+                    # print(f'f.shape=={f.shape}')
+                    # print(f'Prediction datatype f=== {type(f)}')
+                else:
+                    print(f'!!!!!! Prediction Intervals available!!!!')
+                    print(f'&&&&& len(Ensemble_pred_interval_centers)  === {len(self.Ensemble_pred_interval_centers)}&&&&&')
+                    f = self.Ensemble_pred_interval_centers[i * cs: (i+1) * cs]
+                    # print(f'&&&&& len(f) === {len(f)}&&&&&')
+                    # print(f'PI centers datatype == {type(f)}')
+                    f = jnp.array(f)
+                    # print(f'PI centers datatype after converting== {type(f)}')
                 # f = self.nn.out(self.nn.params, ctxs, actions) #the predicted reward for action a in the given context ctxs.
                 g = self.nn.grad_out(self.nn.params, ctxs, actions) / jnp.sqrt(self.nn.m)
                 # g = self.nn.grad_out_cp(self.nn.params, ctxs, actions) / jnp.sqrt(self.nn.m)
@@ -97,19 +153,76 @@ class ApproxNeuraLCBV2_cp(BanditAlgorithm):
             lcb = jnp.hstack(lcb)
             # lcb_a is used to decide which action to take by selecting the action with the highest LCB.
             acts.append(jnp.argmax(lcb, axis=1)) 
-        return jnp.hstack(acts)
+        sampled_test_actions = jnp.hstack(acts)
+
+        X_train = self.data.contexts
+        # selected actions for training
+        actions = self.data.actions.ravel().astype(int)
+        # rewards for training
+        Y_train = self.data.rewards[np.arange(len(actions)), actions].reshape(-1, 1)
+        X_predict = test_contexts
+        test_actions = sampled_test_actions.ravel().astype(int)
+        Y_predict = opt_vals
+        filename = self.res_dir
+        nn_model = self.nn
+        
+       
+        self.prediction_interval_model = prediction_interval(
+                        nn_model,  
+                        X_train, 
+                        X_predict, 
+                        Y_train, 
+                        Y_predict, 
+                        actions, 
+                        test_actions,
+                        filename)
+        self.Ensemble_pred_interval_centers = self.prediction_interval_model.fit_bootstrap_models_online(B=10, miss_test_idx=[])
+        # print(f'self.Ensemble_prediction_interval_centers:{self.Ensemble_pred_interval_centers}')
+        PI_dfs, results = self.prediction_interval_model.run_experiments(alpha=0.05, stride=8,methods=['Ensemble'])       
+        
+        # return jnp.hstack(acts)
+        return sampled_test_actions
     
  
-    def update_buffer(self, contexts, actions, rewards): 
-        print(f'!!!!!!!!!!data shapes before update_buffer() !!!!!!!!!!')
-        print(f'c.shape = {contexts.shape}')
-        print(f'a.shape = {actions.shape}')
-        print(f'r.shape = {rewards.shape}')
-        
-        self.data.add(contexts, actions, rewards)
-        return self.data.contexts, self.data.
-    
+    def update_buffer(self, c, a, r): 
+        print(f'        !!!!!!!!!! Updating buffer !!!!!!!!!!')
+        # print(f'!!!!!!!!!!data shapes before update_buffer() !!!!!!!!!!')
+        # print(f'c.shape = {c.shape}')
+        # print(f'a.shape = {a.shape}')
+        # print(f'r.shape = {r.shape}')
+        # c.shape = (1, 13)
+        # a.shape = (1,)
+        # r.shape = (1, 1)
+        # we add one data entry at each round where there is a new hour of EHR coming 
+        self.data.add(c, a, r)
+        # return self.data.contexts, self.data.actions, self.data.rewards
+    # adding the prediction_intervals
+
+    # update with prediction interval
     def update(self, contexts, actions, rewards):
+
+        # training for updating the nn parameters
+        self.nn.train(self.data, self.hparams.num_steps)
+
+        # if Is_PI: # update the action sample policy based on the 
+
+        #     self.Ensemble_pred_interval_centers = self.fit_bootstrap_models_online(B =10, miss_test_idx = [])
+        #     print(f'self.Ensemble_pred_interval_centers:{self.Ensemble_pred_interval_centers}')
+        # # Generate prediction intervals for each predicted reward
+        #     PIs_df, results = self.compute_PIs_Ensemble_online(alpha=0.05, stride=8)
+        #     print(f'PI_dfs.shape === {PIs_df.shape}')
+        #     print(f'results: {results}')
+        
+
+        u = self.nn.grad_out(self.nn.params, contexts, actions) / jnp.sqrt(self.nn.m) #neuralbanditV2
+        # u  = self.nn.grad_out(self.nn.params, contexts  ) / jnp.sqrt(self.nn.m)# neuralbandit
+
+
+        for i in range(contexts.shape[0]):
+            self.diag_Lambda[actions[i]] = self.diag_Lambda[actions[i]] + jnp.square(u[i,:])
+
+            
+    def update_original(self, c , a, r):
         """Update the network parameters and the confidence parameter.
         
         Args:
@@ -123,88 +236,20 @@ class ApproxNeuraLCBV2_cp(BanditAlgorithm):
         # Should run self.update_buffer before self.update to update the model in the latest data. 
         # loo_preds = self.get_loo_params(contexts, actions, rewards)
         # print(f'LOO predictions (self.pred_interval_centers): {loo_preds}')
+
+        # replace this with the PI b ased train
         self.nn.train(self.data, self.hparams.num_steps)
 
-        u = self.nn.grad_out(self.nn.params, contexts, actions) / jnp.sqrt(self.nn.m) #neuralbanditV2
+         
+        u = self.nn.grad_out(self.nn.params, c, a) / jnp.sqrt(self.nn.m) #neuralbanditV2
         # u  = self.nn.grad_out(self.nn.params, contexts  ) / jnp.sqrt(self.nn.m)# neuralbandit
 
 
-        for i in range(contexts.shape[0]):
-            self.diag_Lambda[actions[i]] = self.diag_Lambda[actions[i]] + jnp.square(u[i,:])
-        
-        # print(f'                Data fed into get_loo_params:%%%%%%%%%%%%')
-        # print(f'self.data.contexts.shape:{self.data.contexts.shape}')
-        # print(f'self.data.actions.shape:{self.data.actions.shape}')
-        # print(f'self.data.rewards.shape:{self.data.rewards.shape}')
+        for i in range(c.shape[0]):
+            self.diag_Lambda[a[i]] = self.diag_Lambda[a[i]] + jnp.square(u[i,:])
 
-
-
-
-
-
-        # loo_preds = self.get_loo_params(self.data.contexts, self.data.actions, self.data.rewards)
-       
-        # print(f'LOO predictions (self.pred_interval_centers): {loo_preds}')
-
-
-
-    # def monitor_loo(self, contexts=None, actions=None, rewards=None):
-    #     print(f'running monitor() of algo ApproxNeuraLCBV2 .......')
-    #     ## debug: 
-    #     # print(f'param.shape:')
-    #     # print([param.shape for param in jax.tree_leaves(self.nn.params)])
-    #     # print(f'type(self.nn.params): {self.nn.params}')
-    #     # for param in jax.tree_leaves(self.nn.params):
-    #     #     print(f'current param: {param}')
-    #     #     print(f'param.shape: {param.shape}')
-    #     #     new_param = jnp.ravel(param)
-    #     #     print(f'new_param.shape: {new_param.shape}')
-    #     # sys.exit()
-
-    #     '''
-    #     The way jnp.hstack is called might be causing the issue. 
-    #     When you use a generator expression with jnp.hstack, 
-    #     JAX might not handle it as expected because it could require an explicit materialization of the sequence. 
-    #     Try converting the generator to a list before passing it to jnp.hstack:
-    #     norm = jnp.hstack([jnp.ravel(param) for param in jax.tree_leaves(self.nn.params)])
-    #     '''
-    #     # norm = jnp.hstack((jnp.ravel(param) for param in jax.tree_leaves(self.nn.params)))
-    #     norm = jnp.hstack([jnp.ravel(param) for param in jax.tree_leaves(self.nn.params)])
-    #     preds = self.nn.out(self.nn.params, contexts, actions)
-
-
-    #     cnfs = []
-    #     for a in range(self.hparams.num_actions):
-    #         # ??? what is this actions_tmp???
-    #         # each element is set to integer 'a', length equals to the number of contexts
-    #         # generate a temporary action array where the chosen action a is applied uniformly across all sample in the batch
-    #         actions_tmp = jnp.ones(shape=(contexts.shape[0],)) * a 
-    #         f = self.nn.out(self.nn.params, contexts, actions_tmp) # (num_samples, 1)
-    #         # g = self.nn.grad_out(self.nn.params, contexts, actions_tmp) / jnp.sqrt(self.nn.m) # (num_samples, p)
-    #         g = self.nn.grad_out_fn(self.nn.params, contexts, actions_tmp) / jnp.sqrt(self.nn.m) # (num_samples, p)
-
- 
-    #         gAg = jnp.sum( jnp.square(g) / self.diag_Lambda[a][:], axis=-1)
-    #         cnf = jnp.sqrt(gAg) # (num_samples,)
-
-    #         cnfs.append(cnf) 
-    #     cnf = jnp.hstack(cnfs) 
-    #     loo_preds = self.pred_interval_centers
-    #     cost = self.nn.loss(self.nn.params, contexts, actions, rewards, loo_preds)
-    #     a = int(actions.ravel()[0])
-    #     if self.hparams.debug_mode == 'simple':
-    #         print('     r: {} | a: {} | f: {} | cnf: {} | loss: {} | param_mean: {}'.format(rewards.ravel()[0], a, \
-    #             preds.ravel()[0], \
-    #             cnf.ravel()[a], cost, jnp.mean(jnp.square(norm))))
-    #     else:
-    #         print('     r: {} | a: {} | f: {} | cnf: {} | loss: {} | param_mean: {}'.format(rewards.ravel()[0], \
-    #             a, preds.ravel(), \
-    #             cnf.ravel(), cost, jnp.mean(jnp.square(norm))))
- 
     def monitor(self, contexts=None, actions=None, rewards=None):
         print(f'$$$$$$$$$$$ Monitoring ApproxNeuraLCBV2 .......')
-       
-        
         # The way jnp.hstack is called might be causing the issue. 
         # When you use a generator expression with jnp.hstack, 
         # JAX might not handle it as expected because it could require an explicit materialization of the sequence. 
@@ -246,13 +291,11 @@ class ApproxNeuraLCBV2_cp(BanditAlgorithm):
             gAg = jnp.sum( jnp.square(g) / self.diag_Lambda[a][:], axis=-1)
             cnf = jnp.sqrt(gAg) # (num_samples,)
             print(f'Confidence bounds: {cnf}')
-
             cnfs.append(cnf) 
         cnf = jnp.hstack(cnfs) 
-        # loo_preds = self.pred_interval_centers
         cost = self.nn.loss(self.nn.params, contexts, actions, rewards )
-        if len(self.pred_interval_centers) > 0:
-            print(f'LOO Predictions (centers): {self.pred_interval_centers}')
+        if len(self.Ensemble_pred_interval_centers) > 0:
+            print(f'length of LOO Predictions (centers): {len(self.Ensemble_pred_interval_centers)}')
         else:
             print('No LOO predictions available at this point.')
 
@@ -266,55 +309,10 @@ class ApproxNeuraLCBV2_cp(BanditAlgorithm):
             print('     r: {} | a: {} | f: {} | cnf: {} | loss: {} | param_mean: {}'.format(rewards.ravel()[0], \
                 a, preds.ravel(), \
                 cnf.ravel(), cost, jnp.mean(jnp.square(norm))))
-    '''
-    
-    def get_loo_params(self, contexts=None, actions=None, rewards=None):
-    
-    #Calculate conformal prediction intervals using the prediction_interval class.
-  
-    # Extract training and prediction data from the bandit dataset
-        X_train, Y_train = self.data.contexts, self.data.rewards
-        X_predict, Y_predict = contexts, rewards
-
-         
-        if self.prediction_interval_model is None:
-            # Initialize conformal prediction interval model if not already initialized
-            self.prediction_interval_model = prediction_interval(
-                self.nn,  # The neural network model (NeuralBanditModelV2)
-                X_train, X_predict, Y_train, Y_predict, filename = self.res_dir
-            )
-
-        # Calculate conformal prediction intervals using bootstrapping
-        miss_test_idx = []  # You can customize this based on your data handling
-        B = 0  # Number of bootstrap samples, adjust this as needed
-        alpha = 0.1  # Confidence level for prediction intervals
-
-        # Fit bootstrap models and compute intervals
-        self.pred_interval_centers = self.prediction_interval_model.fit_bootstrap_models_online(B, miss_test_idx)
-        print(f'self.prediction_interval_centers:{self.pred_interval_centers}')
-        # sys.exit()
-        # Generate prediction intervals for each predicted reward
-
-        PIs_df = self.prediction_interval_model.compute_PIs_Ensemble_online(alpha=0.05, stride=10)
-
-        # # You now have the prediction intervals in PIs_df
-        # Y_upper = PIs_df['upper'].values
-        # Y_lower = PIs_df['lower'].values
-
-        # # Print the prediction intervals
-        # print(f'Prediction Intervals:')
-        # print(f'Lower Bound: {Y_lower}, Upper Bound: {Y_upper}')
-
-        PIs_df, results = self.prediction_interval_model.run_experiments(alpha=0.05, stride=10, methods=['Ensemble'] )
-        print(f'%%%%%%%%%%%~~~~~~~~~`~~~conformal prediction average results: ')
-        print({results})
 
 
-        if not isinstance(results, pd.DataFrame):
-            results = pd.DataFrame([results])
-        with open(self.res_dir+'/final_all_results_avg.csv', 'a') as f:
-            results.to_csv(f, header=f.tell()==0, index=False)
-        return self.pred_interval_centers    
-    '''
 
 
+
+
+     

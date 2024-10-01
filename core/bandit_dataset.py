@@ -131,11 +131,13 @@ class BanditDataset(object):
         else:
             self.actions = jnp.vstack((self.actions, action.reshape(-1,1)))
 
-        print(f'&&&&&&&&&&&& After adding new (c,a,r)')
-        print(f'&&&&&&& context.shape: {self.contexts.shape}')
-        print(f'&&&&&&& action.shape: {self.actions.shape}')
-        print(f'&&&&&&& reward.shape:{self.rewards.shape}')
-
+        # print(f'&&&&&&&&&&&& After adding new (c,a,r)')
+        # print(f'&&&&&&& context.shape: {self.contexts.shape}')
+        # print(f'&&&&&&& action.shape: {self.actions.shape}')
+        # print(f'&&&&&&& reward.shape:{self.rewards.shape}')
+        # &&&&&&& context.shape: (1, 13)
+        # &&&&&&& action.shape: (1, 1)
+        # &&&&&&& reward.shape:(1, 2)
 
 
     def get_batch_with_weights(self, batch_size):
@@ -227,6 +229,7 @@ class BanditDataset(object):
                 # ind = np.random.choice(range(max(0, n - self.buffer_s), n), batch_size)
         else:
             ind = range(n - batch_size,n)
+
         a = self.actions[ind,:].ravel().astype(int)
         rewards_batch = self.rewards[ind, :]  # First select the rows using ind
         rewards_selected = rewards_batch[np.arange(len(a)), a].reshape(-1, 1)

@@ -29,7 +29,8 @@ importlib.reload(algorithms.neural_offline_bandit)
 
 # from algorithms.neural_offline_bandit import ExactNeuraLCBV2, NeuralGreedyV2, ApproxNeuraLCBV2_cp
 from algorithms.neural_offline_bandit import NeuralGreedyV2, ApproxNeuraLCBV2
-from algorithms.neural_offline_bandit_cp import ApproxNeuraLCBV2_cp
+
+from algorithms.neural_offline_bandit_cp import ApproxNeuraLCB_cp
 
 
 from algorithms.lin_lcb import LinLCB 
@@ -119,18 +120,22 @@ flags.DEFINE_float('eps', 0.1, 'Probability of selecting a random action in eps-
 flags.DEFINE_float('subset_r', 0.5, 'The ratio of the action spaces to be selected in offline data')
 
 
-num_train_sepsis_pat_win = 10
-num_test_pat_septic_win = 1
+# num_train_sepsis_pat_win = 10
+# num_test_pat_septic_win = 1
+num_train_sepsis_pat_win = 500
+num_test_pat_septic_win = 250
 win_size= 8 
 print(f'num_train_sepsis_pat_win === {num_train_sepsis_pat_win}')
 print(f'num_test_pat_septic_win === {num_test_pat_septic_win}')
+
+
 is_window = True
 flags.DEFINE_boolean('is_window', is_window, 'to use the window sized data or not?') 
 
 flags.DEFINE_integer('num_train_sepsis_pat_win', num_train_sepsis_pat_win , 'Number of septic windows for training.') 
 flags.DEFINE_integer('num_test_pat_septic_win', num_test_pat_septic_win, 'Number of septic windows for testing.') 
 
-    
+
 
 # this might only corresponding to a few hundreds patients
 if is_window:
@@ -149,11 +154,13 @@ flags.DEFINE_integer('update_freq', 1, 'Update frequency')
 flags.DEFINE_integer('freq_summary', 10, 'Summary frequency')
 
 flags.DEFINE_integer('test_freq', 10, 'Test frequency')
-flags.DEFINE_string('algo_group', 'approx-neural', 'baseline/neural')
+# flags.DEFINE_string('algo_group', 'approx-neural', 'baseline/neural')
+flags.DEFINE_string('algo_group', 'approx-neural_cp', 'conformal prediction/neural')
+
 # flags.DEFINE_integer('num_sim', 10, 'Number of simulations')
 flags.DEFINE_integer('num_sim', 1, 'Number of simulations')
 
-flags.DEFINE_float('noise_std', 0.1, 'Noise std')
+flags.DEFINE_float('noise_std', 0.01, 'Noise std')
 
 flags.DEFINE_integer('chunk_size', 500, 'Chunk size')
 # flags.DEFINE_integer('chunk_size', 5, 'Chunk size')
@@ -202,16 +209,30 @@ def main(unused_argv):
         # so actually this is returning a class not a string
         DataClass = dataclasses[FLAGS.data_type]
         if FLAGS.data_type == 'sepsis':
-
+        # class SepsisData(object):
+        #     def __init__(self,  
+        #                 is_window,
+        #                 num_train_sepsis_pat_win,
+        #                 num_test_pat_septic_win,
+        #                 num_contexts, 
+        #                 num_test_contexts,         
+        #                 num_actions=2, 
+        #                 noise_std=0.01,
+        #                 pi='eps-greedy', 
+        #                 eps=0.1, 
+        #                 subset_r=0.5
+        #                 ):
             data = DataClass(                
                         is_window = FLAGS.is_window,
                         num_train_sepsis_pat_win= FLAGS.num_train_sepsis_pat_win,
                         num_test_pat_septic_win= FLAGS.num_test_pat_septic_win, 
                         num_contexts=FLAGS.num_contexts, 
                         num_test_contexts=FLAGS.num_test_contexts,
+                        num_actions=2,
+                        noise_std = FLAGS.noise_std,
                         pi = FLAGS.policy, 
                         eps = FLAGS.eps, 
-                        subset_r = FLAGS.subset_r, ) 
+                        subset_r = FLAGS.subset_r) 
         else:
 
             data = DataClass(num_contexts=FLAGS.num_contexts, 
@@ -292,6 +313,7 @@ def main(unused_argv):
     # res_dir = os.path.join('results', data_prefix) 
     res_dir = os.path.join(f'results/trainwins_{num_train_sepsis_pat_win}_testwins_{num_test_pat_septic_win}', data_prefix) 
     flags.DEFINE_string('res_dir', res_dir, 'final average result path')
+    print(f'final result path === {FLAGS.res_dir}')
 
     if not os.path.exists(res_dir):
         os.makedirs(res_dir)
@@ -301,86 +323,102 @@ def main(unused_argv):
     #================================================================
     # Algorithms 
     #================================================================
-
-    if FLAGS.algo_group == 'approx-neural':
-        algos = [
-            # class UniformSampling(BanditAlgorithm)
-                # UniformSampling(lin_hparams),
-                # NeuralGreedyV2(hparams, update_freq = FLAGS.update_freq), 
-                # class ApproxNeuraLCBV2(BanditAlgorithm)
-                ApproxNeuraLCBV2_cp(hparams, res_dir = FLAGS.res_dir, update_freq = FLAGS.update_freq)
-                # ApproxNeuraLCBV2(hparams, update_freq = FLAGS.update_freq)
-            ]
-
-        algo_prefix = 'approx-neural-gridsearch_epochs={}_m={}_layern={}_buffer={}_bs={}_lr={}_beta={}_lambda={}_lambda0={}'.format(
-            hparams.num_steps, min(hparams.layer_sizes), hparams.layer_n, hparams.buffer_s, hparams.batch_size, hparams.lr, \
-            hparams.beta, hparams.lambd, hparams.lambd0
-        )
-
-    
-    if FLAGS.algo_group == 'neural-greedy':
-        algos = [
+    original_stdout = sys.stdout
+    with open(res_dir+'/log.out', 'w') as f:
+        sys.stdout = f 
+        if FLAGS.algo_group == 'approx-neural':
+            
+            algos = [
+                # class UniformSampling(BanditAlgorithm)
+                    # UniformSampling(lin_hparams),
+                    # NeuralGreedyV2(hparams, update_freq = FLAGS.update_freq), 
+                    # class ApproxNeuraLCBV2(BanditAlgorithm)
+                    # ApproxNeuraLCB_cp(hparams, res_dir = FLAGS.res_dir, update_freq = FLAGS.update_freq)
+                    ApproxNeuraLCBV2(hparams, update_freq = FLAGS.update_freq)
+                ]
+            # algo_prefix = 'approx-neural-gridsearch_epochs={}_m={}_layern={}_buffer={}_bs={}_lr={}_beta={}_lambda={}_lambda0={}'.format(
+            #     hparams.num_steps, min(hparams.layer_sizes), hparams.layer_n, hparams.buffer_s, hparams.batch_size, hparams.lr, \
+            #     hparams.beta, hparams.lambd, hparams.lambd0
+            algo_prefix = 'no-cp-approx-neural-gridsearch_epochs={}_m={}_layern={}_buffer={}_bs={}_lr={}_beta={}_lambda={}_lambda0={}'.format(
+                hparams.num_steps, min(hparams.layer_sizes), hparams.layer_n, hparams.buffer_s, hparams.batch_size, hparams.lr, \
+                hparams.beta, hparams.lambd, hparams.lambd0
+            )
+        if FLAGS.algo_group == 'approx-neural_cp':
+            algos = [
+                # class UniformSampling(BanditAlgorithm)
+                    # UniformSampling(lin_hparams),
+                    # NeuralGreedyV2(hparams, update_freq = FLAGS.update_freq), 
+                    # class ApproxNeuraLCBV2(BanditAlgorithm)
+                    ApproxNeuraLCB_cp(hparams, res_dir = FLAGS.res_dir, update_freq = FLAGS.update_freq)
+                    # ApproxNeuraLCBV2(hparams, update_freq = FLAGS.update_freq)
+                ]
+            algo_prefix = 'approx-neural-gridsearch_epochs={}_m={}_layern={}_buffer={}_bs={}_lr={}_beta={}_lambda={}_lambda0={}'.format(
+                hparams.num_steps, min(hparams.layer_sizes), hparams.layer_n, hparams.buffer_s, hparams.batch_size, hparams.lr, \
+                hparams.beta, hparams.lambd, hparams.lambd0
+            )
+        if FLAGS.algo_group == 'neural-greedy':
+            algos = [
+                    # UniformSampling(lin_hparams),
+                    NeuralGreedyV2(hparams, update_freq = FLAGS.update_freq), 
+                ]
+            algo_prefix = 'neural-greedy-gridsearch_epochs={}_m={}_layern={}_buffer={}_bs={}_lr={}_lambda={}'.format(
+                hparams.num_steps, min(hparams.layer_sizes), hparams.layer_n, hparams.buffer_s, hparams.batch_size, hparams.lr, \
+            hparams.lambd
+            ) 
+        
+        if FLAGS.algo_group == 'baseline':
+            algos = [
                 UniformSampling(lin_hparams),
-                NeuralGreedyV2(hparams, update_freq = FLAGS.update_freq), 
+                LinLCB(lin_hparams),
+                ## KernLCB(lin_hparams), 
+                # NeuralGreedyV2(hparams, update_freq = FLAGS.update_freq),
+                # ApproxNeuralLinLCBV2(hparams), 
+                # ApproxNeuralLinGreedyV2(hparams),
+                NeuralLinGreedyJointModel(hparams), 
+                ApproxNeuralLinLCBJointModel(hparams)
+
             ]
 
-        algo_prefix = 'neural-greedy-gridsearch_epochs={}_m={}_layern={}_buffer={}_bs={}_lr={}_lambda={}'.format(
-            hparams.num_steps, min(hparams.layer_sizes), hparams.layer_n, hparams.buffer_s, hparams.batch_size, hparams.lr, \
-           hparams.lambd
-        ) 
-      
+            algo_prefix = 'baseline_epochs={}_m={}_layern={}_beta={}_lambda0={}_rbf-sigma={}_maxnum={}'.format(
+                hparams.num_steps, min(hparams.layer_sizes), hparams.layer_n, \
+                hparams.beta, hparams.lambd0, lin_hparams.rbf_sigma, lin_hparams.max_num_sample
+            )
 
+        if FLAGS.algo_group == 'kern': # for tuning KernLCB
+            algos = [
+                UniformSampling(lin_hparams),
+                KernLCB(lin_hparams), 
+            ]
 
-    if FLAGS.algo_group == 'baseline':
-        algos = [
-            UniformSampling(lin_hparams),
-            LinLCB(lin_hparams),
-            ## KernLCB(lin_hparams), 
-            # NeuralGreedyV2(hparams, update_freq = FLAGS.update_freq),
-            # ApproxNeuralLinLCBV2(hparams), 
-            # ApproxNeuralLinGreedyV2(hparams),
-            NeuralLinGreedyJointModel(hparams), 
-            ApproxNeuralLinLCBJointModel(hparams)
+            algo_prefix = 'kern-gridsearch_beta={}_rbf-sigma={}_maxnum={}'.format(
+                hparams.beta, lin_hparams.rbf_sigma, lin_hparams.max_num_sample
+            )
 
-        ]
+        if FLAGS.algo_group == 'neurallinlcb': # Tune NeuralLinLCB seperately  
+            algos = [
+                UniformSampling(lin_hparams),
+                ApproxNeuralLinLCBJointModel(hparams)
+            ]
 
-        algo_prefix = 'baseline_epochs={}_m={}_layern={}_beta={}_lambda0={}_rbf-sigma={}_maxnum={}'.format(
-            hparams.num_steps, min(hparams.layer_sizes), hparams.layer_n, \
-            hparams.beta, hparams.lambd0, lin_hparams.rbf_sigma, lin_hparams.max_num_sample
-        )
-
-    if FLAGS.algo_group == 'kern': # for tuning KernLCB
-        algos = [
-            UniformSampling(lin_hparams),
-            KernLCB(lin_hparams), 
-        ]
-
-        algo_prefix = 'kern-gridsearch_beta={}_rbf-sigma={}_maxnum={}'.format(
-            hparams.beta, lin_hparams.rbf_sigma, lin_hparams.max_num_sample
-        )
-
-    if FLAGS.algo_group == 'neurallinlcb': # Tune NeuralLinLCB seperately  
-        algos = [
-            UniformSampling(lin_hparams),
-            ApproxNeuralLinLCBJointModel(hparams)
-        ]
-
-        algo_prefix = 'neurallinlcb-gridsearch_m={}_layern={}_beta={}_lambda0={}'.format(
-            min(hparams.layer_sizes), hparams.layer_n, hparams.beta, hparams.lambd0
-        )
-    #==============================
-    # Runner 
-    #==============================
-    # file path for saving the results
-    file_name = os.path.join(res_dir, algo_prefix) + '.npz' 
+            algo_prefix = 'neurallinlcb-gridsearch_m={}_layern={}_beta={}_lambda0={}'.format(
+                min(hparams.layer_sizes), hparams.layer_n, hparams.beta, hparams.lambd0
+            )
+        #==============================
+        # Runner 
+        #==============================
+        # file path for saving the results
+        file_name = os.path.join(res_dir, algo_prefix) + '.npz' 
+        
+        
+        # this is the core function that run all the experiments
+        print(f'starting contextual_bandit_runner() ......')
+        start  =  time.time()
+        regrets, errs = contextual_bandit_runner(algos, data, FLAGS.num_sim, FLAGS.update_freq, FLAGS.test_freq, FLAGS.verbose, FLAGS.debug, FLAGS.normalize, file_name, res_dir )
     
-    # this is the core function that run all the experiments
-    print(f'starting contextual_bandit_runner() ......')
-    start  =  time.time()
-    regrets, errs = contextual_bandit_runner(algos, data, FLAGS.num_sim, FLAGS.update_freq, FLAGS.test_freq, FLAGS.verbose, FLAGS.debug, FLAGS.normalize, file_name, res_dir )
- 
-    np.savez(file_name, regrets=regrets, errs=errs)
-    print(f'total time for contextual bandit runner: {time.time()-start} seconds')
+        np.savez(file_name, regrets=regrets, errs=errs)
+        print(f'total time for contextual bandit runner: {time.time()-start} seconds')
+
+    sys.stdout = original_stdout
 
 
 # thissetup is only executed only if the script is run directly from the command line, not when imported as a module in another python project scrpit.

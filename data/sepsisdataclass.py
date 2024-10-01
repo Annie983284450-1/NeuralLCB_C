@@ -292,6 +292,8 @@ class SepsisData(object):
         rewards = mean_rewards + self.noise_std * np.random.normal(size=mean_rewards.shape)
         
         # Simulate actions based on epsilon-greedy policy
+
+        # !!! so the actions after reset() is already chosen
         actions = sample_offline_policy(mean_rewards, self.num_train_samples, self.num_actions, self.pi, self.eps, self.subset_r, contexts, rewards)
         
         dataset = (contexts, actions, rewards, test_contexts, mean_test_rewards)

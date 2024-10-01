@@ -12,6 +12,13 @@ from core.utils import inv_sherman_morrison, inv_sherman_morrison_single_sample,
 from algorithms.neural_bandit_model import NeuralBanditModel, NeuralBanditModelV2
 import sys
 import utils_Sepsysolcp as util
+ 
+import importlib
+import cp_funs.PI
+
+importlib.reload(cp_funs.PI)
+from cp_funs.PI import prediction_interval
+
 
 
 class ExactNeuraLCBV2(BanditAlgorithm):
@@ -209,28 +216,8 @@ class ApproxNeuraLCBV2(BanditAlgorithm):
             # print(lcb)
             acts.append( jnp.argmax(lcb, axis=1)) 
         return jnp.hstack(acts)
-        # def process(i):
-        #     ctxs = contexts[i * cs: (i+1) * cs,:] 
-        #     lcb = []
-        #     for a in range(self.hparams.num_actions):
-        #         actions = jnp.ones(shape=(ctxs.shape[0],)) * a 
-
-        #         f = self.nn.out(self.nn.params, ctxs, actions) # (num_samples, 1)
-        #         # g = self.nn.grad_out(self.nn.params, convoluted_contexts) / jnp.sqrt(self.nn.m) # (num_samples, p)
-        #         g = self.nn.grad_out(self.nn.params, ctxs, actions) / jnp.sqrt(self.nn.m)
-        #         gAg = jnp.sum( jnp.square(g) / self.diag_Lambda[a][:], axis=-1) # (None, p) -> (None,)
-
-        #         cnf = jnp.sqrt(gAg) # (num_samples,)
-        #         lcb_a = f.ravel() - self.hparams.beta * cnf.ravel()  # (num_samples,)
-        #         lcb.append(lcb_a.reshape(-1,1)) 
-        #     lcb = jnp.hstack(lcb) 
-        #     # print(lcb)
-        #     return jnp.argmax(lcb, axis=1)
     
-        # acts = Parallel(n_jobs=50,prefer="threads")(delayed(process)(i) for i in range(num_chunks))
-        # return jnp.hstack(acts)
-    
-    # see the definition in BanditDataset\
+    # see the definition in BanditDataset
     # update contexts, actions and reward
     def update_buffer(self, contexts, actions, rewards): 
         self.data.add(contexts, actions, rewards)
@@ -492,7 +479,7 @@ class NeuraLCB(BanditAlgorithm):
 
 class ExactNeuraLCB(BanditAlgorithm):
     """NeuraLCB using exact confidence matrix. """
-    def __init__(self, hparams, name='ExactNeuraLCB'):
+    def __init__(self, hparams, res_dir,name='ExactNeuraLCB'):
         self.name = name 
         self.hparams = hparams 
         opt = optax.adam(hparams.lr)
@@ -508,13 +495,21 @@ class ExactNeuraLCB(BanditAlgorithm):
                 np.eye(self.nn.num_params)/hparams.lambd0 for _ in hparams.num_actions
             ]
         ) # (num_actions, p, p)
+        self.prediction_interval_model = None
+        self.res_dir  = res_dir
+        self.Ensemble_fitted_func = []
+        self.Ensemble_online_resid = np.array([])
+        self.Ensemble_pred_interval_centers = []   
+        self.Ensemble_train_interval_centers = []  # Predicted training data centers by EnbPI
+        self.beta_hat_bins = []
 
-    def sample_action(self, contexts):
+
+    def sample_action_original(self, context):
         """
         Args:
             context: (None, self.hparams.context_dim)
         """
-        n = contexts.shape[0] 
+        n = context.shape[0] 
         
         if n <= self.hparams.max_test_batch:
             f = self.nn.out(self.nn.params, context) # (num_samples, num_actions)
@@ -541,7 +536,82 @@ class ExactNeuraLCB(BanditAlgorithm):
                 acts.append(jnp.argmax(lcb, axis=1).ravel())
             return jnp.array(acts)
             
+    def sample_action(self, context, opt_vals, opt_actions):
+        """
+        Args:
+            context: (None, self.hparams.context_dim)
+        """
+        n = context.shape[0] 
+        
+        if n <= self.hparams.max_test_batch:
+            if len(self.Ensemble_pred_interval_centers) == 0:
+                f = self.nn.out(self.nn.params, context) # (num_samples, num_actions)
+            else:
+                f = self.Ensemble_pred_interval_centers 
 
+            g = self.nn.grad_out(self.nn.params, context) / jnp.sqrt(self.nn.m) # (num_actions, num_samples, p)
+            gA = jnp.sum(jnp.multiply(g[:,:,None,:], self.Lambda_inv[:, None, :,:]), axis=-1) # (num_actions, num_samples, p)
+            gAg = jnp.sum(jnp.multiply(gA, g), axis=-1) # (num_actions, num_samples)
+            cnf = jnp.sqrt(gAg).T # (num_samples, num_actions)
+
+            lcb = f - self.hparams.beta * cnf   # (num_samples, num_actions)
+            sampled_test_actions = jnp.argmax(lcb, axis=1)
+            # return jnp.argmax(lcb, axis=1)
+        else: # Break contexts in batches if it is large.
+            inv = int(n / self.hparams.max_test_batch)
+            acts = []
+            for i in range(inv):
+                c = context[i*self.hparams.max_test_batch:self.hparams.max_test_batch*(i+1),:]
+                if len(self.Ensemble_pred_interval_centers) == 0:
+                    f = self.nn.out(self.nn.params, c) # (num_samples, num_actions)
+                else:
+                
+                    f = self.Ensemble_pred_interval_centers[i*self.hparams.max_test_batch:self.hparams.max_test_batch*(i+1),:]
+                    f = jnp.array(f)
+                    print(f'!!!!!! Prediction Intervals available!!!!')
+                    print(f'&&&&& len(Ensemble_pred_interval_centers)  === {len(self.Ensemble_pred_interval_centers)}&&&&&')
+                    print(f'PI centers datatype == {type(self.Ensemble_pred_interval_centers)}')
+                # f = self.nn.out(self.nn.params, c) # (num_samples, num_actions)
+
+                g = self.nn.grad_out(self.nn.params, c) # (num_actions, num_samples, p)
+
+                gA = jnp.sum(jnp.multiply(g[:,:,None,:], self.Lambda_inv[:, None, :,:]), axis=-1) # (num_actions, num_samples, p)
+                gAg = jnp.sum(jnp.multiply(gA, g), axis=-1) # (num_actions, num_samples)
+                cnf = jnp.sqrt(gAg).T # (num_samples, num_actions)
+
+                lcb = f - self.hparams.beta * cnf   # (num_samples, num_actions)
+                acts.append(jnp.argmax(lcb, axis=1).ravel())
+            sampled_test_actions = jnp.hstack(acts)
+            # return jnp.array(acts)
+        
+
+        X_train = self.data.contexts
+        # selected actions for training
+        actions = self.data.actions.ravel().astype(int)
+        # rewards for training
+        Y_train = self.data.rewards[np.arange(len(actions)), actions].reshape(-1, 1)
+        X_predict = context
+        test_actions = sampled_test_actions.ravel().astype(int)
+        Y_predict = opt_vals
+        filename = self.res_dir
+        nn_model = self.nn
+        
+       
+        self.prediction_interval_model = prediction_interval(
+                        nn_model,  
+                        X_train, 
+                        X_predict, 
+                        Y_train, 
+                        Y_predict, 
+                        actions, 
+                        test_actions,
+                        filename)
+        self.Ensemble_pred_interval_centers = self.prediction_interval_model.fit_bootstrap_models_online(B=10, miss_test_idx=[])
+        print(f'self.Ensemble_prediction_interval_centers:{self.Ensemble_pred_interval_centers}')
+        PI_dfs, results = self.prediction_interval_model.run_experiments(alpha=0.05, stride=8,methods=['Ensemble'])       
+        
+        # return jnp.hstack(acts)
+        return sampled_test_actions
     def update(self, contexts, actions, rewards):
         """Update the network parameters and the confidence parameter.
         

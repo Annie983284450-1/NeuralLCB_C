@@ -32,23 +32,32 @@ import core.bandit_dataset
 importlib.reload(core.bandit_dataset)
 from core.bandit_dataset import BanditDataset
 import copy
-from algorithms.neural_offline_bandit_cp import ApproxNeuraLCBV2_cp, NeuralBanditModelV2, NeuralBanditModel
+
+# if algorithms.neural_offline_bandit_cp import PT, PI cannot import algorithms.neural_offline_bandit_cp, there would be circular import error
+# from algorithms.neural_offline_bandit_cp import ApproxNeuraLCBV2_cp, NeuralBanditModelV2, NeuralBanditModel
+
 class prediction_interval():
     '''
         Create prediction intervals using different methods (i.e., EnbPI, J+aB ICP, Weighted, Time-series)
     '''
  
 
-    def __init__(self, algo, cmab, filename):
+    def __init__(self,  nn_model,  # The neural network model (NeuralBanditModelV2)
+                X_train, X_predict, Y_train, Y_predict,  actions, test_actions, filename):
         
-        self.nn_model = algo.nn  # NeuralBanditModelV2(opt, hparams, '{}-net'.format(name))
+        # self.nn_model = algo.nn  # NeuralBanditModelV2(opt, hparams, '{}-net'.format(name))
+        self.nn_model= nn_model
 
         # reset_data() will return a form of (contexts, actions, rewards, test_contexts, mean_test_rewards) 
         # cmab = OfflineContextualBandit(*data.reset_data(sim))
-        self.X_train = 
+        self.X_train =  X_train
         self.X_predict = X_predict
         self.Y_train = Y_train
         self.Y_predict = Y_predict
+        self.actions = actions
+        self.test_actions = test_actions
+
+        
         # list of models for B bootstraps
         self.Ensemble_fitted_func = []
         self.Ensemble_online_resid = np.array([])
@@ -65,7 +74,7 @@ class prediction_interval():
         # self.WeightCP_online_resid = np.array([])
         # self.JaB_boot_samples_idx = 0
         # self.JaB_boot_predictions = 0
-        self.final_result_path = filename
+        self.filename = filename
 
 
     def fit_bootstrap_models_online(self,  B, miss_test_idx):
@@ -74,9 +83,11 @@ class prediction_interval():
         '''
         n = len(self.X_train)  
         n1 = len(self.X_predict)
-        print('============Size of X_train and X_predict:')
-        print(f'~~~~~self.X_train.shape === {self.X_train.shape}')
-        print(f'~~~~~self.X_predict.shape ==={self.X_predict.shape}')
+        print('====================================Size Checking of fit_bootstrap_models_online()====================================:')
+        print(f'~~~~~~~~~~self.X_train.shape === {self.X_train.shape}~~~~~~~~~~')
+        print(f'~~~~~~~~~~self.X_predict.shape ==={self.X_predict.shape}~~~~~~~~~~')
+        print(f'~~~~~~~~~~self.Y_train.shape === {self.Y_train.shape}~~~~~~~~~~')
+        print(f'~~~~~~~~~~self.Y_predict.shape ==={self.Y_predict.shape}~~~~~~~~~~')
         boot_samples_idx = util.generate_bootstrap_samples(n,n,B)
         # hold predictions from each f^b, for the whole datatset
         boot_predictions = np.zeros((B, (n+n1)), dtype=float)
@@ -90,33 +101,32 @@ class prediction_interval():
             # Clone the current neural network model
             # model = clone_model(self.nn_model)
             model = self.nn_model.clone()
-            if isinstance(data, NeuralBanditModelV2):
-                print("********* The loaded nn model is an instance of NeuralBanditModelV2.")
-            else:
-                print("*********Error!!!! The loaded nn model is not an instance of NeuralBanditModelV2.")
-
-                sys.exit()
-            data = BanditDataset(model.hparams.context_dim, model.hparams.num_actions, len(self.X_train), f'{b}_th_fitdata')
+            tmp_data = BanditDataset(model.hparams.context_dim, model.hparams.num_actions, len(self.X_train), f'{b}_th_fitdata')
             # Add the bootstrapped data into the model
-            data.add(self.X_train[boot_samples_idx[b], :], np.zeros(len(boot_samples_idx[b])), self.Y_train[boot_samples_idx[b]])
+
+
+            # this is not correct, the actions are not valid. 
+            tmp_data.add(self.X_train[boot_samples_idx[b], :], self.actions[boot_samples_idx[b]], self.Y_train[boot_samples_idx[b]])
             # Train the model on the bootstrapped dataset
             # print(f'data after added:{data}')
             # sys.exit()
             
             # dataset = (contexts, actions, rewards, test_contexts, mean_test_rewards)
-            # print(f'*********  {b}-th Bootstrap  ****************')
-            print(f'data.contexts.shape:{data.contexts.shape}')
-            print(f'data.rewards.shape:{data.rewards.shape}')
+            print(f'*********  {b}-th Bootstrap  ****************')
+            print(f'tmp_data.contexts.shape:{tmp_data.contexts.shape}')
+            print(f'tmp_data.rewards.shape:{tmp_data.rewards.shape}')
 
 
             # def train(self, data, num_steps)
 
             
-            model.train(data, model.hparams.num_steps)
+            model.train(tmp_data, model.hparams.num_steps)
             # Predict using the trained model on the combined training and prediction set
 
+            
+
             # def out_impure_fn(self, params, contexts, actions):
-            boot_predictions[b] = model.out(model.params, np.r_[self.X_train, self.X_predict], np.zeros((n + n1,))).flatten() # for V2
+            boot_predictions[b] = model.out(model.params, np.r_[self.X_train, self.X_predict],  np.r_[self.actions, self.test_actions]).flatten() # for V2
           
        
 
@@ -184,7 +194,7 @@ class prediction_interval():
         num_unique_resid = resid_strided.shape[0]
         print('     num_unique_resid:', num_unique_resid)
         print(f'        size of resid_strided: {resid_strided.shape}')
-        print(f'        resid_strided:{resid_strided}')
+        # print(f'        resid_strided:{resid_strided}')
 
         width_left = np.zeros(num_unique_resid)
         width_right = np.zeros(num_unique_resid)
@@ -208,13 +218,7 @@ class prediction_interval():
         width_left = np.repeat(width_left, stride)  # This is because |width|=T1/stride.
         width_right = np.repeat(width_right, stride)  # This is because |width|=T1/stride.
         print("size of width_left:", width_left.size)
-        # store the lower and upper bound of each entry (prediction set only)
-
-        # len(out_sample_predict) = n1 = len(Y_predict)
-        # and we have nrows = floor(n1//stride)+1 = n1/stride
-        # then len(width_left)  = len(width_right) = n1 = len(out_sample_predict)
-        # herein, we need to make sure that n1/stride ==0, so that len(width_left)  = len(width_right) = n1 = len(out_sample_predict) with 100%??? Added by Annie Zhou Feb 23rd, 2023
-        # width_left might be negative numbers, that's normal
+ 
 
         # n1X2 data frame
         print(f'            out_sample_predict.shape:{out_sample_predict.shape}')
@@ -254,7 +258,7 @@ class prediction_interval():
             PIs.append(PI)
 
             # Calculate coverage and width
-            print(' =====. Debugging =====. ')
+            # print(' =====. Debugging =====. ')
             print("Shape of PI['lower']:", PI['lower'].shape)
             print("Shape of PI['upper']:", PI['upper'].shape)
             print("Shape of self.Y_predict:", self.Y_predict.shape)
@@ -266,10 +270,15 @@ class prediction_interval():
 
             results.loc[len(results)] = [len(self.X_train), mean_coverage, mean_width, lower_mean, upper_mean]
             final_result_path = self.filename
+            new_row_all_avg = results
             if not isinstance(new_row_all_avg, pd.DataFrame):
                 new_row_all_avg = pd.DataFrame([new_row_all_avg])
             with open(final_result_path+'/final_all_results_avg.csv', 'a') as f:
                 new_row_all_avg.to_csv(f, header=f.tell()==0, index=False)
+            print(f'~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            print(f'results:{results}')
+            print(f'~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+
         return pd.concat(PIs, axis=1), results
 
 
