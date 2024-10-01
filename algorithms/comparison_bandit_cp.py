@@ -39,7 +39,9 @@ class ExactNeuraLCBV2(BanditAlgorithm):
                 jnp.eye(self.nn.num_params)/hparams.lambd0 for _ in range(hparams.num_actions)
             ]
         ) # (num_actions, p, p)
+        self.Ensemble_train_interval_centers = []  # Predicted training data centers by EnbPI
 
+ 
     def reset(self, seed): 
         self.Lambda_inv = jnp.array(
             [
@@ -50,8 +52,47 @@ class ExactNeuraLCBV2(BanditAlgorithm):
         self.nn.reset(seed) 
         # this will reset actions, contexts, rewards to None
         self.data.reset()
+        print(f'~~~~~~~!!!!!! After running algo.reset()~!!!!!!!!!!~~~~~~~~~~')
+        print(f'self.data.rewards.shape:{self.data.rewards}')
+
 
     def sample_action(self, contexts):
+        """
+        Args:
+            context: (None, self.hparams.context_dim)
+        """
+        cs = self.hparams.chunk_size
+        num_chunks = math.ceil(contexts.shape[0] / cs)
+        acts = []
+        for i in range(num_chunks):
+            ctxs = contexts[i * cs: (i+1) * cs,:] 
+            lcb = []
+            for a in range(self.hparams.num_actions):
+                actions = jnp.ones(shape=(ctxs.shape[0],)) * a 
+                # this is the predicted rewards 
+                if len(self.Ensemble_pred_interval_centers) == 0:
+                    print(f'!!!! Prediction intervals not available at current stage!!! self.Ensemble_pred_interval_centers == None')
+                    f = self.nn.out(self.nn.params, ctxs, actions)  # Default to the neural network output
+                else:
+                    print(f'!!!!!! Prediction Intervals available!!!!')
+                    print(f'&&&&& len(Ensemble_pred_interval_centers)  === {len(self.Ensemble_pred_interval_centers)}&&&&&')
+                    f = self.Ensemble_pred_interval_centers[i * cs: (i+1) * cs]
+                    f = jnp.array(f)
+                # g = self.nn.grad_out(self.nn.params, convoluted_contexts) / jnp.sqrt(self.nn.m) # (num_samples, p)
+                g = self.nn.grad_out(self.nn.params, ctxs, actions) / jnp.sqrt(self.nn.m)
+                gA = g @ self.Lambda_inv[a,:,:] # (num_samples, p)
+                
+                gAg = jnp.sum(jnp.multiply(gA, g), axis=-1) # (num_samples, )
+                cnf = jnp.sqrt(gAg) # (num_samples,)
+
+                lcb_a = f.ravel() - self.hparams.beta * cnf.ravel()  # (num_samples,)
+                lcb.append(lcb_a.reshape(-1,1)) 
+            lcb = jnp.hstack(lcb) 
+            acts.append( jnp.argmax(lcb, axis=1)) 
+        return jnp.hstack(acts)
+
+    
+    def sample_action_original(self, contexts):
         """
         Args:
             context: (None, self.hparams.context_dim)

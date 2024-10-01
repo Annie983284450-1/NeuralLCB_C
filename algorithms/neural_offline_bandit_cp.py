@@ -88,11 +88,14 @@ class ApproxNeuraLCB_cp(BanditAlgorithm):
         self.res_dir  = res_dir
         # reset_data() will return a form of (contexts, actions, rewards, test_contexts, mean_test_rewards) 
         # cmab = OfflineContextualBandit(*data.reset_data(sim))
-        self.Ensemble_fitted_func = []
-        self.Ensemble_online_resid = np.array([])
-        self.Ensemble_pred_interval_centers = []   
         self.Ensemble_train_interval_centers = []  # Predicted training data centers by EnbPI
-        self.beta_hat_bins = []
+
+
+        # stuff below might not be used. 
+        # self.Ensemble_fitted_func = []
+        # self.Ensemble_online_resid = np.array([])
+        # self.Ensemble_pred_interval_centers = []   
+        # self.beta_hat_bins = []
  
 
     def reset(self, seed): 
