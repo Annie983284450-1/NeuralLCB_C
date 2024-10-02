@@ -1,0 +1,18 @@
+Total excution time: 2433.9823155403137 seconds
+num_test_pat = 300
+num_train_sepsis_pat = 500
+num_train_nosepsis_pat = 500
+tot_trial = 1
+refit_step = 100
+No of experts = 1
+Experts = ['ridge']
+The models have been fitted for 2 times.
+Machine: ece-kl2313-01.ece.gatech.edu
+Multiprocessor: True
+dt_early=-12
+dt_optimal=-6
+dt_late=3.0
+max_u_tp=2
+min_u_fn=-2
+u_fp=-0.05
+u_tn=0.05

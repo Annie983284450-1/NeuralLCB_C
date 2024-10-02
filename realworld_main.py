@@ -122,7 +122,7 @@ flags.DEFINE_float('subset_r', 0.5, 'The ratio of the action spaces to be select
 
 # num_train_sepsis_pat_win = 10
 # num_test_pat_septic_win = 1
-num_train_sepsis_pat_win = 500
+num_train_sepsis_pat_win = 1000
 num_test_pat_septic_win = 250
 win_size= 8 
 print(f'num_train_sepsis_pat_win === {num_train_sepsis_pat_win}')
@@ -307,11 +307,11 @@ def main(unused_argv):
 
 
 
-    data_prefix = '{}_d={}_a={}_pi={}_std={}'.format(FLAGS.data_type, \
-            context_dim, num_actions, policy_prefix, data.noise_std)
+    data_prefix = '{}_d={}_a={}_pi={}_std={}_testfreq={}'.format(FLAGS.data_type, \
+            context_dim, num_actions, policy_prefix, data.noise_std,FLAGS.test_freq)
 
     # res_dir = os.path.join('results', data_prefix) 
-    res_dir = os.path.join(f'results/trainwins_{num_train_sepsis_pat_win}_testwins_{num_test_pat_septic_win}', data_prefix) 
+    res_dir = os.path.join(f'../neuralcb_results/trainwins_{num_train_sepsis_pat_win}_testwins_{num_test_pat_septic_win}', data_prefix) 
     flags.DEFINE_string('res_dir', res_dir, 'final average result path')
     print(f'final result path === {FLAGS.res_dir}')
 

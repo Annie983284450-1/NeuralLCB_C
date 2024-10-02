@@ -1,0 +1,10 @@
+                                        # errors = 1-(curr_pat_predictions['SepsisLabel'] - curr_pat_predictions[f'{expert}_predictions']).abs() wrong!!!
+                                        errors = (curr_pat_predictions['SepsisLabel'] - curr_pat_predictions[f'{expert}_predictions']).abs()
+
+                                        the regret is actually reward herein!!!!!!
+                                        for:
+
+                                            # experts_lists = [['ridge','rf','dct','lr'],
+    #                  ['ridge','rf','lr'],
+    #                  ['ridge', 'rf'],
+    #                  ['ridge']]  

@@ -3,7 +3,9 @@ Use python 3.9, it can install the jax sommothly with 'pip install jax jaxlib op
 
 
 pip install torchvision
-pip install pasty pyod xgboost
+pip install patsy pyod xgboost
+# conda install -c conda-forge pasty pyod xgboost
+
 pip install --upgrade --no-deps statsmodels
 pip install scikit-learn
 pip install tqdm
