@@ -19,11 +19,14 @@ except RuntimeError:
 
 # When the context-action representation is encoded in the one-hot way, 
 # LinLCB is equivalent to the disjoint linear model.  
-class LinLCB(BanditAlgorithm):
-    def __init__(self, hparams, update_freq=1, name='LinLCB'):
+class LinLCB_cp(BanditAlgorithm):
+    def __init__(self, hparams,res_dir, update_freq=1, name='LinLCB'):
         self.name = name 
         self.hparams = hparams 
         self.update_freq = update_freq
+        self.prediction_interval_model = None
+        self.res_dir  = res_dir
+        self.Ensemble_pred_interval_centers = []   
         self.reset()
 
     def reset(self, seed=None):

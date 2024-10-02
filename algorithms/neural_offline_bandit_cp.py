@@ -86,15 +86,16 @@ class ApproxNeuraLCB_cp(BanditAlgorithm):
         # self.pred_interval_centers = []
         self.prediction_interval_model = None
         self.res_dir  = res_dir
+        self.Ensemble_pred_interval_centers = []   
+
         # reset_data() will return a form of (contexts, actions, rewards, test_contexts, mean_test_rewards) 
         # cmab = OfflineContextualBandit(*data.reset_data(sim))
-        self.Ensemble_train_interval_centers = []  # Predicted training data centers by EnbPI
+        # self.Ensemble_train_interval_centers = []  # Predicted training data centers by EnbPI
 
 
-        # stuff below might not be used. 
+         
         # self.Ensemble_fitted_func = []
         # self.Ensemble_online_resid = np.array([])
-        # self.Ensemble_pred_interval_centers = []   
         # self.beta_hat_bins = []
  
 
@@ -105,7 +106,7 @@ class ApproxNeuraLCB_cp(BanditAlgorithm):
         print(f'~~~~~~~!!!!!! After running algo.reset()~!!!!!!!!!!~~~~~~~~~~')
         print(f'self.data.rewards.shape:{self.data.rewards}')
         # self.prediction_interval_model = None
-    # line 5 in NeuraLCB_Bmode
+    # line 5 in NeuraLCB Bmode
     # here is where conformal prediction and NeuraLCB integrated together
     def sample_action(self, test_contexts, opt_vals, opt_actions):
         # flags.DEFINE_integer('chunk_size', 500, 'Chunk size')
@@ -119,16 +120,12 @@ class ApproxNeuraLCB_cp(BanditAlgorithm):
             ctxs = test_contexts[i * cs: (i+1) * cs,:] 
             # for each chunk of context, store the lower confidence bound (lcb)
             lcb = [] 
-
             # Calculating Lower Confidence Bound (LCB) for Each Action
-
-
             for a in range(self.hparams.num_actions):
                 # num_actions= 2
                 # a = 0 or 1
                 # actions = 0 if a =0, else 1
                 actions = jnp.ones(shape=(ctxs.shape[0],)) * a 
-
                 # ************************Integration********************************
                 # Use conformal predicted rewards if available, otherwise use the network's prediction
                 if len(self.Ensemble_pred_interval_centers) == 0:

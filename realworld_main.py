@@ -16,6 +16,7 @@ importlib.reload(core.contextual_bandit)
 from core.contextual_bandit import contextual_bandit_runner
 # the core code
 # from algorithms.neural_offline_bandit import ExactNeuraLCBV2, NeuralGreedyV2, ApproxNeuraLCBV2
+from algorithms.comparison_bandit_cp import ExactNeuraLCBV2
 
 
 # import algorithms.neural_offline_bandit_cp  # Import the entire module
@@ -370,10 +371,10 @@ def main(unused_argv):
             algos = [
                 UniformSampling(lin_hparams),
                 LinLCB(lin_hparams),
-                ## KernLCB(lin_hparams), 
-                # NeuralGreedyV2(hparams, update_freq = FLAGS.update_freq),
-                # ApproxNeuralLinLCBV2(hparams), 
-                # ApproxNeuralLinGreedyV2(hparams),
+                KernLCB(lin_hparams), 
+                NeuralGreedyV2(hparams, update_freq = FLAGS.update_freq),
+                ApproxNeuralLinLCBV2(hparams), 
+                ApproxNeuralLinGreedyV2(hparams),
                 NeuralLinGreedyJointModel(hparams), 
                 ApproxNeuralLinLCBJointModel(hparams)
 

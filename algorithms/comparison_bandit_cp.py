@@ -32,15 +32,15 @@ class ExactNeuraLCBV2(BanditAlgorithm):
       
         self.data = BanditDataset(hparams.context_dim, hparams.num_actions, hparams.buffer_s, '{}-data'.format(name))
         # self.nn.num_params: the number of network parameters (i.e., p)
-        self.prediction_interval_model = None
-        self.res_dir  = res_dir
+
         self.Lambda_inv = jnp.array(
             [
                 jnp.eye(self.nn.num_params)/hparams.lambd0 for _ in range(hparams.num_actions)
             ]
         ) # (num_actions, p, p)
         self.Ensemble_train_interval_centers = []  # Predicted training data centers by EnbPI
-
+        self.prediction_interval_model = None
+        self.res_dir  = res_dir
  
     def reset(self, seed): 
         self.Lambda_inv = jnp.array(
@@ -56,7 +56,7 @@ class ExactNeuraLCBV2(BanditAlgorithm):
         print(f'self.data.rewards.shape:{self.data.rewards}')
 
 
-    def sample_action(self, contexts):
+    def sample_action(self, contexts,test_contexts, opt_vals, opt_actions):
         """
         Args:
             context: (None, self.hparams.context_dim)
@@ -71,6 +71,7 @@ class ExactNeuraLCBV2(BanditAlgorithm):
                 actions = jnp.ones(shape=(ctxs.shape[0],)) * a 
                 # this is the predicted rewards 
                 if len(self.Ensemble_pred_interval_centers) == 0:
+                    print(f'________________{i}-th chunk________________')
                     print(f'!!!! Prediction intervals not available at current stage!!! self.Ensemble_pred_interval_centers == None')
                     f = self.nn.out(self.nn.params, ctxs, actions)  # Default to the neural network output
                 else:
@@ -89,7 +90,33 @@ class ExactNeuraLCBV2(BanditAlgorithm):
                 lcb.append(lcb_a.reshape(-1,1)) 
             lcb = jnp.hstack(lcb) 
             acts.append( jnp.argmax(lcb, axis=1)) 
-        return jnp.hstack(acts)
+        sampled_test_actions = jnp.hstack(acts)
+
+        X_train = self.data.contexts
+        # selected actions for training
+        actions = self.data.actions.ravel().astype(int)
+        # rewards for training
+        Y_train = self.data.rewards[np.arange(len(actions)), actions].reshape(-1, 1)
+        X_predict = test_contexts
+        test_actions = sampled_test_actions.ravel().astype(int)
+        Y_predict = opt_vals
+        filename = self.res_dir
+        nn_model = self.nn
+        
+       
+        self.prediction_interval_model = prediction_interval(
+                        nn_model,  
+                        X_train, 
+                        X_predict, 
+                        Y_train, 
+                        Y_predict, 
+                        actions, 
+                        test_actions,
+                        filename)
+        self.Ensemble_pred_interval_centers = self.prediction_interval_model.fit_bootstrap_models_online(B=10, miss_test_idx=[])
+        # print(f'self.Ensemble_prediction_interval_centers:{self.Ensemble_pred_interval_centers}')
+        PI_dfs, results = self.prediction_interval_model.run_experiments(alpha=0.05, stride=8,methods=['Ensemble'])       
+        return sampled_test_actions
 
     
     def sample_action_original(self, contexts):
@@ -178,14 +205,17 @@ class ExactNeuraLCBV2(BanditAlgorithm):
  
  
 
-class NeuralGreedyV2(BanditAlgorithm):
-    def __init__(self, hparams, update_freq=1, name='NeuralGreedyV2'):
+class NeuralGreedyV2_cp(BanditAlgorithm):
+    def __init__(self, hparams, res_dir, update_freq=1, name='NeuralGreedyV2'):
         self.name = name 
         self.hparams = hparams 
         self.update_freq = update_freq 
         opt = optax.adam(hparams.lr)
         self.nn = NeuralBanditModelV2(opt, hparams, '{}-net'.format(name))
         self.data = BanditDataset(hparams.context_dim, hparams.num_actions, hparams.buffer_s, '{}-data'.format(name))
+        self.Ensemble_train_interval_centers = []  # Predicted training data centers by EnbPI
+        self.prediction_interval_model = None
+        self.res_dir  = res_dir
 
     def reset(self, seed): 
         self.nn.reset(seed) 
