@@ -82,6 +82,7 @@ class ApproxNeuraLCB_cp(BanditAlgorithm):
         # self.nn = NeuralBanditModel(opt, hparams, '{}-net'.format(name))
         # data buffer for incoming data, update each round when we have a new (c,a, r)
         self.data = BanditDataset(hparams.context_dim, hparams.num_actions, hparams.buffer_s, '{}-data'.format(name))
+
         self.diag_Lambda = [jnp.ones(self.nn.num_params) * hparams.lambd0 for _ in range(hparams.num_actions)]
         # self.pred_interval_centers = []
         self.prediction_interval_model = None
@@ -103,8 +104,8 @@ class ApproxNeuraLCB_cp(BanditAlgorithm):
         self.diag_Lambda = [jnp.ones(self.nn.num_params) * self.hparams.lambd0 for _ in range(self.hparams.num_actions)]
         # self.nn.reset(seed) # with NeuralBanditV2()
         self.data.reset()
-        print(f'~~~~~~~!!!!!! After running algo.reset()~!!!!!!!!!!~~~~~~~~~~')
-        print(f'self.data.rewards.shape:{self.data.rewards}')
+        # print(f'~~~~~~~!!!!!! After running {self.name}.reset()~!!!!!!!!!!~~~~~~~~~~')
+        # print(f'self.data.rewards.shape:{self.data.rewards}')
         # self.prediction_interval_model = None
     # line 5 in NeuraLCB Bmode
     # here is where conformal prediction and NeuraLCB integrated together
@@ -129,13 +130,13 @@ class ApproxNeuraLCB_cp(BanditAlgorithm):
                 # ************************Integration********************************
                 # Use conformal predicted rewards if available, otherwise use the network's prediction
                 if len(self.Ensemble_pred_interval_centers) == 0:
-                    print(f'!!!! Prediction intervals not available at current stage!!! self.Ensemble_pred_interval_centers == None')
+                    # print(f'!!!! Prediction intervals not available at current stage!!! self.Ensemble_pred_interval_centers == None')
                     f = self.nn.out(self.nn.params, ctxs, actions)  # Default to the neural network output
                     # print(f'f.shape=={f.shape}')
                     # print(f'Prediction datatype f=== {type(f)}')
                 else:
-                    print(f'!!!!!! Prediction Intervals available!!!!')
-                    print(f'&&&&& len(Ensemble_pred_interval_centers)  === {len(self.Ensemble_pred_interval_centers)}&&&&&')
+                    # print(f'!!!!!! Prediction Intervals available!!!!')
+                    # print(f'&&&&& len(Ensemble_pred_interval_centers)  === {len(self.Ensemble_pred_interval_centers)}&&&&&')
                     f = self.Ensemble_pred_interval_centers[i * cs: (i+1) * cs]
                     # print(f'&&&&& len(f) === {len(f)}&&&&&')
                     # print(f'PI centers datatype == {type(f)}')
@@ -175,7 +176,8 @@ class ApproxNeuraLCB_cp(BanditAlgorithm):
                         Y_predict, 
                         actions, 
                         test_actions,
-                        filename)
+                        filename,
+                        self.name)
         self.Ensemble_pred_interval_centers = self.prediction_interval_model.fit_bootstrap_models_online(B=10, miss_test_idx=[])
         # print(f'self.Ensemble_prediction_interval_centers:{self.Ensemble_pred_interval_centers}')
         PI_dfs, results = self.prediction_interval_model.run_experiments(alpha=0.05, stride=8,methods=['Ensemble'])       
@@ -260,7 +262,19 @@ class ApproxNeuraLCB_cp(BanditAlgorithm):
         # a flattened version of all the model parameters (weights and biases of the neural network).
         print(f'Parameter norm: {jnp.mean(jnp.square(norm))}')
 
-        preds = self.nn.out(self.nn.params, contexts, actions)
+        # preds = self.nn.out(self.nn.params, contexts, actions)
+
+
+        if len(self.Ensemble_pred_interval_centers) == 0:
+                
+            preds = self.nn.out(self.nn.params, contexts, actions)  
+              
+        else:
+  
+            preds = self.Ensemble_pred_interval_centers 
+
+
+
         print(f"preds.shape:{preds.shape}")
         print(f'Predictions: {preds}')
         '''
@@ -281,9 +295,11 @@ class ApproxNeuraLCB_cp(BanditAlgorithm):
             # each element is set to integer 'a', length equals to the number of contexts
             # generate a temporary action array where the chosen action a is applied uniformly across all sample in the batch
             actions_tmp = jnp.ones(shape=(contexts.shape[0],)) * a 
+
             #f: predicted rewards
             # seems that 'f' is not used
-            f = self.nn.out(self.nn.params, contexts, actions_tmp) # (num_samples, 1)
+            # f = self.nn.out(self.nn.params, contexts, actions_tmp) # (num_samples, 1)
+
             g = self.nn.grad_out(self.nn.params, contexts, actions_tmp) / jnp.sqrt(self.nn.m) # (num_samples, p)
             # self.diag_Lambda[a][:] is the confidence parameters
             # this operation effectively scales the gradient by the inverse of the confidence parameters
@@ -299,6 +315,7 @@ class ApproxNeuraLCB_cp(BanditAlgorithm):
         else:
             print('No LOO predictions available at this point.')
 
+        print(f'~~~~~~~~~~~~~~~~~~~========================~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
         a = int(actions.ravel()[0])
         if self.hparams.debug_mode == 'simple':
@@ -309,6 +326,7 @@ class ApproxNeuraLCB_cp(BanditAlgorithm):
             print('     r: {} | a: {} | f: {} | cnf: {} | loss: {} | param_mean: {}'.format(rewards.ravel()[0], \
                 a, preds.ravel(), \
                 cnf.ravel(), cost, jnp.mean(jnp.square(norm))))
+        print(f'~~~~~~~~~~~~~~~~~~~========================~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
 
 

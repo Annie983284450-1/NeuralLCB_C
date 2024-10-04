@@ -19,9 +19,9 @@ import cp_funs.PI
 importlib.reload(cp_funs.PI)
 from cp_funs.PI import prediction_interval
 
-class ExactNeuraLCBV2(BanditAlgorithm):
+class ExactNeuraLCBV2_cp(BanditAlgorithm):
     """NeuraLCB using exact confidence matrix and NeuralBanditModelV2. """
-    def __init__(self, hparams,res_dir, update_freq=1, name='ExactNeuraLCBV2'):
+    def __init__(self, hparams,res_dir, update_freq=1, name='ExactNeuraLCBV2_cp'):
         self.name = name 
         self.hparams = hparams 
         self.update_freq = update_freq
@@ -38,9 +38,10 @@ class ExactNeuraLCBV2(BanditAlgorithm):
                 jnp.eye(self.nn.num_params)/hparams.lambd0 for _ in range(hparams.num_actions)
             ]
         ) # (num_actions, p, p)
-        self.Ensemble_train_interval_centers = []  # Predicted training data centers by EnbPI
         self.prediction_interval_model = None
         self.res_dir  = res_dir
+        self.Ensemble_pred_interval_centers = []   
+
  
     def reset(self, seed): 
         self.Lambda_inv = jnp.array(
@@ -56,7 +57,7 @@ class ExactNeuraLCBV2(BanditAlgorithm):
         print(f'self.data.rewards.shape:{self.data.rewards}')
 
 
-    def sample_action(self, contexts,test_contexts, opt_vals, opt_actions):
+    def sample_action(self, contexts,  opt_vals, opt_actions):
         """
         Args:
             context: (None, self.hparams.context_dim)
@@ -97,7 +98,7 @@ class ExactNeuraLCBV2(BanditAlgorithm):
         actions = self.data.actions.ravel().astype(int)
         # rewards for training
         Y_train = self.data.rewards[np.arange(len(actions)), actions].reshape(-1, 1)
-        X_predict = test_contexts
+        X_predict = contexts
         test_actions = sampled_test_actions.ravel().astype(int)
         Y_predict = opt_vals
         filename = self.res_dir
@@ -112,7 +113,8 @@ class ExactNeuraLCBV2(BanditAlgorithm):
                         Y_predict, 
                         actions, 
                         test_actions,
-                        filename)
+                        filename,
+                        self.name)
         self.Ensemble_pred_interval_centers = self.prediction_interval_model.fit_bootstrap_models_online(B=10, miss_test_idx=[])
         # print(f'self.Ensemble_prediction_interval_centers:{self.Ensemble_pred_interval_centers}')
         PI_dfs, results = self.prediction_interval_model.run_experiments(alpha=0.05, stride=8,methods=['Ensemble'])       
@@ -169,19 +171,40 @@ class ExactNeuraLCBV2(BanditAlgorithm):
         # u = self.nn.grad_out(self.nn.params, convoluted_contexts) / jnp.sqrt(self.nn.m)  # (num_samples, p)
         u = self.nn.grad_out(self.nn.params, contexts, actions) / jnp.sqrt(self.nn.m)
         for i in range(contexts.shape[0]):
-            jax.ops.index_update(self.Lambda_inv, actions[i], \
-                inv_sherman_morrison_single_sample(u[i,:], self.Lambda_inv[actions[i],:,:]))
+            # jax.ops.index_update(self.Lambda_inv, actions[i], \
+            #     inv_sherman_morrison_single_sample(u[i,:], self.Lambda_inv[actions[i],:,:]))
+            self.Lambda_inv = self.Lambda_inv.at[actions[i]].set(inv_sherman_morrison_single_sample(u[i, :], self.Lambda_inv[actions[i], :, :]))
+
+
 
     def monitor(self, contexts=None, actions=None, rewards=None):
-        norm = jnp.hstack(( jnp.ravel(param) for param in jax.tree_leaves(self.nn.params)))
+        # print("self.nn.params:", self.nn.params)
+        # print("tree_leaves(self.nn.params):", jax.tree_leaves(self.nn.params))
+        for param in jax.tree_leaves(self.nn.params):
+            print(f'param.shape in jax.tree_leaves(self.nn.params):')
+            print(param.shape)
+        # sys.exit()
 
-        preds = self.nn.out(self.nn.params, contexts, actions) # (num_samples,)
+
+        # norm = jnp.hstack(( jnp.ravel(param) for param in jax.tree_leaves(self.nn.params)))
+        norm = jnp.hstack([jnp.ravel(param) if param.shape != (1,) else param.reshape(1,) for param in jax.tree_leaves(self.nn.params)])
+
+
+        # preds = self.nn.out(self.nn.params, contexts, actions) # (num_samples,)
+        
+        if len(self.Ensemble_pred_interval_centers) == 0:
+                
+            preds = self.nn.out(self.nn.params, contexts, actions)  
+              
+        else:
+  
+            preds = self.Ensemble_pred_interval_centers 
 
         cnfs = []
         for a in range(self.hparams.num_actions):
             actions_tmp = jnp.ones(shape=(contexts.shape[0],)) * a 
 
-            f = self.nn.out(self.nn.params, contexts, actions_tmp) # (num_samples, 1)
+            # f = self.nn.out(self.nn.params, contexts, actions_tmp) # (num_samples, 1)
             g = self.nn.grad_out(self.nn.params, contexts, actions_tmp) / jnp.sqrt(self.nn.m) # (num_samples, p)
             gA = g @ self.Lambda_inv[a,:,:] # (num_samples, p)
             
@@ -192,6 +215,13 @@ class ExactNeuraLCBV2(BanditAlgorithm):
         cnf = jnp.hstack(cnfs) 
 
         cost = self.nn.loss(self.nn.params, contexts, actions, rewards)
+
+        if len(self.Ensemble_pred_interval_centers) > 0:
+            print(f'length of LOO Predictions (centers): {len(self.Ensemble_pred_interval_centers)}')
+        else:
+            print('No LOO predictions available at this point.')
+
+        print(f'~~~~~~~~~~~~~~~~~~~========================~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
         a = int(actions.ravel()[0])
         if self.hparams.debug_mode == 'simple':
             print('     r: {} | a: {} | f: {} | cnf: {} | loss: {} | param_mean: {}'.format(rewards.ravel()[0], a, \
@@ -201,6 +231,7 @@ class ExactNeuraLCBV2(BanditAlgorithm):
             print('     r: {} | a: {} | f: {} | cnf: {} | loss: {} | param_mean: {}'.format(rewards.ravel()[0], \
                 a, preds.ravel(), \
                 cnf.ravel(), cost, jnp.mean(jnp.square(norm))))
+        print(f'~~~~~~~~~~~~~~~~~~~========================~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
  
  
@@ -213,9 +244,9 @@ class NeuralGreedyV2_cp(BanditAlgorithm):
         opt = optax.adam(hparams.lr)
         self.nn = NeuralBanditModelV2(opt, hparams, '{}-net'.format(name))
         self.data = BanditDataset(hparams.context_dim, hparams.num_actions, hparams.buffer_s, '{}-data'.format(name))
-        self.Ensemble_train_interval_centers = []  # Predicted training data centers by EnbPI
         self.prediction_interval_model = None
         self.res_dir  = res_dir
+        self.Ensemble_pred_interval_centers = []   
 
     def reset(self, seed): 
         self.nn.reset(seed) 
@@ -225,7 +256,19 @@ class NeuralGreedyV2_cp(BanditAlgorithm):
         preds = []
         for a in range(self.hparams.num_actions):
             actions = jnp.ones(shape=(contexts.shape[0],)) * a 
-            f = self.nn.out(self.nn.params, contexts, actions) # (num_samples, 1)
+            # ====== added by Annie 2024 Oct.04
+            if len(self.Ensemble_pred_interval_centers) == 0:
+                print(f'________________{i}-th chunk________________')
+                print(f'!!!! Prediction intervals not available at current stage!!! self.Ensemble_pred_interval_centers == None')
+                f = self.nn.out(self.nn.params, contexts, actions)  # Default to the neural network output
+            else:
+                print(f'!!!!!! Prediction Intervals available!!!!')
+                print(f'&&&&& len(Ensemble_pred_interval_centers)  === {len(self.Ensemble_pred_interval_centers)}&&&&&')
+                f = self.Ensemble_pred_interval_centers
+                f = jnp.array(f)
+            # ====== added by Annie 2024 Oct.04
+
+            # f = self.nn.out(self.nn.params, contexts, actions) # (num_samples, 1)
             preds.append(f) 
         preds = jnp.hstack(preds) 
         return jnp.argmax(preds, axis=1)
@@ -249,7 +292,7 @@ class NeuralGreedyV2_cp(BanditAlgorithm):
     def monitor(self, contexts=None, actions=None, rewards=None):
         norm = jnp.hstack(( jnp.ravel(param) for param in jax.tree_leaves(self.nn.params)))
 
-        convoluted_contexts = self.nn.action_convolution(contexts, actions)
+        # convoluted_contexts = self.nn.action_convolution(contexts, actions)
 
         preds = self.nn.out(self.nn.params, contexts, actions) # (num_samples,)
 

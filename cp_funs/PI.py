@@ -43,7 +43,7 @@ class prediction_interval():
  
 
     def __init__(self,  nn_model,  # The neural network model (NeuralBanditModelV2)
-                X_train, X_predict, Y_train, Y_predict,  actions, test_actions, filename):
+                X_train, X_predict, Y_train, Y_predict,  actions, test_actions, filename, algoname):
         
         # self.nn_model = algo.nn  # NeuralBanditModelV2(opt, hparams, '{}-net'.format(name))
         self.nn_model= nn_model
@@ -56,6 +56,7 @@ class prediction_interval():
         self.Y_predict = Y_predict
         self.actions = actions
         self.test_actions = test_actions
+        self.algoname = algoname
 
         
         # list of models for B bootstraps
@@ -75,6 +76,7 @@ class prediction_interval():
         # self.JaB_boot_samples_idx = 0
         # self.JaB_boot_predictions = 0
         self.filename = filename
+        # self.sim = sim
 
 
     def fit_bootstrap_models_online(self,  B, miss_test_idx):
@@ -273,10 +275,10 @@ class prediction_interval():
             new_row_all_avg = results
             if not isinstance(new_row_all_avg, pd.DataFrame):
                 new_row_all_avg = pd.DataFrame([new_row_all_avg])
-            with open(final_result_path+'/final_all_results_avg.csv', 'a') as f:
+            with open(final_result_path+f'/final_all_cpresults_avg_{self.algoname}.csv', 'a') as f:
                 new_row_all_avg.to_csv(f, header=f.tell()==0, index=False)
             print(f'~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-            print(f'results:{results}')
+            print(f'Conformal Prediction Results:{results}')
             print(f'~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
         return pd.concat(PIs, axis=1), results

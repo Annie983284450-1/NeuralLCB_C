@@ -4,6 +4,8 @@ import numpy as np
 from tqdm import tqdm
 from timeit import timeit 
 import time 
+import pandas as pd
+import os
  
 
 def action_stats(actions, num_actions):
@@ -28,10 +30,152 @@ def action_accuracy(pred_actions, opt_actions):
     """
     return np.mean(np.asarray(pred_actions == opt_actions).astype('float32'))
  
- 
+
+def contextual_bandit_runner_v2(algos, data, \
+            num_sim, test_freq, verbose, debug, normalize, res_dir = None ,algo_prefix = None, file_name=None, sim=None):
+    """Run an offline contextual bandit problem on a set of algorithms in the same dataset. 
+
+    Args:
+        dataset: A tuple of (contexts, actions, mean_rewards, test_contexts, test_mean_rewards).
+        algos: A list of algorithms to run on the bandit instance.  
+    """
+    print(f'starting contextual_bandit_runner_v2() ......')
+    
+
+    # Create a bandit instance 
+    regrets = [] # (num_sim, num_algos, T) 
+    errs = [] # (num_sim, num_algos, T) 
+    # for sim in range(num_sim):
+
+    if res_dir:
+        regret_csv = res_dir+'/'+ algo_prefix+f'.csv'
+        with open(regret_csv, 'w') as f:
+            pass  # Just opening in 'w' mode truncates the file
+            
+        for j,algo in enumerate(algos): 
+             
+                    # Open in write mode to truncate the file
+            with open(res_dir+f'/final_all_cpresults_avg_{algo.name}.csv', 'w') as f:
+                    pass  # Just opening in 'w' mode truncates the file      
+        print('Simulation: {}/{}'.format(sim + 1, num_sim))
+        cmab = OfflineContextualBandit(*data.reset_data(sim))
+        for algo in algos:
+            algo.reset(sim * 1111)
+        subopts = [[] for _ in range(len(algos))]
+        act_errs = [[] for _ in range(len(algos))]
+        opt_vals = np.max(cmab.test_mean_rewards, axis=1) 
+        opt_actions = np.argmax(cmab.test_mean_rewards, axis=1) 
+
+        for i in tqdm(range(cmab.num_contexts),ncols=75):
+
+
+            print(f' !!!@  !!!@  !!!@  !!!@  !!!@  !!!@  !!!@  !!!!!!@ ROUND{i}!@ ROUND{i}!! @#$@ ROUND {i} @#@ ROUND{i}$@ !!!!!!')
+            start_time = time.time()
+            c,a,r = cmab.get_data(i) 
+            print(f'!!!!!!!!!!!!{i}-th data point !!!!!!!!')
+            '''
+            c.shape = (1, 13)
+            a.shape = (1,)
+            r.shape = (1, 1)            
+            '''
+            # actually there is always one algo in algos
+
+            for j,algo in enumerate(algos): 
+                # if i == 0:
+                #     # Open in write mode to truncate the file
+                #     with open(res_dir+f'/final_all_results_avg_{algo.name}.csv', 'w') as f:
+                #         pass  # Just opening in 'w' mode truncates the file
+                regrets_results = pd.DataFrame(columns=[ 'algo_name', 'train_size','regrets', 'act_errs', 'sel_stats', 'opt_stats'])
+                print(f'~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Running {algo}^^^^^^^^^^^^^^^^~~~~~~~~~~~~~~~~~~~~~~~')
+                algo.update_buffer(c,a,r)
+                # update_freq default value 1
+                if i % algo.update_freq == 0 and algo.name != 'KernLCB':
+                    # update the network parameters and confidence parameters
+                    # algo.update(c, a, r)    
+                    print(f'~~~~~~~~~~~Updating the network parameters and confidence parameters of {algo}~~~~~~~~~~~')
+                    algo.update(c,a,r)
+                # testing 
+                if i % test_freq == 0:
+                    print(f'  ------------------------@@@@@@@@@@@@@@@@@------Testing ---i === {i} --- @@@@@@@@@@@@@@@@@------------')
+                    if algo.name == 'KernLCB': 
+                        algo.update()
+                    if algo.name == 'KernLCB' and algo.X.shape[0] >= algo.hparams.max_num_sample:
+                        print('KernLCB reuses the last 1000 points for prediction!')
+                        test_subopt = subopts[j][-1] # reuse the last result
+                        action_acc = 1 - act_errs[j][-1]
+                        if verbose: # default true
+                            print('[sim: {}/{} | iter: {}/{}] {} | regret: {} | acc: {} | '.format(
+                                sim+1, num_sim,  i, cmab.num_contexts,
+                                algo.name, test_subopt, action_acc))
+                    else: 
+                        t1 = time.time()
+                        cp_experts = ['ApproxNeuraLCB_cp', 'ExactNeuraLCBV2_cp']
+                        # predicted actions using NeuraLCB and conformal predicsion
+                        # if algo.name == 'ApproxNeuraLCB_cp':
+                        if algo.name in cp_experts:
+                            print(f'test_contexts.shape == {cmab.test_contexts.shape}')
+                            test_actions = algo.sample_action(cmab.test_contexts, opt_vals, opt_actions) 
+                        # elif algo.name == 'ExactNeuraLCBV2_cp':
+                        #     test_actions = algo.sample_action(cmab.test_contexts, opt_vals, opt_actions)
+                        else:
+                            test_actions = algo.sample_action(cmab.test_contexts) 
+                        # print(f'################# test_actions.shape==={test_actions.shape}')
+                        t2 = time.time()
+                        sel_vals = cmab.test_mean_rewards[np.arange(cmab.num_test_contexts), test_actions.ravel()]
+                        if normalize:
+                            test_subopt = np.mean(1 - sel_vals / opt_vals) 
+                        else:
+                            test_subopt = np.mean(opt_vals - sel_vals)
+                       # action_accuracy(): return np.mean(np.asarray(pred_actions == opt_actions).astype('float32'))
+                        action_acc = action_accuracy(test_actions.ravel(), opt_actions.ravel()) 
+
+                        if verbose:  # default true
+                            print('[sim: {}/{} | iter: {}/{}] {} | regret: {} | acc: {} | test_time: {} '.format(
+                                sim+1, num_sim,  i, cmab.num_contexts,
+                                algo.name, test_subopt, action_acc, t2-t1))
+                            if debug:  # default true
+                                sel_stats = action_stats(test_actions.ravel(), cmab.num_actions) 
+                                opt_stats = action_stats(opt_actions.ravel(), cmab.num_actions)
+                                print('     opt_rate: {} | pred_rate: {}'.format(opt_stats, sel_stats))
+                                algo.monitor(c, a, r)           
+                    subopts[j].append(test_subopt) 
+                    act_errs[j].append(1 - action_acc) 
+                    # regrets_results = pd.DataFrame(columns=[ 'algo_name', 'train_size','regrets',    'act_errs',    'sel_stats', 'opt_stats'])
+                    regrets_results.loc[len(regrets_results)] = [algo.name,  i+1,         test_subopt, 1 - action_acc, sel_stats,   opt_stats]
+                    new_row_regret = regrets_results
+                    
+                    if not isinstance(new_row_regret , pd.DataFrame):
+                        new_row_regret  = pd.DataFrame([new_row_regret])
+                    with open(regret_csv,  'a') as f:
+                        new_row_regret.to_csv(f, header=f.tell()==0, index=False)
+                    print(f'~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                    print(f'        Regrets_results of {algo.name} when train size ==={i}: \n {regrets_results}')
+                    print(f'~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        
+            # time_elapsed = timeit() - start_time
+            time_elapsed = time.time() - start_time
+            if i % test_freq == 0:
+                if verbose:
+                    print('Time elapse per iteration: {}'.format(time_elapsed))
+                    print('=============================================================')
+                    
+        regrets.append(np.array(subopts)) 
+        errs.append(np.array(act_errs)) 
+
+        # if file_name: # save for every simulation
+        #     np.savez(file_name, np.array(regrets), np.array(errs) ) 
+
+    return np.array(regrets), np.array(errs) 
+
+
+
+
+
+
+
 # this is the final function 
 def contextual_bandit_runner(algos, data, \
-            num_sim, update_freq, test_freq, verbose, debug, normalize, save_path=None, res_dir = None):
+            num_sim, update_freq, test_freq, verbose, debug, normalize, file_name =None, res_dir = None):
     """Run an offline contextual bandit problem on a set of algorithms in the same dataset. 
 
     Args:
@@ -48,7 +192,6 @@ def contextual_bandit_runner(algos, data, \
         # reset_data() is defined in realworld_data.py in the dataclass
         # Note: data is a class not sth as a numpy array !!
         # reset_data() will return a form of (contexts, actions, rewards, test_contexts, mean_test_rewards) 
-        
         cmab = OfflineContextualBandit(*data.reset_data(sim))
         # sys.exit()
      # algo: BanditAlgortihm class
@@ -61,13 +204,8 @@ def contextual_bandit_runner(algos, data, \
             algo.reset(sim * 1111)
     
         # initialize an empty list for each algorithm
-        subopts = [
-            [] for _ in range(len(algos))
-        ]
-
-        act_errs = [
-            [] for _ in range(len(algos))
-        ]
+        subopts = [[] for _ in range(len(algos))]
+        act_errs = [[] for _ in range(len(algos))]
 
         # Compute test values and opt actions 
         # rewards : (num_contexts, num_actions) 
@@ -120,14 +258,12 @@ def contextual_bandit_runner(algos, data, \
         # Bandit Dataset is also self-defined
                 print(f'~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Running {algo}^^^^^^^^^^^^^^^^~~~~~~~~~~~~~~~~~~~~~~~')
                 algo.update_buffer(c,a,r)
-                 
                 # Add data and update the internal state of each offline algorithm 
                 # update_freq default value 1
                 if i % algo.update_freq == 0 and algo.name != 'KernLCB':
                     # update the network parameters and confidence parameters
                     # algo.update(c, a, r)    
                     print(f'~~~~~~~~~~~Updating the network parameters and confidence parameters of {algo}~~~~~~~~~~~')
-       
                     algo.update(c,a,r)
                 # testing 
                 if i % test_freq == 0:
@@ -197,8 +333,10 @@ def contextual_bandit_runner(algos, data, \
         regrets.append(np.array(subopts)) 
         errs.append(np.array(act_errs)) 
 
-        if save_path: # save for every simulation
-            np.savez(save_path, np.array(regrets), np.array(errs) ) 
+        # the code actually can only deal with one simulation
+
+        # if file_name: # save for every simulation
+        #     np.savez(file_name, np.array(regrets), np.array(errs) ) 
 
     return np.array(regrets), np.array(errs) 
 

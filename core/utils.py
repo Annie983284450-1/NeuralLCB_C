@@ -6,6 +6,7 @@ import numpy as np
 from tqdm import tqdm
 from easydict import EasyDict as edict
 from algorithms.lin_ucb import LinUCB # for online data collection
+import sys
 
 @jax.jit 
 def inv_sherman_morrison(u, A_inv):
@@ -60,6 +61,11 @@ def action_convolution(contexts, actions, num_actions):
         convoluted_contexts: (None, context_dim * num_actions)
     """
     one_hot_actions = jax.nn.one_hot(actions, num_actions) # (None, num_actions) 
+    print('one_hot_actions.shape, contexts.shape:')
+    print(one_hot_actions.shape, contexts.shape)
+    # if one_hot_actions.shape!= contexts.shape:
+    #     sys.exit('one_hot_actions.shape!= contexts.shape')
+
     convoluted_contexts = jax.vmap(jax.jit(jnp.kron))(one_hot_actions, contexts) # (None, context_dim * num_actions) 
     return convoluted_contexts
 
