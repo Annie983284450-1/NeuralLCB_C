@@ -87,8 +87,8 @@ help_text: string describes the flag
 '''
 
 # flags.DEFINE_string('algo_group', 'approx-neural_cp', 'conformal prediction/neural')
-# flags.DEFINE_string('algo_group', 'ApproxNeuraLCB_cp', 'conformal prediction/neural')
-flags.DEFINE_string('algo_group', 'ExactNeuraLCBV2_cp', 'conformal prediction/neural')
+flags.DEFINE_string('algo_group', 'ApproxNeuraLCB_cp', 'conformal prediction/neural')
+# flags.DEFINE_string('algo_group', 'ExactNeuraLCBV2_cp', 'conformal prediction/neural')
 # flags.DEFINE_string('algo_group', 'NeuralGreedyV2_cp', 'conformal prediction/neural')
 
 
