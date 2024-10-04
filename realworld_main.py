@@ -16,7 +16,7 @@ importlib.reload(core.contextual_bandit)
 from core.contextual_bandit import contextual_bandit_runner, contextual_bandit_runner_v2
 
 from algorithms.neural_offline_bandit_cp import ApproxNeuraLCB_cp
-from algorithms.comparison_bandit_cp import ExactNeuraLCBV2_cp
+from algorithms.comparison_bandit_cp import ExactNeuraLCBV2_cp, NeuralGreedyV2_cp
 
 
 from algorithms.lin_lcb import LinLCB 
@@ -86,7 +86,13 @@ help_text: string describes the flag
 
 '''
 
-# seems that everybody has a default value
+# flags.DEFINE_string('algo_group', 'approx-neural_cp', 'conformal prediction/neural')
+# flags.DEFINE_string('algo_group', 'ApproxNeuraLCB_cp', 'conformal prediction/neural')
+flags.DEFINE_string('algo_group', 'ExactNeuraLCBV2_cp', 'conformal prediction/neural')
+# flags.DEFINE_string('algo_group', 'NeuralGreedyV2_cp', 'conformal prediction/neural')
+
+
+ 
 
 # flags.DEFINE_string('data_type', 'mushroom', 'Dataset to sample from')
 
@@ -144,9 +150,8 @@ flags.DEFINE_integer('test_freq', 10, 'Test frequency')
 
 
 
-# flags.DEFINE_string('algo_group', 'approx-neural_cp', 'conformal prediction/neural')
 
-flags.DEFINE_string('algo_group', 'ExactNeuraLCBV2_cp', 'conformal prediction/neural')
+
 
 # flags.DEFINE_integer('num_sim', 10, 'Number of simulations')
 flags.DEFINE_integer('num_sim', 1, 'Number of simulations')
@@ -337,6 +342,19 @@ def main(unused_argv):
         #         hparams.beta, hparams.lambd, hparams.lambd0
         #     )
 
+        if FLAGS.algo_group == 'NeuralGreedyV2_cp':
+            algos = [
+                # class UniformSampling(BanditAlgorithm)
+                    # UniformSampling(lin_hparams),
+                    # NeuralGreedyV2(hparams, update_freq = FLAGS.update_freq), 
+                    # class ApproxNeuraLCBV2(BanditAlgorithm)
+                    NeuralGreedyV2_cp(hparams, res_dir = FLAGS.res_dir, update_freq = FLAGS.update_freq)
+                    # ApproxNeuraLCBV2(hparams, update_freq = FLAGS.update_freq)
+                ]
+            algo_prefix = 'NeuralGreedyV2_cp-gridsearch_epochs={}_m={}_layern={}_buffer={}_bs={}_lr={}_beta={}_lambda={}_lambda0={}'.format(
+                hparams.num_steps, min(hparams.layer_sizes), hparams.layer_n, hparams.buffer_s, hparams.batch_size, hparams.lr, \
+                hparams.beta, hparams.lambd, hparams.lambd0
+            )
         if FLAGS.algo_group == 'ExactNeuraLCBV2_cp':
             algos = [
                 # class UniformSampling(BanditAlgorithm)
@@ -346,11 +364,10 @@ def main(unused_argv):
                     ExactNeuraLCBV2_cp(hparams, res_dir = FLAGS.res_dir, update_freq = FLAGS.update_freq)
                     # ApproxNeuraLCBV2(hparams, update_freq = FLAGS.update_freq)
                 ]
-            algo_prefix = 'exactneuralcbv2_cp-gridsearch_epochs={}_m={}_layern={}_buffer={}_bs={}_lr={}_beta={}_lambda={}_lambda0={}'.format(
+            algo_prefix = 'ExactNeuraLCBV2_cp-gridsearch_epochs={}_m={}_layern={}_buffer={}_bs={}_lr={}_beta={}_lambda={}_lambda0={}'.format(
                 hparams.num_steps, min(hparams.layer_sizes), hparams.layer_n, hparams.buffer_s, hparams.batch_size, hparams.lr, \
                 hparams.beta, hparams.lambd, hparams.lambd0
             )
-
 
         if FLAGS.algo_group == 'approx-neural_cp':
             algos = [
@@ -362,6 +379,19 @@ def main(unused_argv):
                     # ApproxNeuraLCBV2(hparams, update_freq = FLAGS.update_freq)
                 ]
             algo_prefix = 'approx-neural-gridsearch_epochs={}_m={}_layern={}_buffer={}_bs={}_lr={}_beta={}_lambda={}_lambda0={}'.format(
+                hparams.num_steps, min(hparams.layer_sizes), hparams.layer_n, hparams.buffer_s, hparams.batch_size, hparams.lr, \
+                hparams.beta, hparams.lambd, hparams.lambd0
+            )
+        if FLAGS.algo_group == 'ApproxNeuraLCB_cp':
+            algos = [
+                # class UniformSampling(BanditAlgorithm)
+                    # UniformSampling(lin_hparams),
+                    # NeuralGreedyV2(hparams, update_freq = FLAGS.update_freq), 
+                    # class ApproxNeuraLCBV2(BanditAlgorithm)
+                    ApproxNeuraLCB_cp(hparams, res_dir = FLAGS.res_dir, update_freq = FLAGS.update_freq)
+                    # ApproxNeuraLCBV2(hparams, update_freq = FLAGS.update_freq)
+                ]
+            algo_prefix = 'ApproxNeuraLCB_cp-gridsearch_epochs={}_m={}_layern={}_buffer={}_bs={}_lr={}_beta={}_lambda={}_lambda0={}'.format(
                 hparams.num_steps, min(hparams.layer_sizes), hparams.layer_n, hparams.buffer_s, hparams.batch_size, hparams.lr, \
                 hparams.beta, hparams.lambd, hparams.lambd0
             )

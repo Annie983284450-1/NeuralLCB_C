@@ -72,12 +72,12 @@ class ExactNeuraLCBV2_cp(BanditAlgorithm):
                 actions = jnp.ones(shape=(ctxs.shape[0],)) * a 
                 # this is the predicted rewards 
                 if len(self.Ensemble_pred_interval_centers) == 0:
-                    print(f'________________{i}-th chunk________________')
-                    print(f'!!!! Prediction intervals not available at current stage!!! self.Ensemble_pred_interval_centers == None')
+                    # print(f'________________{i}-th chunk________________')
+                    # print(f'!!!! Prediction intervals not available at current stage!!! self.Ensemble_pred_interval_centers == None')
                     f = self.nn.out(self.nn.params, ctxs, actions)  # Default to the neural network output
                 else:
-                    print(f'!!!!!! Prediction Intervals available!!!!')
-                    print(f'&&&&& len(Ensemble_pred_interval_centers)  === {len(self.Ensemble_pred_interval_centers)}&&&&&')
+                    # print(f'!!!!!! Prediction Intervals available!!!!')
+                    # print(f'&&&&& len(Ensemble_pred_interval_centers)  === {len(self.Ensemble_pred_interval_centers)}&&&&&')
                     f = self.Ensemble_pred_interval_centers[i * cs: (i+1) * cs]
                     f = jnp.array(f)
                 # g = self.nn.grad_out(self.nn.params, convoluted_contexts) / jnp.sqrt(self.nn.m) # (num_samples, p)
@@ -90,7 +90,7 @@ class ExactNeuraLCBV2_cp(BanditAlgorithm):
                 lcb_a = f.ravel() - self.hparams.beta * cnf.ravel()  # (num_samples,)
                 lcb.append(lcb_a.reshape(-1,1)) 
             lcb = jnp.hstack(lcb) 
-            acts.append( jnp.argmax(lcb, axis=1)) 
+            acts.append(jnp.argmax(lcb, axis=1)) 
         sampled_test_actions = jnp.hstack(acts)
 
         X_train = self.data.contexts
@@ -193,11 +193,8 @@ class ExactNeuraLCBV2_cp(BanditAlgorithm):
         # preds = self.nn.out(self.nn.params, contexts, actions) # (num_samples,)
         
         if len(self.Ensemble_pred_interval_centers) == 0:
-                
             preds = self.nn.out(self.nn.params, contexts, actions)  
-              
         else:
-  
             preds = self.Ensemble_pred_interval_centers 
 
         cnfs = []
@@ -237,7 +234,7 @@ class ExactNeuraLCBV2_cp(BanditAlgorithm):
  
 
 class NeuralGreedyV2_cp(BanditAlgorithm):
-    def __init__(self, hparams, res_dir, update_freq=1, name='NeuralGreedyV2'):
+    def __init__(self, hparams, res_dir, update_freq=1, name='NeuralGreedyV2_cp'):
         self.name = name 
         self.hparams = hparams 
         self.update_freq = update_freq 
@@ -252,26 +249,65 @@ class NeuralGreedyV2_cp(BanditAlgorithm):
         self.nn.reset(seed) 
         self.data.reset()
 
-    def sample_action(self, contexts):
+    def sample_action(self, contexts, opt_vals, opt_actions):
         preds = []
         for a in range(self.hparams.num_actions):
             actions = jnp.ones(shape=(contexts.shape[0],)) * a 
             # ====== added by Annie 2024 Oct.04
             if len(self.Ensemble_pred_interval_centers) == 0:
-                print(f'________________{i}-th chunk________________')
-                print(f'!!!! Prediction intervals not available at current stage!!! self.Ensemble_pred_interval_centers == None')
                 f = self.nn.out(self.nn.params, contexts, actions)  # Default to the neural network output
             else:
-                print(f'!!!!!! Prediction Intervals available!!!!')
-                print(f'&&&&& len(Ensemble_pred_interval_centers)  === {len(self.Ensemble_pred_interval_centers)}&&&&&')
                 f = self.Ensemble_pred_interval_centers
                 f = jnp.array(f)
             # ====== added by Annie 2024 Oct.04
 
             # f = self.nn.out(self.nn.params, contexts, actions) # (num_samples, 1)
             preds.append(f) 
-        preds = jnp.hstack(preds) 
-        return jnp.argmax(preds, axis=1)
+        '''
+        === debug log ====
+        jnp.hstack flattens the array along the horizontal axis, resulting in a one-dimensional array. This is why you end up with preds.shape == (1040,) instead of the expected two dimensions.
+        Since you have 520 contexts and are making predictions for 2 actions, jnp.hstack concatenates them into a single flat array instead of keeping them as separate rows and columns.
+        Solution:
+        To fix this, you should use jnp.column_stack (or jnp.stack) instead of jnp.hstack. jnp.column_stack will ensure that preds has two dimensions: one for the number of contexts and another for the number of actions.
+        '''
+        # preds = jnp.hstack(preds) 
+        # Use column_stack to ensure that each action's predictions are in separate columns
+        preds = jnp.column_stack(preds)
+        print(f"preds.shape: {preds.shape}")
+        sampled_test_actions = jnp.argmax(preds, axis=1)
+
+
+
+
+
+        X_train = self.data.contexts
+        # selected actions for training
+        actions = self.data.actions.ravel().astype(int)
+        # rewards for training
+        Y_train = self.data.rewards[np.arange(len(actions)), actions].reshape(-1, 1)
+        X_predict = contexts
+        test_actions = sampled_test_actions.ravel().astype(int)
+        Y_predict = opt_vals
+        filename = self.res_dir
+        nn_model = self.nn
+        
+       
+        self.prediction_interval_model = prediction_interval(
+                        nn_model,  
+                        X_train, 
+                        X_predict, 
+                        Y_train, 
+                        Y_predict, 
+                        actions, 
+                        test_actions,
+                        filename,
+                        self.name)
+        self.Ensemble_pred_interval_centers = self.prediction_interval_model.fit_bootstrap_models_online(B=10, miss_test_idx=[])
+        # print(f'self.Ensemble_prediction_interval_centers:{self.Ensemble_pred_interval_centers}')
+        PI_dfs, results = self.prediction_interval_model.run_experiments(alpha=0.05, stride=8,methods=['Ensemble'])       
+
+
+        return sampled_test_actions
 
     def update_buffer(self, contexts, actions, rewards): 
         self.data.add(contexts, actions, rewards)
@@ -290,16 +326,35 @@ class NeuralGreedyV2_cp(BanditAlgorithm):
         self.nn.train(self.data, self.hparams.num_steps)
 
     def monitor(self, contexts=None, actions=None, rewards=None):
-        norm = jnp.hstack(( jnp.ravel(param) for param in jax.tree_leaves(self.nn.params)))
+        for param in jax.tree_leaves(self.nn.params):
+            print(f'param.shape in jax.tree_leaves(self.nn.params):')
+            print(param.shape)
+        # sys.exit()
+
+
+        # norm = jnp.hstack(( jnp.ravel(param) for param in jax.tree_leaves(self.nn.params)))
+        norm = jnp.hstack([jnp.ravel(param) if param.shape != (1,) else param.reshape(1,) for param in jax.tree_leaves(self.nn.params)])
+
+
+
+
 
         # convoluted_contexts = self.nn.action_convolution(contexts, actions)
 
-        preds = self.nn.out(self.nn.params, contexts, actions) # (num_samples,)
+        # preds = self.nn.out(self.nn.params, contexts, actions) # (num_samples,)
 
         preds = []
         for a in range(self.hparams.num_actions):
             actions_tmp = jnp.ones(shape=(contexts.shape[0],)) * a 
-            f = self.nn.out(self.nn.params, contexts, actions_tmp) # (num_samples, 1)
+
+            if len(self.Ensemble_pred_interval_centers) == 0:
+                f = self.nn.out(self.nn.params, contexts, actions_tmp) # (num_samples, 1)
+            else:
+                f = self.Ensemble_pred_interval_centers
+                f = jnp.array(f)
+
+
+            # f = self.nn.out(self.nn.params, contexts, actions_tmp) # (num_samples, 1)
             preds.append(f) 
         preds = jnp.hstack(preds) 
 

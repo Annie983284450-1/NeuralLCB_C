@@ -1,15 +1,0 @@
-  0%|                                              | 0/160 [00:00<?, ?it/s]  0%|                                              | 0/160 [00:02<?, ?it/s]
-Traceback (most recent call last):
-  File "/Users/anniezhou/Desktop/NeuralLCB_C/realworld_main.py", line 439, in <module>
-    app.run(main)
-  File "/opt/anaconda3/envs/jax_tf28/lib/python3.9/site-packages/absl/app.py", line 308, in run
-    _run_main(main, args)
-  File "/opt/anaconda3/envs/jax_tf28/lib/python3.9/site-packages/absl/app.py", line 254, in _run_main
-    sys.exit(main(argv))
-  File "/Users/anniezhou/Desktop/NeuralLCB_C/realworld_main.py", line 427, in main
-    regrets, errs = contextual_bandit_runner_v2(algos, data, \
-  File "/Users/anniezhou/Desktop/NeuralLCB_C/core/contextual_bandit.py", line 83, in contextual_bandit_runner_v2
-    algo.update(c,a,r)
-  File "/Users/anniezhou/Desktop/NeuralLCB_C/algorithms/comparison_bandit_cp.py", line 172, in update
-    jax.ops.index_update(self.Lambda_inv, actions[i], \
-AttributeError: module 'jax.ops' has no attribute 'index_update'

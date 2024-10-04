@@ -109,6 +109,9 @@ class ApproxNeuraLCB_cp(BanditAlgorithm):
         # self.prediction_interval_model = None
     # line 5 in NeuraLCB Bmode
     # here is where conformal prediction and NeuraLCB integrated together
+
+ 
+
     def sample_action(self, test_contexts, opt_vals, opt_actions):
         # flags.DEFINE_integer('chunk_size', 500, 'Chunk size')
         # flags.DEFINE_integer('batch_size', 32, 'Batch size')
@@ -155,7 +158,9 @@ class ApproxNeuraLCB_cp(BanditAlgorithm):
             # lcb_a is used to decide which action to take by selecting the action with the highest LCB.
             acts.append(jnp.argmax(lcb, axis=1)) 
         sampled_test_actions = jnp.hstack(acts)
+        
 
+        # computing preidcition intervals
         X_train = self.data.contexts
         # selected actions for training
         actions = self.data.actions.ravel().astype(int)
