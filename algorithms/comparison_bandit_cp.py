@@ -119,37 +119,6 @@ class ExactNeuraLCBV2_cp(BanditAlgorithm):
         # print(f'self.Ensemble_prediction_interval_centers:{self.Ensemble_pred_interval_centers}')
         PI_dfs, results = self.prediction_interval_model.run_experiments(alpha=0.05, stride=8,methods=['Ensemble'])       
         return sampled_test_actions
-
-    
-    def sample_action_original(self, contexts):
-        """
-        Args:
-            context: (None, self.hparams.context_dim)
-        """
-        cs = self.hparams.chunk_size
-        num_chunks = math.ceil(contexts.shape[0] / cs)
-        acts = []
-        for i in range(num_chunks):
-            ctxs = contexts[i * cs: (i+1) * cs,:] 
-            lcb = []
-            for a in range(self.hparams.num_actions):
-                actions = jnp.ones(shape=(ctxs.shape[0],)) * a 
-                # this is the predicted rewards 
-                f = self.nn.out(self.nn.params, ctxs, actions) # (num_samples, 1)
-                # g = self.nn.grad_out(self.nn.params, convoluted_contexts) / jnp.sqrt(self.nn.m) # (num_samples, p)
-                g = self.nn.grad_out(self.nn.params, ctxs, actions) / jnp.sqrt(self.nn.m)
-                gA = g @ self.Lambda_inv[a,:,:] # (num_samples, p)
-                
-                gAg = jnp.sum(jnp.multiply(gA, g), axis=-1) # (num_samples, )
-                cnf = jnp.sqrt(gAg) # (num_samples,)
-
-                lcb_a = f.ravel() - self.hparams.beta * cnf.ravel()  # (num_samples,)
-                lcb.append(lcb_a.reshape(-1,1)) 
-            lcb = jnp.hstack(lcb) 
-            acts.append( jnp.argmax(lcb, axis=1)) 
-        return jnp.hstack(acts)
-
-    
     def update_buffer(self, contexts, actions, rewards): 
         self.data.add(contexts, actions, rewards)
         
@@ -162,13 +131,8 @@ class ExactNeuraLCBV2_cp(BanditAlgorithm):
             rewards: An array of real numbers representing the reward for (context, action)
         
         """
-
-        # self.data.add(contexts, actions, rewards)
+        
         self.nn.train(self.data, self.hparams.num_steps)
-
-        # Update confidence parameter over all samples in the batch
-        # convoluted_contexts = self.nn.action_convolution(contexts, actions)  
-        # u = self.nn.grad_out(self.nn.params, convoluted_contexts) / jnp.sqrt(self.nn.m)  # (num_samples, p)
         u = self.nn.grad_out(self.nn.params, contexts, actions) / jnp.sqrt(self.nn.m)
         for i in range(contexts.shape[0]):
             # jax.ops.index_update(self.Lambda_inv, actions[i], \
@@ -184,8 +148,6 @@ class ExactNeuraLCBV2_cp(BanditAlgorithm):
             print(f'param.shape in jax.tree_leaves(self.nn.params):')
             print(param.shape)
         # sys.exit()
-
-
         # norm = jnp.hstack(( jnp.ravel(param) for param in jax.tree_leaves(self.nn.params)))
         norm = jnp.hstack([jnp.ravel(param) if param.shape != (1,) else param.reshape(1,) for param in jax.tree_leaves(self.nn.params)])
 
@@ -335,10 +297,6 @@ class NeuralGreedyV2_cp(BanditAlgorithm):
         # norm = jnp.hstack(( jnp.ravel(param) for param in jax.tree_leaves(self.nn.params)))
         norm = jnp.hstack([jnp.ravel(param) if param.shape != (1,) else param.reshape(1,) for param in jax.tree_leaves(self.nn.params)])
 
-
-
-
-
         # convoluted_contexts = self.nn.action_convolution(contexts, actions)
 
         # preds = self.nn.out(self.nn.params, contexts, actions) # (num_samples,)
@@ -373,47 +331,107 @@ class NeuralGreedyV2_cp(BanditAlgorithm):
                 )
 #===================================================================================================
 
-class NeuraLCB(BanditAlgorithm):
+class NeuraLCB_cp(BanditAlgorithm):
     """NeuraLCB using diag approximation for confidence matrix. """
-    def __init__(self, hparams, name='NeuraLCB'):
+    def __init__(self, hparams, res_dir, update_freq, name='NeuraLCB_cp'):
         self.name = name 
         self.hparams = hparams 
-        opt = optax.adam(hparams.lr)
-        self.nn = NeuralBanditModel(opt, hparams, 'nn')
+        opt = optax.adam(hparams.lr) 
+        # here is why NeuraLCB is different from ApproxNeuraLCBV2
+        # we have "self.nn = NeuralBanditModelV2(opt, hparams, '{}-net'.format(name))" in ApproxNeuraLCBV2
+        self.nn = NeuralBanditModel(opt, hparams, '{}-nn'.format(name))
         self.data = BanditDataset(hparams.context_dim, hparams.num_actions, hparams.buffer_s, 'bandit_data')
-
-        self.diag_Lambda = jnp.array(
-                [hparams.lambd0 * jnp.ones(self.nn.num_params) for _ in range(self.hparams.num_actions) ]
-            ) # (num_actions, p)
-
-    def sample_action(self, contexts):
+        self.diag_Lambda = jnp.array([hparams.lambd0 * jnp.ones(self.nn.num_params) for _ in range(self.hparams.num_actions)]) # (num_actions, p)
+        self.update_freq = update_freq
+        self.prediction_interval_model = None
+        self.res_dir  = res_dir
+        self.Ensemble_pred_interval_centers = []  
+    def sample_action(self, contexts,opt_vals, opt_actions):
         """
         Args:
             contexts: (None, self.hparams.context_dim)
         """
+
+
+
         n = contexts.shape[0] 
-        
-        if n <= self.hparams.max_test_batch:
-            f = self.nn.out(self.nn.params, contexts) # (num_samples, num_actions)
-            g = self.nn.grad_out(self.nn.params, contexts) # (num_actions, num_samples, p)
+        cs = self.hparams.chunk_size
+        num_chunks = math.ceil(contexts.shape[0] / cs)
+        acts = []
 
-            cnf = jnp.sqrt( jnp.sum(jnp.square(g) / self.diag_Lambda.reshape(self.hparams.num_actions,1,-1), axis=-1) ) / jnp.sqrt(self.nn.m)
-            lcb = f - self.hparams.beta * cnf.T   # (num_samples, num_actions)
-            return jnp.argmax(lcb, axis=1)
-        else: # Break contexts in batches if it is large.
-            inv = int(n / self.hparams.max_test_batch)
-            acts = []
-            for i in range(inv):
-                c = contexts[i*self.hparams.max_test_batch:self.hparams.max_test_batch*(i+1),:]
-                f = self.nn.out(self.nn.params, c) # (num_samples, num_actions)
-                g = self.nn.grad_out(self.nn.params, c) # (num_actions, num_samples, p)
 
-                cnf = jnp.sqrt( jnp.sum(jnp.square(g) / self.diag_Lambda.reshape(self.hparams.num_actions,1,-1), axis=-1) ) / jnp.sqrt(self.nn.m)
-                lcb = f - self.hparams.beta * cnf.T   # (num_samples, num_actions)
-                acts.append(jnp.argmax(lcb, axis=1).ravel())
-            return jnp.array(acts)
+        for i in range(num_chunks):
+            ctxs = contexts[i * cs: (i+1) * cs,:] 
+            lcb = []
+          
+            # actions = jnp.ones(shape=(ctxs.shape[0],)) * a 
+            # this is the predicted rewards 
+            start_idx = i * cs
+            end_idx = min((i + 1) * cs, n)
+            ctxs = contexts[start_idx:end_idx, :]  # Shape (batch_size, context_dim)
             
 
+            if len(self.Ensemble_pred_interval_centers) == 0:
+                f = self.nn.out(self.nn.params, ctxs)  # Default to the neural network output
+            else:             
+                f = self.Ensemble_pred_interval_centers[start_idx:end_idx]
+                f = jnp.array(f)
+                print(f'self.Ensemble_pred_interval_centers available!!!!')
+                print(f'self.Ensemble_pred_interval_centers.shape == {self.Ensemble_pred_interval_centers.shape}')
+            # g = self.nn.grad_out(self.nn.params, convoluted_contexts) / jnp.sqrt(self.nn.m) # (num_samples, p)
+            # g = self.nn.grad_out(self.nn.params, ctxs, actions) / jnp.sqrt(self.nn.m)
+            
+            g = self.nn.grad_out(self.nn.params, ctxs)  # Shape (num_actions, batch_size, context_dim)
+            
+            cnf = jnp.sqrt(jnp.sum(jnp.square(g) / self.diag_Lambda.reshape(self.hparams.num_actions, 1, -1), axis=-1)) / jnp.sqrt(self.nn.m)
+            cnf = cnf.T
+
+            # lcb= f.ravel() - self.hparams.beta * cnf.ravel()  # (num_samples,)
+            lcb = f - self.hparams.beta * cnf 
+            print(f'lcb.shape == {lcb.shape}')
+            print(f'cnf.shape == {cnf.shape}')
+            
+   
+            acts.append(jnp.argmax(lcb, axis=1)) 
+
+        sampled_test_actions = jnp.concatenate(acts)
+        print(f'len(sampled_test_actions) == {len(sampled_test_actions)}')
+
+        print(f'sample_test_actions.shape==={sampled_test_actions.shape}')
+
+        assert sampled_test_actions.shape[0] == n, f"Mismatch between number of contexts ({n}) and sampled actions ({sampled_test_actions.shape[0]})"
+
+
+        X_train = self.data.contexts
+        # selected actions for training
+        actions = self.data.actions.ravel().astype(int)
+        # rewards for training
+        Y_train = self.data.rewards[np.arange(len(actions)), actions].reshape(-1, 1)
+        X_predict = contexts
+        test_actions = sampled_test_actions.ravel().astype(int)
+        Y_predict = opt_vals
+        filename = self.res_dir
+        nn_model = self.nn
+        
+        self.prediction_interval_model = prediction_interval(
+                        nn_model,  
+                        X_train, 
+                        X_predict, 
+                        Y_train, 
+                        Y_predict, 
+                        actions, 
+                        test_actions,
+                        filename,
+                        self.name)
+        self.Ensemble_pred_interval_centers = self.prediction_interval_model.fit_bootstrap_models_online(B=10, miss_test_idx=[])
+        # print(f'self.Ensemble_prediction_interval_centers:{self.Ensemble_pred_interval_centers}')
+        PI_dfs, results = self.prediction_interval_model.run_experiments(alpha=0.05, stride=8,methods=['Ensemble'])    
+            
+        return sampled_test_actions
+        
+            
+    def update_buffer(self, contexts, actions, rewards): 
+        self.data.add(contexts, actions, rewards)
     def update(self, contexts, actions, rewards):
         """Update the network parameters and the confidence parameter.
         
@@ -424,30 +442,46 @@ class NeuraLCB(BanditAlgorithm):
         
         """
 
-        self.data.add(contexts, actions, rewards)
+        # self.data.add(contexts, actions, rewards)
         self.nn.train(self.data, self.hparams.num_steps)
 
         # Update confidence parameter over all samples in the batch
+        # no actions are involved in the updating process. differentfrom Approxlcbv2
         g = self.nn.grad_out(self.nn.params, contexts)  # (num_actions, num_samples, p)
         g = jnp.square(g) / self.nn.m 
         for i in range(g.shape[1]): 
             self.diag_Lambda += g[:,i,:]
 
     def monitor(self, contexts=None, actions=None, rewards=None):
-        params = jnp.hstack(( jnp.ravel(param) for param in jax.tree_leaves(self.nn.params)))
+        # params = jnp.hstack(( jnp.ravel(param) for param in jax.tree_leaves(self.nn.params)))
+        params = jnp.hstack([jnp.ravel(param) if param.shape != (1,) else param.reshape(1,) for param in jax.tree_leaves(self.nn.params)])
+ 
 
-        f = self.nn.out(self.nn.params, contexts) # (num_samples, num_actions)
-        g = self.nn.grad_out(self.nn.params, contexts) # (num_actions, num_samples, p)
 
+        
+        if len(self.Ensemble_pred_interval_centers) == 0:
+            f = self.nn.out(self.nn.params, contexts) # (num_samples, num_actions)
+        else:
+            f = self.Ensemble_pred_interval_centers
+            f = jnp.array(f)
+        g = self.nn.grad_out(self.nn.params, contexts)
         cnf = jnp.sqrt( jnp.sum(jnp.square(g) / self.diag_Lambda.reshape(self.hparams.num_actions,1,-1), axis=-1) ) / jnp.sqrt(self.nn.m)
+
+        
+
+
         
         # action and reward fed here are in vector forms, we convert them into an array of one-hot vectors
         action_hot = jax.nn.one_hot(actions.ravel(), self.hparams.num_actions) 
         reward_hot = action_hot * rewards.reshape(-1,1)
 
         cost = self.nn.loss(self.nn.params, contexts, action_hot, reward_hot)
-        print('     r: {} | a: {} | f: {} | cnf: {} | param_mean: {}'.format(rewards.ravel()[0], actions.ravel()[0], f.ravel(), \
-            cnf.ravel(), jnp.mean(jnp.square(params))))
+        print(f'~~~~~~~~~~~~~~~~~~~========================~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        print('     r: {} | a: {} | f: {} | cnf: {} | loss: {}  | param_mean: {}'.format(rewards.ravel()[0], actions.ravel()[0], f.ravel(), \
+            cnf.ravel(), cost, jnp.mean(jnp.square(params))))
+        print(f'~~~~~~~~~~~~~~~~~~~========================~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+
+ 
 
 class ExactNeuraLCB(BanditAlgorithm):
     """NeuraLCB using exact confidence matrix. """
@@ -538,7 +572,7 @@ class ExactNeuraLCB(BanditAlgorithm):
                     f = self.nn.out(self.nn.params, c) # (num_samples, num_actions)
                 else:
                 
-                    f = self.Ensemble_pred_interval_centers[i*self.hparams.max_test_batch:self.hparams.max_test_batch*(i+1),:]
+                    f = self.Ensemble_pred_interval_centers[i*self.hparams.max_test_batch:self.hparams.max_test_batch*(i+1)]
                     f = jnp.array(f)
                     print(f'!!!!!! Prediction Intervals available!!!!')
                     print(f'&&&&& len(Ensemble_pred_interval_centers)  === {len(self.Ensemble_pred_interval_centers)}&&&&&')

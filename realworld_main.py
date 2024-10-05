@@ -16,7 +16,7 @@ importlib.reload(core.contextual_bandit)
 from core.contextual_bandit import contextual_bandit_runner, contextual_bandit_runner_v2
 
 from algorithms.neural_offline_bandit_cp import ApproxNeuraLCB_cp
-from algorithms.comparison_bandit_cp import ExactNeuraLCBV2_cp, NeuralGreedyV2_cp
+from algorithms.comparison_bandit_cp import ExactNeuraLCBV2_cp, NeuralGreedyV2_cp, NeuraLCB_cp
 
 
 from algorithms.lin_lcb import LinLCB 
@@ -90,7 +90,11 @@ help_text: string describes the flag
 flags.DEFINE_string('algo_group', 'ApproxNeuraLCB_cp', 'conformal prediction/neural')
 # flags.DEFINE_string('algo_group', 'ExactNeuraLCBV2_cp', 'conformal prediction/neural')
 # flags.DEFINE_string('algo_group', 'NeuralGreedyV2_cp', 'conformal prediction/neural')
+flags.DEFINE_boolean('is_window', True, 'to use the window sized data or not?') 
 
+flags.DEFINE_integer('num_train_sepsis_pat_win', 10 , 'Number of septic windows for training.') 
+flags.DEFINE_integer('num_test_pat_septic_win', 1, 'Number of septic windows for testing.') 
+flags.DEFINE_integer('win_size', 8, 'Window size used for training and testing.')
 
  
 
@@ -122,11 +126,7 @@ flags.DEFINE_float('subset_r', 0.5, 'The ratio of the action spaces to be select
 
 
 
-flags.DEFINE_boolean('is_window', True, 'to use the window sized data or not?') 
 
-flags.DEFINE_integer('num_train_sepsis_pat_win', 10 , 'Number of septic windows for training.') 
-flags.DEFINE_integer('num_test_pat_septic_win', 1, 'Number of septic windows for testing.') 
-flags.DEFINE_integer('win_size', 8, 'Window size used for training and testing.')
 
 
 # is_window = True
@@ -305,7 +305,8 @@ def main(unused_argv):
         'debug_mode': 'full', # simple/full
         'num_train_sepsis_pat_win': FLAGS.num_train_sepsis_pat_win,
         'num_test_pat_septic_win': FLAGS.num_test_pat_septic_win,
-        'data_type':FLAGS.data_type
+        'data_type':FLAGS.data_type,
+        'max_test_batch': FLAGS.batch_size
         # 'policy_prefix', policy_prefix
     })
 
@@ -343,8 +344,10 @@ def main(unused_argv):
     # Algorithms 
     #================================================================
     original_stdout = sys.stdout
-    with open(res_dir+f'/trainwin_{FLAGS.num_train_sepsis_pat_win}test_win_{FLAGS.num_test_pat_septic_win}_{FLAGS.algo_group}_log.txt', 'w') as f:
-        sys.stdout = f 
+
+    # with open(res_dir+f'/trainwin_{FLAGS.num_train_sepsis_pat_win}test_win_{FLAGS.num_test_pat_septic_win}_{FLAGS.algo_group}_log.txt', 'w') as f:
+    #     sys.stdout = f 
+    if res_dir:
         # if FLAGS.algo_group == 'approx-neural':
             
         #     algos = [
@@ -363,32 +366,32 @@ def main(unused_argv):
         #         hparams.beta, hparams.lambd, hparams.lambd0
         #     )
 
-        if FLAGS.algo_group == 'NeuralGreedyV2_cp':
-            algos = [
-                # class UniformSampling(BanditAlgorithm)
-                    # UniformSampling(lin_hparams),
-                    # NeuralGreedyV2(hparams, update_freq = FLAGS.update_freq), 
-                    # class ApproxNeuraLCBV2(BanditAlgorithm)
-                    NeuralGreedyV2_cp(hparams, res_dir = FLAGS.res_dir, update_freq = FLAGS.update_freq)
-                    # ApproxNeuraLCBV2(hparams, update_freq = FLAGS.update_freq)
-                ]
-            algo_prefix = 'NeuralGreedyV2_cp-gridsearch_epochs={}_m={}_layern={}_buffer={}_bs={}_lr={}_beta={}_lambda={}_lambda0={}'.format(
-                hparams.num_steps, min(hparams.layer_sizes), hparams.layer_n, hparams.buffer_s, hparams.batch_size, hparams.lr, \
-                hparams.beta, hparams.lambd, hparams.lambd0
-            )
-        if FLAGS.algo_group == 'ExactNeuraLCBV2_cp':
-            algos = [
-                # class UniformSampling(BanditAlgorithm)
-                    # UniformSampling(lin_hparams),
-                    # NeuralGreedyV2(hparams, update_freq = FLAGS.update_freq), 
-                    # class ApproxNeuraLCBV2(BanditAlgorithm)
-                    ExactNeuraLCBV2_cp(hparams, res_dir = FLAGS.res_dir, update_freq = FLAGS.update_freq)
-                    # ApproxNeuraLCBV2(hparams, update_freq = FLAGS.update_freq)
-                ]
-            algo_prefix = 'ExactNeuraLCBV2_cp-gridsearch_epochs={}_m={}_layern={}_buffer={}_bs={}_lr={}_beta={}_lambda={}_lambda0={}'.format(
-                hparams.num_steps, min(hparams.layer_sizes), hparams.layer_n, hparams.buffer_s, hparams.batch_size, hparams.lr, \
-                hparams.beta, hparams.lambd, hparams.lambd0
-            )
+        # if FLAGS.algo_group == 'NeuralGreedyV2_cp':
+        #     algos = [
+        #         # class UniformSampling(BanditAlgorithm)
+        #             # UniformSampling(lin_hparams),
+        #             # NeuralGreedyV2(hparams, update_freq = FLAGS.update_freq), 
+        #             # class ApproxNeuraLCBV2(BanditAlgorithm)
+        #             NeuralGreedyV2_cp(hparams, res_dir = FLAGS.res_dir, update_freq = FLAGS.update_freq)
+        #             # ApproxNeuraLCBV2(hparams, update_freq = FLAGS.update_freq)
+        #         ]
+        #     algo_prefix = 'NeuralGreedyV2_cp-gridsearch_epochs={}_m={}_layern={}_buffer={}_bs={}_lr={}_beta={}_lambda={}_lambda0={}'.format(
+        #         hparams.num_steps, min(hparams.layer_sizes), hparams.layer_n, hparams.buffer_s, hparams.batch_size, hparams.lr, \
+        #         hparams.beta, hparams.lambd, hparams.lambd0
+        #     )
+        # if FLAGS.algo_group == 'ExactNeuraLCBV2_cp':
+        #     algos = [
+        #         # class UniformSampling(BanditAlgorithm)
+        #             # UniformSampling(lin_hparams),
+        #             # NeuralGreedyV2(hparams, update_freq = FLAGS.update_freq), 
+        #             # class ApproxNeuraLCBV2(BanditAlgorithm)
+        #             ExactNeuraLCBV2_cp(hparams, res_dir = FLAGS.res_dir, update_freq = FLAGS.update_freq)
+        #             # ApproxNeuraLCBV2(hparams, update_freq = FLAGS.update_freq)
+        #         ]
+        #     algo_prefix = 'ExactNeuraLCBV2_cp-gridsearch_epochs={}_m={}_layern={}_buffer={}_bs={}_lr={}_beta={}_lambda={}_lambda0={}'.format(
+        #         hparams.num_steps, min(hparams.layer_sizes), hparams.layer_n, hparams.buffer_s, hparams.batch_size, hparams.lr, \
+        #         hparams.beta, hparams.lambd, hparams.lambd0
+        #     )
 
         if FLAGS.algo_group == 'approx-neural_cp':
             algos = [
@@ -403,19 +406,19 @@ def main(unused_argv):
                 hparams.num_steps, min(hparams.layer_sizes), hparams.layer_n, hparams.buffer_s, hparams.batch_size, hparams.lr, \
                 hparams.beta, hparams.lambd, hparams.lambd0
             )
-        if FLAGS.algo_group == 'ApproxNeuraLCB_cp':
-            algos = [
-                # class UniformSampling(BanditAlgorithm)
-                    # UniformSampling(lin_hparams),
-                    # NeuralGreedyV2(hparams, update_freq = FLAGS.update_freq), 
-                    # class ApproxNeuraLCBV2(BanditAlgorithm)
-                    ApproxNeuraLCB_cp(hparams, res_dir = FLAGS.res_dir, update_freq = FLAGS.update_freq)
-                    # ApproxNeuraLCBV2(hparams, update_freq = FLAGS.update_freq)
-                ]
-            algo_prefix = 'ApproxNeuraLCB_cp-gridsearch_epochs={}_m={}_layern={}_buffer={}_bs={}_lr={}_beta={}_lambda={}_lambda0={}'.format(
-                hparams.num_steps, min(hparams.layer_sizes), hparams.layer_n, hparams.buffer_s, hparams.batch_size, hparams.lr, \
-                hparams.beta, hparams.lambd, hparams.lambd0
-            )
+        # if FLAGS.algo_group == 'ApproxNeuraLCB_cp':
+        #     algos = [
+        #         # class UniformSampling(BanditAlgorithm)
+        #             # UniformSampling(lin_hparams),
+        #             # NeuralGreedyV2(hparams, update_freq = FLAGS.update_freq), 
+        #             # class ApproxNeuraLCBV2(BanditAlgorithm)
+        #             ApproxNeuraLCB_cp(hparams, res_dir = FLAGS.res_dir, update_freq = FLAGS.update_freq)
+        #             # ApproxNeuraLCBV2(hparams, update_freq = FLAGS.update_freq)
+        #         ]
+            # algo_prefix = 'ApproxNeuraLCB_cp-gridsearch_epochs={}_m={}_layern={}_buffer={}_bs={}_lr={}_beta={}_lambda={}_lambda0={}'.format(
+            #     hparams.num_steps, min(hparams.layer_sizes), hparams.layer_n, hparams.buffer_s, hparams.batch_size, hparams.lr, \
+            #     hparams.beta, hparams.lambd, hparams.lambd0
+            # )
         # if FLAGS.algo_group == 'neural-greedy':
         #     algos = [
         #             # UniformSampling(lin_hparams),
@@ -465,6 +468,37 @@ def main(unused_argv):
             algo_prefix = 'neurallinlcb-gridsearch_m={}_layern={}_beta={}_lambda0={}'.format(
                 min(hparams.layer_sizes), hparams.layer_n, hparams.beta, hparams.lambd0
             )
+
+
+        # Create a dictionary to map algo_group names to their respective classes
+        ALGO_MAP = {
+            'ExactNeuraLCBV2_cp': ExactNeuraLCBV2_cp,
+            'NeuralGreedyV2_cp': NeuralGreedyV2_cp,
+            'ApproxNeuraLCB_cp': ApproxNeuraLCB_cp,
+            'NeuraLCB_cp': NeuraLCB_cp
+        }
+        if FLAGS.algo_group not in ALGO_MAP:
+            raise ValueError(f"Unknown algo_group: {FLAGS.algo_group}")
+        else:
+            print(f'@@@@@@@@@~~~~~~~~~~~~~~~ Algorithm Testing ==== {FLAGS.algo_group}~~~~~~~~~~~~~~~@@@@@@@@@')
+
+        # Get the algorithm class
+        algo_class = ALGO_MAP[FLAGS.algo_group]
+
+        # Create the algorithm instance
+        algos = [
+            algo_class(hparams, res_dir=FLAGS.res_dir, update_freq=FLAGS.update_freq)
+        ]
+
+        # Create the prefix string using f-string
+        algo_prefix = (
+            f"{FLAGS.algo_group}-gridsearch_epochs={hparams.num_steps}_m={min(hparams.layer_sizes)}"
+            f"_layern={hparams.layer_n}_buffer={hparams.buffer_s}_bs={hparams.batch_size}"
+            f"_lr={hparams.lr}_beta={hparams.beta}_lambda={hparams.lambd}_lambda0={hparams.lambd0}"
+        )
+
+
+        
         #==============================
         # Runner 
         #==============================
@@ -483,6 +517,9 @@ def main(unused_argv):
         np.savez(file_name, regrets=regrets, errs=errs)
 
         print(f'total time for contextual bandit runner: {time.time()-start} seconds')
+
+
+
 
     sys.stdout = original_stdout
 

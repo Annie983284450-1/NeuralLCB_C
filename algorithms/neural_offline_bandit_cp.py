@@ -78,7 +78,7 @@ class ApproxNeuraLCB_cp(BanditAlgorithm):
         self.update_freq = update_freq
         # learning rate 1e-3
         opt = optax.adam(hparams.lr)
-        self.nn = NeuralBanditModelV2(opt, hparams, '{}-net'.format(name))
+        self.nn = NeuralBanditModelV2(opt, hparams, '{}-nn2'.format(name))
         # self.nn = NeuralBanditModel(opt, hparams, '{}-net'.format(name))
         # data buffer for incoming data, update each round when we have a new (c,a, r)
         self.data = BanditDataset(hparams.context_dim, hparams.num_actions, hparams.buffer_s, '{}-data'.format(name))
@@ -125,6 +125,9 @@ class ApproxNeuraLCB_cp(BanditAlgorithm):
             # for each chunk of context, store the lower confidence bound (lcb)
             lcb = [] 
             # Calculating Lower Confidence Bound (LCB) for Each Action
+            # difference between Neuralcb_cp, Neuralcb_cp does 
+            # The action-specific scaling of diag_Lambda in Snippet 2 provides a more tailored calculation for each action's uncertainty, 
+            # possibly leading to a more accurate representation of the uncertainty associated with each action. This could be beneficial when actions exhibit different variances.
             for a in range(self.hparams.num_actions):
                 # num_actions= 2
                 # a = 0 or 1

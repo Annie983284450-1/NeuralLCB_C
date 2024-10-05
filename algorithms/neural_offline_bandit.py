@@ -504,7 +504,7 @@ class ExactNeuraLCB(BanditAlgorithm):
         self.beta_hat_bins = []
 
 
-    def sample_action_original(self, context):
+    def sample_action(self, context):
         """
         Args:
             context: (None, self.hparams.context_dim)
@@ -535,8 +535,16 @@ class ExactNeuraLCB(BanditAlgorithm):
                 lcb = f - self.hparams.beta * cnf   # (num_samples, num_actions)
                 acts.append(jnp.argmax(lcb, axis=1).ravel())
             return jnp.array(acts)
-            
-    def sample_action(self, context, opt_vals, opt_actions):
+    '''
+    If you are considering replacing f with conformal predictions:
+    directly use conformal prediction outputs for f to better calibrate the predicted values based on empirical uncertainty from the bootstrap-based approach.
+    As for g, since it is tightly integrated into how uncertainty (cnf) is calculated, it would be more complex to replace it with conformal prediction outputs. 
+    The gradients (g) are used to propagate uncertainty through the parameters, which is not directly covered by conformal predictions. 
+    The conformal prediction approach does not provide gradients with respect to model parameters; it only gives calibrated estimates of model outputs.
+    Therefore, it is advisable to keep g as it is for computing uncertainty.
+    The conformal predictions can replace f for action value estimates, while the gradients continue to be used to propagate parameter-level uncertainty effectively.
+    '''
+    def sample_action_cp(self, context, opt_vals, opt_actions):
         """
         Args:
             context: (None, self.hparams.context_dim)
@@ -568,9 +576,9 @@ class ExactNeuraLCB(BanditAlgorithm):
                 
                     f = self.Ensemble_pred_interval_centers[i*self.hparams.max_test_batch:self.hparams.max_test_batch*(i+1),:]
                     f = jnp.array(f)
-                    print(f'!!!!!! Prediction Intervals available!!!!')
-                    print(f'&&&&& len(Ensemble_pred_interval_centers)  === {len(self.Ensemble_pred_interval_centers)}&&&&&')
-                    print(f'PI centers datatype == {type(self.Ensemble_pred_interval_centers)}')
+                    # print(f'!!!!!! Prediction Intervals available!!!!')
+                    # print(f'&&&&& len(Ensemble_pred_interval_centers)  === {len(self.Ensemble_pred_interval_centers)}&&&&&')
+                    # print(f'PI centers datatype == {type(self.Ensemble_pred_interval_centers)}')
                 # f = self.nn.out(self.nn.params, c) # (num_samples, num_actions)
 
                 g = self.nn.grad_out(self.nn.params, c) # (num_actions, num_samples, p)

@@ -159,7 +159,7 @@ class BanditDataset(object):
         else: 
             ind = np.random.choice(range(max(0, n - self.buffer_s), n), batch_size)
         ind = jnp.array(ind)
-        print(f'................. Testing get_batch_with_weights .................')
+        # print(f'................. Testing get_batch_with_weights .................')
         # print(f'batch_size:{batch_size}')
         # # print("Contexts shape:", self.contexts.shape)
         # print("Actions shape:", self.actions.shape)

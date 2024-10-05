@@ -310,6 +310,8 @@ class NeuralBanditModel(NeuralNetwork):
             
         params, opt_state = self.params, self.opt_state 
         for step in range(num_steps):
+
+            
             x,w,y = data.get_batch_with_weights(self.hparams.batch_size) #(None,d), (None, num_actions), (None, num_actions)
             # print('DEBUG', x.shape, w.shape, y.shape)
             params, opt_state = self.update(params, opt_state, x,w,y) 

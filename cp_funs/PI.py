@@ -36,6 +36,21 @@ import copy
 # if algorithms.neural_offline_bandit_cp import PT, PI cannot import algorithms.neural_offline_bandit_cp, there would be circular import error
 # from algorithms.neural_offline_bandit_cp import ApproxNeuraLCBV2_cp, NeuralBanditModelV2, NeuralBanditModel
 
+
+
+# This is how self.Ensemble_pred_interval_centers is calculated. 
+
+# When 
+
+# model.name.split('_')[1] == 'nn',
+
+# boot_predictions[b] = model.out(model.params, np.r_[self.X_train, self.X_predict]).flatten() # for NeuralBanditModel 
+
+# this is the case i am dealing with. It seems that now boo_predictions[b] is 2D instead of 1D compared to when model.name.split('_')[1] == 'nn2'. How could I change the code and deal with 
+
+# boot_predictions[b] when model.name.split('_')[1] == 'nn'.
+
+
 class prediction_interval():
     '''
         Create prediction intervals using different methods (i.e., EnbPI, J+aB ICP, Weighted, Time-series)
@@ -128,7 +143,15 @@ class prediction_interval():
             
 
             # def out_impure_fn(self, params, contexts, actions):
-            boot_predictions[b] = model.out(model.params, np.r_[self.X_train, self.X_predict],  np.r_[self.actions, self.test_actions]).flatten() # for V2
+
+            # nn and nn2 are generating different shapes for predictions, they should be handled differently.
+            # Instead of flattening, handle boot_predictions in a way that maintains the correct structure so that it can be used properly in subsequent computations.
+            if model.name.split('_')[1] == 'nn2':
+                boot_predictions[b] = model.out(model.params, np.r_[self.X_train, self.X_predict],  np.r_[self.actions, self.test_actions]).flatten() # for NeuralBanditModelV2
+                print(f'..........boot_predictions[{b}.shape == {boot_predictions[b].shape}..........')
+            elif model.name.split('_')[1] == 'nn':
+                boot_predictions[b] = model.out(model.params, np.r_[self.X_train, self.X_predict]).flatten() # for NeuralBanditModel
+                print(f'..........boot_predictions[{b}.shape == {boot_predictions[b].shape}..........')
           
        
 

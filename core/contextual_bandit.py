@@ -5,7 +5,7 @@ from tqdm import tqdm
 from timeit import timeit 
 import time 
 import pandas as pd
-import os
+import os, sys
  
 
 def action_stats(actions, num_actions):
@@ -39,45 +39,38 @@ def contextual_bandit_runner_v2(algos, data, \
         dataset: A tuple of (contexts, actions, mean_rewards, test_contexts, test_mean_rewards).
         algos: A list of algorithms to run on the bandit instance.  
     """
-    print(f'starting contextual_bandit_runner_v2() ......')
-    
-
+    print(f'...... ...... ...... SStarting contextual_bandit_runner_v2() ......')
     # Create a bandit instance 
     regrets = [] # (num_sim, num_algos, T) 
     errs = [] # (num_sim, num_algos, T) 
     # for sim in range(num_sim):
-
     if res_dir:
         regret_csv = res_dir+'/'+ algo_prefix+f'.csv'
         with open(regret_csv, 'w') as f:
             pass  # Just opening in 'w' mode truncates the file
-            
         for j,algo in enumerate(algos): 
-             
                     # Open in write mode to truncate the file
             with open(res_dir+f'/final_all_cpresults_avg_{algo.name}.csv', 'w') as f:
                     pass  # Just opening in 'w' mode truncates the file      
         print('Simulation: {}/{}'.format(sim + 1, num_sim))
         cmab = OfflineContextualBandit(*data.reset_data(sim))
+
+
+
+
+
         for algo in algos:
             algo.reset(sim * 1111)
         subopts = [[] for _ in range(len(algos))]
         act_errs = [[] for _ in range(len(algos))]
         opt_vals = np.max(cmab.test_mean_rewards, axis=1) 
         opt_actions = np.argmax(cmab.test_mean_rewards, axis=1) 
-
         for i in tqdm(range(cmab.num_contexts),ncols=75):
-
-
             print(f' !!!@  !!!@  !!!@  !!!@  !!!@  !!!@  !!!@  !!!!!!@ ROUND{i}!@ ROUND{i}!! @#$@ ROUND {i} @#@ ROUND{i}$@ !!!!!!')
             start_time = time.time()
             c,a,r = cmab.get_data(i) 
             print(f'!!!!!!!!!!!!{i}-th data point !!!!!!!!')
-            '''
-            c.shape = (1, 13)
-            a.shape = (1,)
-            r.shape = (1, 1)            
-            '''
+
             # actually there is always one algo in algos
 
             for j,algo in enumerate(algos): 
@@ -109,7 +102,7 @@ def contextual_bandit_runner_v2(algos, data, \
                                 algo.name, test_subopt, action_acc))
                     else: 
                         t1 = time.time()
-                        cp_experts = ['ApproxNeuraLCB_cp', 'ExactNeuraLCBV2_cp', 'NeuralGreedyV2_cp']
+                        cp_experts = ['ApproxNeuraLCB_cp', 'ExactNeuraLCBV2_cp', 'NeuralGreedyV2_cp', 'NeuraLCB_cp']
                         # predicted actions using NeuraLCB and conformal predicsion
                         # if algo.name == 'ApproxNeuraLCB_cp':
                         if algo.name in cp_experts:
@@ -118,9 +111,17 @@ def contextual_bandit_runner_v2(algos, data, \
                         # elif algo.name == 'ExactNeuraLCBV2_cp':
                         #     test_actions = algo.sample_action(cmab.test_contexts, opt_vals, opt_actions)
                         else:
-                            test_actions = algo.sample_action(cmab.test_contexts) 
+                            # test_actions = algo.sample_action(cmab.test_contexts) 
+                            sys.exit('Wrong algo group!!')
                         # print(f'################# test_actions.shape==={test_actions.shape}')
+                        
+                        # print(f"#################cmab.num_test_contexts: {cmab.num_test_contexts}")
+                        # print(f"#################cmab.test_mean_rewards shape: {cmab.test_mean_rewards.shape}")
+                        # print(f"#################test_actions shape: {test_actions.shape}")
+                        # print(f'################# test_actions.shape==={test_actions.shape}')
+                        # print(f"#################test_actions.ravel() shape: {test_actions.ravel().shape}")
                         t2 = time.time()
+                        # sys.exit()
                         sel_vals = cmab.test_mean_rewards[np.arange(cmab.num_test_contexts), test_actions.ravel()]
                         if normalize:
                             test_subopt = np.mean(1 - sel_vals / opt_vals) 
