@@ -112,32 +112,33 @@ flags.DEFINE_float('eps', 0.1, 'Probability of selecting a random action in eps-
 flags.DEFINE_float('subset_r', 0.5, 'The ratio of the action spaces to be selected in offline data')
 
 
-num_train_sepsis_pat_win = 20
-num_test_pat_septic_win = 5
+# num_train_sepsis_pat_win = 20
+# num_test_pat_septic_win = 5
 # num_train_sepsis_pat_win = 1000
 # num_test_pat_septic_win = 250
-win_size= 8 
-print(f'num_train_sepsis_pat_win === {num_train_sepsis_pat_win}')
-print(f'num_test_pat_septic_win === {num_test_pat_septic_win}')
-
-
-is_window = True
-flags.DEFINE_boolean('is_window', is_window, 'to use the window sized data or not?') 
-
-flags.DEFINE_integer('num_train_sepsis_pat_win', num_train_sepsis_pat_win , 'Number of septic windows for training.') 
-flags.DEFINE_integer('num_test_pat_septic_win', num_test_pat_septic_win, 'Number of septic windows for testing.') 
+# # win_size= 8 
+# print(f'num_train_sepsis_pat_win === {num_train_sepsis_pat_win}')
+# print(f'num_test_pat_septic_win === {num_test_pat_septic_win}')
 
 
 
-# this might only corresponding to a few hundreds patients
-if is_window:
+flags.DEFINE_boolean('is_window', True, 'to use the window sized data or not?') 
 
-    flags.DEFINE_integer('num_contexts', num_train_sepsis_pat_win*win_size*2, 'Number of contexts for training.') 
-    flags.DEFINE_integer('num_test_contexts', num_test_pat_septic_win*win_size*13, 'Number of contexts for test.') 
-else:
+flags.DEFINE_integer('num_train_sepsis_pat_win', 10 , 'Number of septic windows for training.') 
+flags.DEFINE_integer('num_test_pat_septic_win', 1, 'Number of septic windows for testing.') 
+flags.DEFINE_integer('win_size', 8, 'Window size used for training and testing.')
 
-    flags.DEFINE_integer('num_contexts', 500, 'Number of contexts for training.') 
-    flags.DEFINE_integer('num_test_contexts', 100, 'Number of contexts for test.') 
+
+# is_window = True
+# # this might only corresponding to a few hundreds patients
+# if is_window:
+
+#     flags.DEFINE_integer('num_contexts', num_train_sepsis_pat_win*win_size*2, 'Number of contexts for training.') 
+#     flags.DEFINE_integer('num_test_contexts', num_test_pat_septic_win*win_size*13, 'Number of contexts for test.') 
+# else:
+
+#     flags.DEFINE_integer('num_contexts', 500, 'Number of contexts for training.') 
+#     flags.DEFINE_integer('num_test_contexts', 100, 'Number of contexts for test.') 
 
 flags.DEFINE_boolean('verbose', True, 'verbose') 
 flags.DEFINE_boolean('debug', True, 'debug') 
@@ -182,6 +183,20 @@ flags.DEFINE_float('lambd', 1e-4, 'regularization parameter')
 #================================================================
 def main(unused_argv): 
 
+    # is_window = True
+    # this might only corresponding to a few hundreds patients
+    if FLAGS.is_window:
+
+        # flags.DEFINE_integer('num_contexts', num_train_sepsis_pat_win*win_size*2, 'Number of contexts for training.') 
+        # flags.DEFINE_integer('num_test_contexts', num_test_pat_septic_win*win_size*13, 'Number of contexts for test.') 
+        num_contexts = FLAGS.num_train_sepsis_pat_win * FLAGS.win_size * 2
+        num_test_contexts = FLAGS.num_test_pat_septic_win * FLAGS.win_size * 13
+    else:
+
+        # flags.DEFINE_integer('num_contexts', 500, 'Number of contexts for training.') 
+        # flags.DEFINE_integer('num_test_contexts', 100, 'Number of contexts for test.') 
+        num_contexts = 500
+        num_test_contexts = 300
     #=================
     # Data 
     #=================
@@ -222,8 +237,10 @@ def main(unused_argv):
                         is_window = FLAGS.is_window,
                         num_train_sepsis_pat_win= FLAGS.num_train_sepsis_pat_win,
                         num_test_pat_septic_win= FLAGS.num_test_pat_septic_win, 
-                        num_contexts=FLAGS.num_contexts, 
-                        num_test_contexts=FLAGS.num_test_contexts,
+                        # num_contexts=FLAGS.num_contexts, 
+                        num_contexts=num_contexts, 
+                        # num_test_contexts=FLAGS.num_test_contexts,
+                        num_test_contexts=num_test_contexts,
                         num_actions=2,
                         noise_std = FLAGS.noise_std,
                         pi = FLAGS.policy, 
@@ -231,8 +248,11 @@ def main(unused_argv):
                         subset_r = FLAGS.subset_r) 
         else:
 
-            data = DataClass(num_contexts=FLAGS.num_contexts, 
-                        num_test_contexts=FLAGS.num_test_contexts,
+            data = DataClass(
+                   # num_contexts=FLAGS.num_contexts, 
+                     num_contexts=num_contexts, 
+                        # num_test_contexts=FLAGS.num_test_contexts,
+                        num_test_contexts= num_test_contexts,
                         pi = FLAGS.policy, 
                         eps = FLAGS.eps, 
                         subset_r = FLAGS.subset_r) 
@@ -240,10 +260,11 @@ def main(unused_argv):
         raise NotImplementedError
     # sys.exit()
 
-    if FLAGS.data_type == 'mnist': # Use 1000 test points for mnist 
-        FLAGS.num_test_contexts = 1000  
-        FLAGS.test_freq = 100
-        FLAGS.chunk_size = 1
+    # if FLAGS.data_type == 'mnist': # Use 1000 test points for mnist 
+    #     # FLAGS.num_test_contexts = 1000  
+    #     num_test_contexts=1000
+    #     FLAGS.test_freq = 100
+    #     FLAGS.chunk_size = 1
     
     # returned dataset = (contexts, actions, rewards, test_contexts, mean_test_rewards) 
     # rewards are added with noise, while mean_(test_)rewards are pure rewards
@@ -307,7 +328,7 @@ def main(unused_argv):
     # res_dir = os.path.join('results', data_prefix) 
     sim = 0
 
-    res_dir = os.path.join(f'../neuralcb_results/sim{sim}/trainwins_{num_train_sepsis_pat_win}_testwins_{num_test_pat_septic_win}/', data_prefix) 
+    res_dir = os.path.join(f'../neuralcb_results/sim{sim}/trainwins_{FLAGS.num_train_sepsis_pat_win}_testwins_{FLAGS.num_test_pat_septic_win}/', data_prefix) 
 
 
     flags.DEFINE_string('res_dir', res_dir, 'final result path for each simulation')
@@ -322,7 +343,7 @@ def main(unused_argv):
     # Algorithms 
     #================================================================
     original_stdout = sys.stdout
-    with open(res_dir+f'/trainwin_{num_train_sepsis_pat_win}test_win_{num_test_pat_septic_win}_{FLAGS.algo_group}_log.txt', 'w') as f:
+    with open(res_dir+f'/trainwin_{FLAGS.num_train_sepsis_pat_win}test_win_{FLAGS.num_test_pat_septic_win}_{FLAGS.algo_group}_log.txt', 'w') as f:
         sys.stdout = f 
         # if FLAGS.algo_group == 'approx-neural':
             
