@@ -19,6 +19,8 @@ import cp_funs.PI
 importlib.reload(cp_funs.PI)
 from cp_funs.PI import prediction_interval
 
+
+#this is actually the algo in the paper. it should be the best-performing. theoretically I mean
 class ExactNeuraLCBV2_cp(BanditAlgorithm):
     """NeuraLCB using exact confidence matrix and NeuralBanditModelV2. """
     def __init__(self, hparams,res_dir, update_freq=1, name='ExactNeuraLCBV2_cp'):

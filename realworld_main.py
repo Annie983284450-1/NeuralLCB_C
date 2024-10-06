@@ -350,50 +350,6 @@ def main(unused_argv):
         sys.stdout = f 
     # if res_dir:
         # if FLAGS.algo_group == 'approx-neural':
-            
-        #     algos = [
-        #         # class UniformSampling(BanditAlgorithm)
-        #             # UniformSampling(lin_hparams),
-        #             # NeuralGreedyV2(hparams, update_freq = FLAGS.update_freq), 
-        #             # class ApproxNeuraLCBV2(BanditAlgorithm)
-        #             # ApproxNeuraLCB_cp(hparams, res_dir = FLAGS.res_dir, update_freq = FLAGS.update_freq)
-        #             # ApproxNeuraLCBV2(hparams, update_freq = FLAGS.update_freq)
-        #         ]
-        #     # algo_prefix = 'approx-neural-gridsearch_epochs={}_m={}_layern={}_buffer={}_bs={}_lr={}_beta={}_lambda={}_lambda0={}'.format(
-        #     #     hparams.num_steps, min(hparams.layer_sizes), hparams.layer_n, hparams.buffer_s, hparams.batch_size, hparams.lr, \
-        #     #     hparams.beta, hparams.lambd, hparams.lambd0
-        #     algo_prefix = 'no-cp-approx-neural-gridsearch_epochs={}_m={}_layern={}_buffer={}_bs={}_lr={}_beta={}_lambda={}_lambda0={}'.format(
-        #         hparams.num_steps, min(hparams.layer_sizes), hparams.layer_n, hparams.buffer_s, hparams.batch_size, hparams.lr, \
-        #         hparams.beta, hparams.lambd, hparams.lambd0
-        #     )
-
-        # if FLAGS.algo_group == 'NeuralGreedyV2_cp':
-        #     algos = [
-        #         # class UniformSampling(BanditAlgorithm)
-        #             # UniformSampling(lin_hparams),
-        #             # NeuralGreedyV2(hparams, update_freq = FLAGS.update_freq), 
-        #             # class ApproxNeuraLCBV2(BanditAlgorithm)
-        #             NeuralGreedyV2_cp(hparams, res_dir = FLAGS.res_dir, update_freq = FLAGS.update_freq)
-        #             # ApproxNeuraLCBV2(hparams, update_freq = FLAGS.update_freq)
-        #         ]
-        #     algo_prefix = 'NeuralGreedyV2_cp-gridsearch_epochs={}_m={}_layern={}_buffer={}_bs={}_lr={}_beta={}_lambda={}_lambda0={}'.format(
-        #         hparams.num_steps, min(hparams.layer_sizes), hparams.layer_n, hparams.buffer_s, hparams.batch_size, hparams.lr, \
-        #         hparams.beta, hparams.lambd, hparams.lambd0
-        #     )
-        # if FLAGS.algo_group == 'ExactNeuraLCBV2_cp':
-        #     algos = [
-        #         # class UniformSampling(BanditAlgorithm)
-        #             # UniformSampling(lin_hparams),
-        #             # NeuralGreedyV2(hparams, update_freq = FLAGS.update_freq), 
-        #             # class ApproxNeuraLCBV2(BanditAlgorithm)
-        #             ExactNeuraLCBV2_cp(hparams, res_dir = FLAGS.res_dir, update_freq = FLAGS.update_freq)
-        #             # ApproxNeuraLCBV2(hparams, update_freq = FLAGS.update_freq)
-        #         ]
-        #     algo_prefix = 'ExactNeuraLCBV2_cp-gridsearch_epochs={}_m={}_layern={}_buffer={}_bs={}_lr={}_beta={}_lambda={}_lambda0={}'.format(
-        #         hparams.num_steps, min(hparams.layer_sizes), hparams.layer_n, hparams.buffer_s, hparams.batch_size, hparams.lr, \
-        #         hparams.beta, hparams.lambd, hparams.lambd0
-        #     )
-
         if FLAGS.algo_group == 'approx-neural_cp':
             algos = [
                 # class UniformSampling(BanditAlgorithm)
@@ -407,31 +363,6 @@ def main(unused_argv):
                 hparams.num_steps, min(hparams.layer_sizes), hparams.layer_n, hparams.buffer_s, hparams.batch_size, hparams.lr, \
                 hparams.beta, hparams.lambd, hparams.lambd0
             )
-        # if FLAGS.algo_group == 'ApproxNeuraLCB_cp':
-        #     algos = [
-        #         # class UniformSampling(BanditAlgorithm)
-        #             # UniformSampling(lin_hparams),
-        #             # NeuralGreedyV2(hparams, update_freq = FLAGS.update_freq), 
-        #             # class ApproxNeuraLCBV2(BanditAlgorithm)
-        #             ApproxNeuraLCB_cp(hparams, res_dir = FLAGS.res_dir, update_freq = FLAGS.update_freq)
-        #             # ApproxNeuraLCBV2(hparams, update_freq = FLAGS.update_freq)
-        #         ]
-            # algo_prefix = 'ApproxNeuraLCB_cp-gridsearch_epochs={}_m={}_layern={}_buffer={}_bs={}_lr={}_beta={}_lambda={}_lambda0={}'.format(
-            #     hparams.num_steps, min(hparams.layer_sizes), hparams.layer_n, hparams.buffer_s, hparams.batch_size, hparams.lr, \
-            #     hparams.beta, hparams.lambd, hparams.lambd0
-            # )
-        # if FLAGS.algo_group == 'neural-greedy':
-        #     algos = [
-        #             # UniformSampling(lin_hparams),
-        #             # NeuralGreedyV2(hparams, update_freq = FLAGS.update_freq), 
-        #         ]
-        #     algo_prefix = 'neural-greedy-gridsearch_epochs={}_m={}_layern={}_buffer={}_bs={}_lr={}_lambda={}'.format(
-        #         hparams.num_steps, min(hparams.layer_sizes), hparams.layer_n, hparams.buffer_s, hparams.batch_size, hparams.lr, \
-        #     hparams.lambd
-        #     ) 
-            
-
-
         # if FLAGS.algo_group == 'baseline':
         #     algos = [
         #         UniformSampling(lin_hparams),
