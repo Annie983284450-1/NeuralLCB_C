@@ -24,6 +24,7 @@ from algorithms.kern_lcb import KernLCB
 from algorithms.uniform_sampling import UniformSampling
 from algorithms.neural_lin_lcb import ExactNeuralLinLCBV2, ExactNeuralLinGreedyV2, ApproxNeuralLinLCBV2, ApproxNeuralLinGreedyV2, \
     ApproxNeuralLinLCBJointModel, NeuralLinGreedyJointModel
+from algorithms.neural_lin_lcb_cp import ApproxNeuralLinLCBV2_cp
 # data class is defined in this script!!
 from data.realworld_data import *
 from data.sepsisdataclass import *

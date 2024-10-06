@@ -75,7 +75,6 @@ class ApproxNeuralLinLCBV2_cp(BanditAlgorithm):
         self.prediction_interval_model = None
         self.res_dir  = res_dir
         self.Ensemble_pred_interval_centers = []   
-
         self.reset(self.hparams.seed)
 
     def reset(self, seed): 
@@ -162,6 +161,8 @@ class ApproxNeuralLinLCBV2_cp(BanditAlgorithm):
             print('     r: {} | a: {} | f: {} | cnf: {} | loss: {} | param_mean: {}'.format(rewards.ravel()[0], \
                 a, preds.ravel(), \
                 cnf.ravel(), cost, jnp.mean(jnp.square(norm))))
+            
+
 
 class ApproxNeuralLinGreedyV2(ApproxNeuralLinLCBV2_cp):
     def __init__(self, hparams, update_freq=1,name='ApproxNeuralLinGreedyV2'):
