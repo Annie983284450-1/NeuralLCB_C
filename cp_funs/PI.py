@@ -55,8 +55,6 @@ class prediction_interval():
     '''
         Create prediction intervals using different methods (i.e., EnbPI, J+aB ICP, Weighted, Time-series)
     '''
- 
-
     def __init__(self,  nn_model,  # The neural network model (NeuralBanditModelV2)
                 X_train, X_predict, Y_train, Y_predict,  actions, test_actions, filename, algoname):
         
@@ -72,28 +70,13 @@ class prediction_interval():
         self.actions = actions
         self.test_actions = test_actions
         self.algoname = algoname
-
-        
-        # list of models for B bootstraps
         self.Ensemble_fitted_func = []
         self.Ensemble_online_resid = np.array([])
         self.Ensemble_pred_interval_centers = []   
-        
-        # self.final_result_path = final_result_path
-        self.Ensemble_train_interval_centers = []  # Predicted training data centers by EnbPI
-        # self.Ensemble_pred_interval_centers = []  # Predicted test data centers by EnbPI
-        # self.Ensemble_online_resid = np.array([])  # LOO scores
-        # self.Ensemble_pred_interval_ends = []  # Upper and lower end
+        self.Ensemble_train_interval_centers = []   
         self.beta_hat_bins = []
-        # self.ICP_fitted_func = []  # it only store 1 fitted ICP func.
-        # self.ICP_resid = np.array([])
-        # self.WeightCP_online_resid = np.array([])
-        # self.JaB_boot_samples_idx = 0
-        # self.JaB_boot_predictions = 0
         self.filename = filename
-        # self.sim = sim
-
-
+      
     def fit_bootstrap_models_online(self,  B, miss_test_idx):
         '''
           Train B bootstrap estimators from subsets of (X_train, Y_train), compute aggregated predictors, and compute the residuals
