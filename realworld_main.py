@@ -345,9 +345,9 @@ def main(unused_argv):
     #================================================================
     original_stdout = sys.stdout
 
-    # with open(res_dir+f'/trainwin_{FLAGS.num_train_sepsis_pat_win}test_win_{FLAGS.num_test_pat_septic_win}_{FLAGS.algo_group}_log.txt', 'w') as f:
-    #     sys.stdout = f 
-    if res_dir:
+    with open(res_dir+f'/trainwin_{FLAGS.num_train_sepsis_pat_win}test_win_{FLAGS.num_test_pat_septic_win}_{FLAGS.algo_group}_log.txt', 'w') as f:
+        sys.stdout = f 
+    # if res_dir:
         # if FLAGS.algo_group == 'approx-neural':
             
         #     algos = [
