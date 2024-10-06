@@ -148,11 +148,12 @@ class prediction_interval():
             # Instead of flattening, handle boot_predictions in a way that maintains the correct structure so that it can be used properly in subsequent computations.
             if model.name.split('_')[1] == 'nn2':
                 boot_predictions[b] = model.out(model.params, np.r_[self.X_train, self.X_predict],  np.r_[self.actions, self.test_actions]).flatten() # for NeuralBanditModelV2
-                # print(f'..........boot_predictions[{b}.shape == {boot_predictions[b].shape}..........')
+                print(f'..........boot_predictions[{b}.shape == {boot_predictions[b].shape}..........')
             elif model.name.split('_')[1] == 'nn':
                 boot_predictions[b] = model.out(model.params, np.r_[self.X_train, self.X_predict]).flatten() # for NeuralBanditModel
-                # print(f'..........boot_predictions[{b}.shape == {boot_predictions[b].shape}..........')
-    
+                print(f'..........boot_predictions[{b}.shape == {boot_predictions[b].shape}..........')
+          
+       
 
             self.Ensemble_fitted_func.append(model)  # Save the model for later use
             in_boot_sample[b, boot_samples_idx[b]] = True
