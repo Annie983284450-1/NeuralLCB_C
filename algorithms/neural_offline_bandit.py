@@ -30,7 +30,7 @@ class ExactNeuraLCBV2(BanditAlgorithm):
         opt = optax.adam(hparams.lr)
         # opt = optax.adam(self.hparams.lr)
         self.nn = NeuralBanditModelV2(opt, hparams, '{}-net'.format(name))
-        # self.nn = NeuralBanditModelV2(opt, self.hparams, '{}-net'.format(self.name))
+       
       
         self.data = BanditDataset(hparams.context_dim, hparams.num_actions, hparams.buffer_s, '{}-data'.format(name))
         # self.nn.num_params: the number of network parameters (i.e., p)
@@ -171,8 +171,7 @@ class ApproxNeuraLCBV2(BanditAlgorithm):
         # This optimizer will be used to update the parameters of NeuralBanditModelV2 
         # based on the gradients computed during training
         opt = optax.adam(hparams.lr)
-        # class NeuralBanditModelV2(NeuralBanditModel):
-        #    __init__(self, optimizer, hparams, name='NeuralBanditModelV2')
+ 
         self.nn = NeuralBanditModelV2(opt, hparams, '{}-net'.format(name))
         """BanditDataset(): sDefine a data buffer for contextual bandit algorithms. """
 
@@ -203,7 +202,7 @@ class ApproxNeuraLCBV2(BanditAlgorithm):
             lcb = []
             for a in range(self.hparams.num_actions):
                 actions = jnp.ones(shape=(ctxs.shape[0],)) * a 
-                # self.nn = NeuralBanditModelV2(opt, hparams, '{}-net'.format(name))
+           
                 f = self.nn.out(self.nn.params, ctxs, actions) # (num_samples, 1)
                 # g = self.nn.grad_out(self.nn.params, convoluted_contexts) / jnp.sqrt(self.nn.m) # (num_samples, p)
                 g = self.nn.grad_out(self.nn.params, ctxs, actions) / jnp.sqrt(self.nn.m)
