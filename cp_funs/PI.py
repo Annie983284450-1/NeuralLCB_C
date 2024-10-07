@@ -103,33 +103,14 @@ class prediction_interval():
             model = self.nn_model.clone()
             tmp_data = BanditDataset(model.hparams.context_dim, model.hparams.num_actions, len(self.X_train), f'{b}_th_fitdata')
             # Add the bootstrapped data into the model
-
-
-            # this is not correct, the actions are not valid. 
             tmp_data.add(self.X_train[boot_samples_idx[b], :], self.actions[boot_samples_idx[b]], self.Y_train[boot_samples_idx[b]])
-            # Train the model on the bootstrapped dataset
-            # print(f'data after added:{data}')
-            # sys.exit()
             
             # dataset = (contexts, actions, rewards, test_contexts, mean_test_rewards)
             # print(f'*********  {b}-th Bootstrap  ****************')
             # print(f'tmp_data.contexts.shape:{tmp_data.contexts.shape}')
             # print(f'tmp_data.rewards.shape:{tmp_data.rewards.shape}')
-
-
-            # def train(self, data, num_steps)
-
             
             model.train(tmp_data, model.hparams.num_steps)
-            # Predict using the trained model on the combined training and prediction set
-
-            
-
-            # def out_impure_fn(self, params, contexts, actions):
-
-            # nn and nn2 are generating different shapes for predictions, they should be handled differently.
-            # Instead of flattening, handle boot_predictions in a way that maintains the correct structure so that it can be used properly in subsequent computations.
-            
             neuralbanditmodel_type = model.name.split('_')
             if 'nn2' in neuralbanditmodel_type:
                 boot_predictions[b] = model.out(model.params, np.r_[self.X_train, self.X_predict],  np.r_[self.actions, self.test_actions]).flatten() # for NeuralBanditModelV2
@@ -167,7 +148,7 @@ class prediction_interval():
         # Final step: Update for residuals in the prediction set
         sorted_out_sample_predict = out_sample_predict.mean(axis=0)
         resid_out_sample = self.Y_predict - sorted_out_sample_predict # length n1
-        print(f'                       resid_out_sample.shape === {resid_out_sample.shape}')
+        # print(f'                       resid_out_sample.shape === {resid_out_sample.shape}')
 
         if len(miss_test_idx) > 0:
             for l in range(len(miss_test_idx)):
@@ -204,8 +185,8 @@ class prediction_interval():
         '''
         resid_strided = util.strided_app(self.Ensemble_online_resid[:-1], n, stride)
         num_unique_resid = resid_strided.shape[0]
-        print('     num_unique_resid:', num_unique_resid)
-        print(f'        size of resid_strided: {resid_strided.shape}')
+        # print('     num_unique_resid:', num_unique_resid)
+        # print(f'        size of resid_strided: {resid_strided.shape}')
         # print(f'        resid_strided:{resid_strided}')
 
         width_left = np.zeros(num_unique_resid)
@@ -289,9 +270,10 @@ class prediction_interval():
                 new_row_all_avg = pd.DataFrame([new_row_all_avg])
             with open(final_result_path+f'/final_all_cpresults_avg_{self.algoname}.csv', 'a') as f:
                 new_row_all_avg.to_csv(f, header=f.tell()==0, index=False)
-            print(f'~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-            print(f'Conformal Prediction Results:\n {results}')
-            print(f'~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+
+            # print(f'~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            # print(f'Conformal Prediction Results:\n {results}')
+            # print(f'~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
         return pd.concat(PIs, axis=1), results
 

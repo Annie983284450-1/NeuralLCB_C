@@ -44,7 +44,6 @@ class ExactNeuralLinLCBV2_cp(BanditAlgorithm):
         self.nn.reset(seed) 
 
     def sample_action(self, contexts,opt_vals, opt_actions):
-
         cs = self.hparams.chunk_size
         num_chunks = math.ceil(contexts.shape[0] / cs)
         acts = []
@@ -126,7 +125,6 @@ class ExactNeuralLinLCBV2_cp(BanditAlgorithm):
             # jax.ops.index_update(self.Lambda_inv, actions[i], \
             #     inv_sherman_morrison_single_sample(u[i,:], self.Lambda_inv[actions[i],:,:]))
 
-
             self.y_hat = self.y_hat.at[actions[i]].set(
                 self.y_hat[actions[i]] + rewards[i] * u[i, :]
             )
@@ -173,8 +171,6 @@ class ExactNeuralLinLCBV2_cp(BanditAlgorithm):
                 a, preds.ravel(), \
                 cnf.ravel(), cost, jnp.mean(jnp.square(norm))))
             
-
-
 
 
 # ======================== ========================ApproxNeuralLinLCBV2_cp================================================
@@ -329,7 +325,6 @@ class ApproxNeuralLinLCBV2_cp(BanditAlgorithm):
             
 
 
- 
 
 
 class ApproxNeuralLinLCBJointModel_cp(BanditAlgorithm):
@@ -450,7 +445,7 @@ class ApproxNeuralLinLCBJointModel_cp(BanditAlgorithm):
         for a in range(self.hparams.num_actions):
             actions_tmp = jnp.ones(shape=(contexts.shape[0],)) * a 
 
-            g = self.nn.grad_out(self.nn.params, ctxs, actions) / jnp.sqrt(self.nn.m) # (None, p)
+            g = self.nn.grad_out(self.nn.params, contexts, actions_tmp) / jnp.sqrt(self.nn.m) # (None, p)
 
             gAg = jnp.sum(jnp.square(g) / self.diag_Lambda, axis=-1)                
             cnf = jnp.sqrt(gAg) # (num_samples,)

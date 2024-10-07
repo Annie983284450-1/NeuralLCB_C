@@ -168,8 +168,7 @@ class NeuralBanditModel(NeuralNetwork):
     def out_impure_fn(self, params, context):
         # execute the neural network forward pass
         out_network = self.nn.apply(params, context)
-        # print(f'type(out_network):{out_network}')
-        # print(f'out_network:{out_network}')
+ 
         return out_network
         # return self.nn.apply(params, context)
  
@@ -208,8 +207,7 @@ class NeuralBanditModel(NeuralNetwork):
         '''
         grad_param_leaves = jax.tree_leaves(grad_params)
 
-        # print(f'grad_param_leaves: {grad_param_leaves}')
-        # print(f'grad_param_leaves.shape: {grad_param_leaves.shape}')
+ 
 
 
         # process the gradient info action by action
@@ -228,8 +226,7 @@ class NeuralBanditModel(NeuralNetwork):
             # for the last layer
             grad_param = grad_param_leaves[-2]
 
-            # print(f'grad_param: {grad_param} for action {a}')
-            # print(f'grad_param.shape: {grad_param.shape}')
+  
 
             # ????????????  why grad_param[:,a,a]???
             action_grad_param.append( grad_param[:,a,a].reshape(-1,1)) 
@@ -606,9 +603,9 @@ class NeuralBanditModelV2(NeuralBanditModel):
 
     # data is a BanditDataset 
     def train(self, data, num_steps):
-        print('(((((((Running train() in NeuralBanditModelV2)))))))')
+        # print('(((((((Running train() in NeuralBanditModelV2)))))))')
         if self.hparams.verbose:
-            print('*******Training {} for {} steps.'.format(self.name, num_steps)) 
+            print('******   NeuralBanditModelV2.train()........            Training {} for {} steps.'.format(self.name, num_steps)) 
             
         params, opt_state = self.params, self.opt_state 
         # flags.DEFINE_integer('num_steps', 100, 'Number of steps to train NN.') 
@@ -631,17 +628,8 @@ class NeuralBanditModelV2(NeuralBanditModel):
             # print(f'x:{x}')
             # print(f'a:{a}')
             # print(f'y.shape:{y.shape}')s
-            # sys.exit()
-            # self.update = jax.jit(self.update_impure_fn) 
-            # update_impure_fn(self, params, opt_state, contexts, actions, rewards)  
-           
-           
-            
             params, opt_state = self.update(params, opt_state, x,a,y ) 
-            
-
             # print the step loss
-            # flags.DEFINE_integer('freq_summary', 10, 'Summary frequency')
             if step % self.hparams.freq_summary == 0 and self.hparams.verbose:
                 # self.loss = jax.jit(self.loss_impure_fn)
                 # loss_impure_fn(self, params, contexts, actions, rewards)
@@ -650,72 +638,4 @@ class NeuralBanditModelV2(NeuralBanditModel):
                 print('{} | step: {} | loss: {}'.format(self.name, step, cost))
             # if step == 0 or step == num_steps-1:
             #     print(f'$$$$$$$$$ Number step-{step} of NeuralBanditModelV2.train() Finished $$$$$$$$$')       
-        
         self.params, self.opt_state = params, opt_state
-        # print(f'self.params:{self.params}')
-        # print(f'self.opt_state:{self.opt_state}')
-        # sys.exit()
-
-
-
-
-
-
-
-
-
-
-
-
-
-    '''
-    Rather than replacing the existing gradient computation, we can use LOO predictions as an additional signal in the gradient computation. 
- 
-
-    1. Use LOO Predictions in Gradient Calculation: 
-    If utilize LOO predictions directly, 
-    modify the grad_out_impure_fn to take into account the differences between the model’s current predictions and the LOO predictions.
-
-    2. Incorporate LOO Predictions as Regularization: 
-    use the LOO predictions as a regularization term in loss function, 
-    ensuring that model’s parameters are updated not only to minimize the standard loss but also to stay consistent with the LOO predictions.
-    '''
-    # def grad_out_impure_cp(self, params, contexts, actions, loo_preds=None):
-    #     """
-    #     Args:
-    #         params: Network parameters 
-    #         contexts: (None, context_dim)
-    #         actions: (None,)
-    #         loo_preds: (None,) - Leave-One-Out predictions, optional
-    #     """
-    #     acts = jax.nn.one_hot(actions, self.hparams.num_actions)[:, None, :]
-    #     ker = jnp.eye(self.hparams.context_dim)[None, :, :]
-    #     sel = jnp.kron(acts, ker)  # (None, context_dim, context_dim * num_actions, :)
-
-    #     # Compute gradients with respect to parameters
-    #     grad_params = jax.jacrev(self.out)(params, contexts, actions)
-
-    #     grads = []
-    #     for key in grad_params:
-    #         if key == 'linear':  # extract the weights for the chosen actions only.
-    #             u = grad_params[key]['w']
-    #             v = jnp.sum(jnp.multiply(u, sel[:, :, :, None]), axis=2)  # (None, context_dim, :)
-    #             grads.append(v.reshape(contexts.shape[0], -1))
-    #             grads.append(grad_params[key]['b'].reshape(contexts.shape[0], -1))
-    #         else:
-    #             for p in jax.tree_leaves(grad_params[key]):
-    #                 grads.append(p.reshape(contexts.shape[0], -1))
-
-    #     # Combine the gradients
-    #     combined_grads = jnp.hstack(grads)
-
-    #     # If LOO predictions are provided, adjust the gradients accordingly
-    #     if loo_preds is not None:
-    #         # Adjust gradients based on the difference between current predictions and LOO predictions
-    #         # For example, we could add or subtract a fraction of the LOO difference to/from the gradient
-    #         preds = self.out(params, contexts, actions).ravel()  # Current model predictions
-    #         diff = preds - loo_preds
-    #         adjustment = jnp.outer(diff, jnp.ones_like(combined_grads[0]))  # Create adjustment based on LOO diffs
-    #         combined_grads += adjustment  # Modify the gradients using LOO predictions
-
-    #     return combined_grads

@@ -236,11 +236,8 @@ class NeuralGreedyV2_cp(BanditAlgorithm):
         # preds = jnp.hstack(preds) 
         # Use column_stack to ensure that each action's predictions are in separate columns
         preds = jnp.column_stack(preds)
-        print(f"preds.shape: {preds.shape}")
+        # print(f"preds.shape: {preds.shape}")
         sampled_test_actions = jnp.argmax(preds, axis=1)
-
-
-
 
 
         X_train = self.data.contexts
@@ -268,7 +265,6 @@ class NeuralGreedyV2_cp(BanditAlgorithm):
         self.Ensemble_pred_interval_centers = self.prediction_interval_model.fit_bootstrap_models_online(B=10, miss_test_idx=[])
         # print(f'self.Ensemble_prediction_interval_centers:{self.Ensemble_pred_interval_centers}')
         PI_dfs, results = self.prediction_interval_model.run_experiments(alpha=0.05, stride=8,methods=['Ensemble'])       
-
 
         return sampled_test_actions
 
