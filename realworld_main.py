@@ -15,15 +15,17 @@ importlib.reload(core.contextual_bandit)
 
 from core.contextual_bandit import contextual_bandit_runner, contextual_bandit_runner_v2
 
-from algorithms.neural_offline_bandit_cp import ApproxNeuraLCB_cp
+from algorithms.neural_offline_bandit_cp import ApproxNeuraLCB_cp 
 from algorithms.comparison_bandit_cp import ExactNeuraLCBV2_cp, NeuralGreedyV2_cp, NeuraLCB_cp
-
-
+ 
+ 
+from algorithms.neural_offline_bandit import ExactNeuraLCBV2, NeuralGreedyV2, ApproxNeuraLCBV2
 from algorithms.lin_lcb import LinLCB 
 from algorithms.kern_lcb import KernLCB 
 from algorithms.uniform_sampling import UniformSampling
 from algorithms.neural_lin_lcb import ExactNeuralLinLCBV2, ExactNeuralLinGreedyV2, ApproxNeuralLinLCBV2, ApproxNeuralLinGreedyV2, \
     ApproxNeuralLinLCBJointModel, NeuralLinGreedyJointModel
+
 from algorithms.neural_lin_lcb_cp import ApproxNeuralLinLCBV2_cp
 # data class is defined in this script!!
 from data.realworld_data import *
@@ -363,23 +365,23 @@ def main(unused_argv):
                 hparams.num_steps, min(hparams.layer_sizes), hparams.layer_n, hparams.buffer_s, hparams.batch_size, hparams.lr, \
                 hparams.beta, hparams.lambd, hparams.lambd0
             )
-        # if FLAGS.algo_group == 'baseline':
-        #     algos = [
-        #         UniformSampling(lin_hparams),
-        #         LinLCB(lin_hparams),
-        #         KernLCB(lin_hparams), 
-        #         NeuralGreedyV2(hparams, update_freq = FLAGS.update_freq),
-        #         ApproxNeuralLinLCBV2(hparams), 
-        #         ApproxNeuralLinGreedyV2(hparams),
-        #         NeuralLinGreedyJointModel(hparams), 
-        #         ApproxNeuralLinLCBJointModel(hparams)
+        if FLAGS.algo_group == 'baseline':
+            algos = [
+                UniformSampling(lin_hparams),
+                LinLCB(lin_hparams),
+                KernLCB(lin_hparams), 
+                NeuralGreedyV2(hparams, update_freq = FLAGS.update_freq),
+                ApproxNeuralLinLCBV2(hparams), 
+                ApproxNeuralLinGreedyV2(hparams),
+                NeuralLinGreedyJointModel(hparams), 
+                ApproxNeuralLinLCBJointModel(hparams)
 
-        #     ]
+            ]
 
-        #     algo_prefix = 'baseline_epochs={}_m={}_layern={}_beta={}_lambda0={}_rbf-sigma={}_maxnum={}'.format(
-        #         hparams.num_steps, min(hparams.layer_sizes), hparams.layer_n, \
-        #         hparams.beta, hparams.lambd0, lin_hparams.rbf_sigma, lin_hparams.max_num_sample
-        #     )
+            algo_prefix = 'baseline_epochs={}_m={}_layern={}_beta={}_lambda0={}_rbf-sigma={}_maxnum={}'.format(
+                hparams.num_steps, min(hparams.layer_sizes), hparams.layer_n, \
+                hparams.beta, hparams.lambd0, lin_hparams.rbf_sigma, lin_hparams.max_num_sample
+            )
 
         if FLAGS.algo_group == 'kern': # for tuning KernLCB
             algos = [

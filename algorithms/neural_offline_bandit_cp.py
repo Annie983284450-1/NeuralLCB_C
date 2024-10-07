@@ -70,6 +70,10 @@ from core.bandit_dataset import BanditDataset
 # ======================================================================
 # ========================================================================
 # the ApproxNeuraLCB with conformal prediction
+
+
+
+
 class ApproxNeuraLCB_cp(BanditAlgorithm):
 
     def __init__(self, hparams, res_dir, update_freq=1, name='ApproxNeuraLCB_cp'):
@@ -82,24 +86,10 @@ class ApproxNeuraLCB_cp(BanditAlgorithm):
         # self.nn = NeuralBanditModel(opt, hparams, '{}-net'.format(name))
         # data buffer for incoming data, update each round when we have a new (c,a, r)
         self.data = BanditDataset(hparams.context_dim, hparams.num_actions, hparams.buffer_s, '{}-data'.format(name))
-
         self.diag_Lambda = [jnp.ones(self.nn.num_params) * hparams.lambd0 for _ in range(hparams.num_actions)]
-        # self.pred_interval_centers = []
         self.prediction_interval_model = None
         self.res_dir  = res_dir
         self.Ensemble_pred_interval_centers = []   
-
-        # reset_data() will return a form of (contexts, actions, rewards, test_contexts, mean_test_rewards) 
-        # cmab = OfflineContextualBandit(*data.reset_data(sim))
-        # self.Ensemble_train_interval_centers = []  # Predicted training data centers by EnbPI
-
-
-         
-        # self.Ensemble_fitted_func = []
-        # self.Ensemble_online_resid = np.array([])
-        # self.beta_hat_bins = []
- 
-
     def reset(self, seed): 
         self.diag_Lambda = [jnp.ones(self.nn.num_params) * self.hparams.lambd0 for _ in range(self.hparams.num_actions)]
         # self.nn.reset(seed) # with NeuralBanditV2()
@@ -109,8 +99,6 @@ class ApproxNeuraLCB_cp(BanditAlgorithm):
         # self.prediction_interval_model = None
     # line 5 in NeuraLCB Bmode
     # here is where conformal prediction and NeuraLCB integrated together
-
- 
 
     def sample_action(self, test_contexts, opt_vals, opt_actions):
         # flags.DEFINE_integer('chunk_size', 500, 'Chunk size')
@@ -174,7 +162,6 @@ class ApproxNeuraLCB_cp(BanditAlgorithm):
         Y_predict = opt_vals
         filename = self.res_dir
         nn_model = self.nn
-        
        
         self.prediction_interval_model = prediction_interval(
                         nn_model,  
@@ -205,58 +192,15 @@ class ApproxNeuraLCB_cp(BanditAlgorithm):
         # r.shape = (1, 1)
         # we add one data entry at each round where there is a new hour of EHR coming 
         self.data.add(c, a, r)
-        # return self.data.contexts, self.data.actions, self.data.rewards
-    # adding the prediction_intervals
 
-    # update with prediction interval
     def update(self, contexts, actions, rewards):
 
         # training for updating the nn parameters
         self.nn.train(self.data, self.hparams.num_steps)
-
-        # if Is_PI: # update the action sample policy based on the 
-
-        #     self.Ensemble_pred_interval_centers = self.fit_bootstrap_models_online(B =10, miss_test_idx = [])
-        #     print(f'self.Ensemble_pred_interval_centers:{self.Ensemble_pred_interval_centers}')
-        # # Generate prediction intervals for each predicted reward
-        #     PIs_df, results = self.compute_PIs_Ensemble_online(alpha=0.05, stride=8)
-        #     print(f'PI_dfs.shape === {PIs_df.shape}')
-        #     print(f'results: {results}')
-        
-
         u = self.nn.grad_out(self.nn.params, contexts, actions) / jnp.sqrt(self.nn.m) #neuralbanditV2
         # u  = self.nn.grad_out(self.nn.params, contexts  ) / jnp.sqrt(self.nn.m)# neuralbandit
-
-
         for i in range(contexts.shape[0]):
             self.diag_Lambda[actions[i]] = self.diag_Lambda[actions[i]] + jnp.square(u[i,:])
-
-            
-    def update_original(self, c , a, r):
-        """Update the network parameters and the confidence parameter.
-        
-        Args:
-            Just represent one sample.
-            contexts: An array of d-dimensional contexts
-            actions: An array of integers in [0, K-1] representing the chosen action 
-            rewards: An array of real numbers representing the reward for (context, action)
-        
-        """
-
-        # Should run self.update_buffer before self.update to update the model in the latest data. 
-        # loo_preds = self.get_loo_params(contexts, actions, rewards)
-        # print(f'LOO predictions (self.pred_interval_centers): {loo_preds}')
-
-        # replace this with the PI b ased train
-        self.nn.train(self.data, self.hparams.num_steps)
-
-         
-        u = self.nn.grad_out(self.nn.params, c, a) / jnp.sqrt(self.nn.m) #neuralbanditV2
-        # u  = self.nn.grad_out(self.nn.params, contexts  ) / jnp.sqrt(self.nn.m)# neuralbandit
-
-
-        for i in range(c.shape[0]):
-            self.diag_Lambda[a[i]] = self.diag_Lambda[a[i]] + jnp.square(u[i,:])
 
     def monitor(self, contexts=None, actions=None, rewards=None):
         print(f'$$$$$$$$$$$ Monitoring ApproxNeuraLCBV2 .......')
@@ -268,21 +212,11 @@ class ApproxNeuraLCB_cp(BanditAlgorithm):
         # norm = jnp.hstack((jnp.ravel(param) for param in jax.tree_leaves(self.nn.params)))
         norm = jnp.hstack([jnp.ravel(param) for param in jax.tree_leaves(self.nn.params)])
         # a flattened version of all the model parameters (weights and biases of the neural network).
-        print(f'Parameter norm: {jnp.mean(jnp.square(norm))}')
-
-        # preds = self.nn.out(self.nn.params, contexts, actions)
-
-
+        # print(f'Parameter norm: {jnp.mean(jnp.square(norm))}')
         if len(self.Ensemble_pred_interval_centers) == 0:
-                
-            preds = self.nn.out(self.nn.params, contexts, actions)  
-              
+            preds = self.nn.out(self.nn.params, contexts, actions)    
         else:
-  
             preds = self.Ensemble_pred_interval_centers 
-
-
-
         print(f"preds.shape:{preds.shape}")
         print(f'Predictions: {preds}')
         '''
@@ -314,14 +248,14 @@ class ApproxNeuraLCB_cp(BanditAlgorithm):
             # providing a measure of the uncertainty of variability in the model's predictions for action a across all contexts
             gAg = jnp.sum( jnp.square(g) / self.diag_Lambda[a][:], axis=-1)
             cnf = jnp.sqrt(gAg) # (num_samples,)
-            print(f'Confidence bounds: {cnf}')
+            # print(f'Confidence bounds: {cnf}')
             cnfs.append(cnf) 
         cnf = jnp.hstack(cnfs) 
         cost = self.nn.loss(self.nn.params, contexts, actions, rewards )
-        if len(self.Ensemble_pred_interval_centers) > 0:
-            print(f'length of LOO Predictions (centers): {len(self.Ensemble_pred_interval_centers)}')
-        else:
-            print('No LOO predictions available at this point.')
+        # if len(self.Ensemble_pred_interval_centers) > 0:
+        #     print(f'length of LOO Predictions (centers): {len(self.Ensemble_pred_interval_centers)}')
+        # else:
+        #     print('No LOO predictions available at this point.')
 
         print(f'~~~~~~~~~~~~~~~~~~~========================~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
