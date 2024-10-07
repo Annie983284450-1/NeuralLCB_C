@@ -333,41 +333,26 @@ def main(unused_argv):
     # Algorithms 
     #================================================================
     original_stdout = sys.stdout
-
+    print(f'$$$$$########## $$$$$########## algorithm: FLAGS.algo_group $$$$$##########$$$$$##########')
     with open(res_dir+f'/trainwin_{FLAGS.num_train_sepsis_pat_win}test_win_{FLAGS.num_test_pat_septic_win}_{FLAGS.algo_group}_log.txt', 'w') as f:
         sys.stdout = f 
     # if res_dir:
+
         # if FLAGS.algo_group == 'approx-neural':
-        if FLAGS.algo_group == 'approx-neural_cp':
-            algos = [
-                # class UniformSampling(BanditAlgorithm)
-                    # UniformSampling(lin_hparams),
-                    # NeuralGreedyV2(hparams, update_freq = FLAGS.update_freq), 
-                    # class ApproxNeuraLCBV2(BanditAlgorithm)
-                    ApproxNeuraLCB_cp(hparams, res_dir = FLAGS.res_dir, update_freq = FLAGS.update_freq)
-                    # ApproxNeuraLCBV2(hparams, update_freq = FLAGS.update_freq)
-                ]
-            algo_prefix = 'approx-neural-gridsearch_epochs={}_m={}_layern={}_buffer={}_bs={}_lr={}_beta={}_lambda={}_lambda0={}'.format(
-                hparams.num_steps, min(hparams.layer_sizes), hparams.layer_n, hparams.buffer_s, hparams.batch_size, hparams.lr, \
-                hparams.beta, hparams.lambd, hparams.lambd0
-            )
-        if FLAGS.algo_group == 'baseline':
-            algos = [
-                UniformSampling(lin_hparams),
-                LinLCB(lin_hparams),
-                KernLCB(lin_hparams), 
-                NeuralGreedyV2(hparams, update_freq = FLAGS.update_freq),
-                ApproxNeuralLinLCBV2(hparams), 
-                ApproxNeuralLinGreedyV2(hparams),
-                NeuralLinGreedyJointModel(hparams), 
-                ApproxNeuralLinLCBJointModel(hparams)
-
-            ]
-
-            algo_prefix = 'baseline_epochs={}_m={}_layern={}_beta={}_lambda0={}_rbf-sigma={}_maxnum={}'.format(
-                hparams.num_steps, min(hparams.layer_sizes), hparams.layer_n, \
-                hparams.beta, hparams.lambd0, lin_hparams.rbf_sigma, lin_hparams.max_num_sample
-            )
+        # if FLAGS.algo_group == 'approx-neural_cp':
+        #     algos = [
+        #         # class UniformSampling(BanditAlgorithm)
+        #             # UniformSampling(lin_hparams),
+        #             # NeuralGreedyV2(hparams, update_freq = FLAGS.update_freq), 
+        #             # class ApproxNeuraLCBV2(BanditAlgorithm)
+        #             ApproxNeuraLCB_cp(hparams, res_dir = FLAGS.res_dir, update_freq = FLAGS.update_freq)
+        #             # ApproxNeuraLCBV2(hparams, update_freq = FLAGS.update_freq)
+        #         ]
+        #     algo_prefix = 'approx-neural-gridsearch_epochs={}_m={}_layern={}_buffer={}_bs={}_lr={}_beta={}_lambda={}_lambda0={}'.format(
+        #         hparams.num_steps, min(hparams.layer_sizes), hparams.layer_n, hparams.buffer_s, hparams.batch_size, hparams.lr, \
+        #         hparams.beta, hparams.lambd, hparams.lambd0
+        #     )
+ 
 
         if FLAGS.algo_group == 'kern': # for tuning KernLCB
             algos = [
@@ -391,14 +376,24 @@ def main(unused_argv):
 
 
         # Create a dictionary to map algo_group names to their respective classes
+        # ALGO_MAP = {
+        #     'ExactNeuraLCBV2_cp': ExactNeuraLCBV2_cp,
+        #     'NeuralGreedyV2_cp': NeuralGreedyV2_cp,
+        #     'ApproxNeuraLCB_cp': ApproxNeuraLCB_cp,
+        #     'NeuraLCB_cp': NeuraLCB_cp,
+        #     'ApproxNeuralLinLCBV2_cp': ApproxNeuralLinLCBV2_cp,
+        #     'ExactNeuralLinLCBV2_cp': ExactNeuralLinLCBV2_cp,
+        #     'ApproxNeuralLinLCBJointModel_cp': ApproxNeuralLinLCBJointModel_cp
+        # }
+
+
         ALGO_MAP = {
-            'ExactNeuraLCBV2_cp': ExactNeuraLCBV2_cp,
             'NeuralGreedyV2_cp': NeuralGreedyV2_cp,
-            'ApproxNeuraLCB_cp': ApproxNeuraLCB_cp,
-            'NeuraLCB_cp': NeuraLCB_cp,
             'ApproxNeuralLinLCBV2_cp': ApproxNeuralLinLCBV2_cp,
-            'ExactNeuralLinLCBV2_cp': ExactNeuralLinLCBV2_cp,
-            'ApproxNeuralLinLCBJointModel_cp': ApproxNeuralLinLCBJointModel_cp
+            'ApproxNeuralLinLCBJointModel_cp': ApproxNeuralLinLCBJointModel_cp,
+            'ApproxNeuraLCB_cp': ApproxNeuraLCB_cp, # finished already
+            'ExactNeuraLCBV2_cp': ExactNeuraLCBV2_cp, # run if we have time
+	        'ExactNeuralLinLCBV2_cp': ExactNeuralLinLCBV2_cp  # run if we have time
         }
         if FLAGS.algo_group not in ALGO_MAP:
             raise ValueError(f"Unknown algo_group: {FLAGS.algo_group}")

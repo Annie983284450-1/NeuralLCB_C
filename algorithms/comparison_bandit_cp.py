@@ -145,9 +145,11 @@ class ExactNeuraLCBV2_cp(BanditAlgorithm):
     def monitor(self, contexts=None, actions=None, rewards=None):
         # print("self.nn.params:", self.nn.params)
         # print("tree_leaves(self.nn.params):", jax.tree_leaves(self.nn.params))
-        for param in jax.tree_leaves(self.nn.params):
-            print(f'param.shape in jax.tree_leaves(self.nn.params):')
-            print(param.shape)
+
+
+        # for param in jax.tree_leaves(self.nn.params):
+        #     print(f'param.shape in jax.tree_leaves(self.nn.params):')
+        #     print(param.shape)
         # sys.exit()
         # norm = jnp.hstack(( jnp.ravel(param) for param in jax.tree_leaves(self.nn.params)))
         norm = jnp.hstack([jnp.ravel(param) if param.shape != (1,) else param.reshape(1,) for param in jax.tree_leaves(self.nn.params)])
@@ -285,9 +287,9 @@ class NeuralGreedyV2_cp(BanditAlgorithm):
         self.nn.train(self.data, self.hparams.num_steps)
 
     def monitor(self, contexts=None, actions=None, rewards=None):
-        for param in jax.tree_leaves(self.nn.params):
-            print(f'param.shape in jax.tree_leaves(self.nn.params):')
-            print(param.shape)
+        # for param in jax.tree_leaves(self.nn.params):
+        #     print(f'param.shape in jax.tree_leaves(self.nn.params):')
+        #     print(param.shape)
         # sys.exit()
 
 
