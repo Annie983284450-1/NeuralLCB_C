@@ -83,11 +83,11 @@ class prediction_interval():
         '''
         n = len(self.X_train)  
         n1 = len(self.X_predict)
-        print('====================================Size Checking of fit_bootstrap_models_online()====================================:')
-        print(f'~~~~~~~~~~self.X_train.shape === {self.X_train.shape}~~~~~~~~~~')
-        print(f'~~~~~~~~~~self.X_predict.shape ==={self.X_predict.shape}~~~~~~~~~~')
-        print(f'~~~~~~~~~~self.Y_train.shape === {self.Y_train.shape}~~~~~~~~~~')
-        print(f'~~~~~~~~~~self.Y_predict.shape ==={self.Y_predict.shape}~~~~~~~~~~')
+        # print('====================================Size Checking of fit_bootstrap_models_online()====================================:')
+        # print(f'~~~~~~~~~~self.X_train.shape === {self.X_train.shape}~~~~~~~~~~')
+        # print(f'~~~~~~~~~~self.X_predict.shape ==={self.X_predict.shape}~~~~~~~~~~')
+        # print(f'~~~~~~~~~~self.Y_train.shape === {self.Y_train.shape}~~~~~~~~~~')
+        # print(f'~~~~~~~~~~self.Y_predict.shape ==={self.Y_predict.shape}~~~~~~~~~~')
         boot_samples_idx = util.generate_bootstrap_samples(n,n,B)
         # hold predictions from each f^b, for the whole datatset
         boot_predictions = np.zeros((B, (n+n1)), dtype=float)
@@ -113,8 +113,8 @@ class prediction_interval():
             
             # dataset = (contexts, actions, rewards, test_contexts, mean_test_rewards)
             print(f'*********  {b}-th Bootstrap  ****************')
-            print(f'tmp_data.contexts.shape:{tmp_data.contexts.shape}')
-            print(f'tmp_data.rewards.shape:{tmp_data.rewards.shape}')
+            # print(f'tmp_data.contexts.shape:{tmp_data.contexts.shape}')
+            # print(f'tmp_data.rewards.shape:{tmp_data.rewards.shape}')
 
 
             # def train(self, data, num_steps)
@@ -283,7 +283,7 @@ class prediction_interval():
             with open(final_result_path+f'/final_all_cpresults_avg_{self.algoname}.csv', 'a') as f:
                 new_row_all_avg.to_csv(f, header=f.tell()==0, index=False)
             print(f'~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-            print(f'Conformal Prediction Results:{results}')
+            print(f'Conformal Prediction Results:\n {results}')
             print(f'~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
         return pd.concat(PIs, axis=1), results
