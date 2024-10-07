@@ -58,7 +58,7 @@ class prediction_interval():
     def __init__(self,  nn_model,  # The neural network model (NeuralBanditModelV2)
                 X_train, X_predict, Y_train, Y_predict,  actions, test_actions, filename, algoname):
         
-        # self.nn_model = algo.nn  # NeuralBanditModelV2(opt, hparams, '{}-net'.format(name))
+        # self.nn_model = algo.nn  # NeuralBanditModelV2(opt, hparams, '{}-nn2'.format(name))
         self.nn_model= nn_model
 
         # reset_data() will return a form of (contexts, actions, rewards, test_contexts, mean_test_rewards) 
@@ -112,7 +112,7 @@ class prediction_interval():
             # sys.exit()
             
             # dataset = (contexts, actions, rewards, test_contexts, mean_test_rewards)
-            print(f'*********  {b}-th Bootstrap  ****************')
+            # print(f'*********  {b}-th Bootstrap  ****************')
             # print(f'tmp_data.contexts.shape:{tmp_data.contexts.shape}')
             # print(f'tmp_data.rewards.shape:{tmp_data.rewards.shape}')
 
@@ -129,12 +129,17 @@ class prediction_interval():
 
             # nn and nn2 are generating different shapes for predictions, they should be handled differently.
             # Instead of flattening, handle boot_predictions in a way that maintains the correct structure so that it can be used properly in subsequent computations.
-            if model.name.split('_')[1] == 'nn2':
+            
+            neuralbanditmodel_type = model.name.split('_')
+            if 'nn2' in neuralbanditmodel_type:
                 boot_predictions[b] = model.out(model.params, np.r_[self.X_train, self.X_predict],  np.r_[self.actions, self.test_actions]).flatten() # for NeuralBanditModelV2
                 # print(f'..........boot_predictions[{b}.shape == {boot_predictions[b].shape}..........')
-            elif model.name.split('_')[1] == 'nn':
+            elif 'nn' in neuralbanditmodel_type:
                 boot_predictions[b] = model.out(model.params, np.r_[self.X_train, self.X_predict]).flatten() # for NeuralBanditModel
                 # print(f'..........boot_predictions[{b}.shape == {boot_predictions[b].shape}..........')
+            else:
+                print(f'neuralbanditmodel_type === {neuralbanditmodel_type}')
+                sys.exit('!!!! Wrong self.nn type!!!!!! It should be nn or nn2!!!!!!')
     
 
             self.Ensemble_fitted_func.append(model)  # Save the model for later use
@@ -266,9 +271,9 @@ class prediction_interval():
 
             # Calculate coverage and width
             # print(' =====. Debugging =====. ')
-            print("Shape of PI['lower']:", PI['lower'].shape)
-            print("Shape of PI['upper']:", PI['upper'].shape)
-            print("Shape of self.Y_predict:", self.Y_predict.shape)
+            # print("Shape of PI['lower']:", PI['lower'].shape)
+            # print("Shape of PI['upper']:", PI['upper'].shape)
+            # print("Shape of self.Y_predict:", self.Y_predict.shape)
 
             mean_coverage = ((PI['lower'] <= self.Y_predict) & (PI['upper'] >= self.Y_predict)).mean()
             mean_width = (PI['upper'] - PI['lower']).mean()
@@ -279,6 +284,8 @@ class prediction_interval():
             final_result_path = self.filename
             new_row_all_avg = results
             if not isinstance(new_row_all_avg, pd.DataFrame):
+
+
                 new_row_all_avg = pd.DataFrame([new_row_all_avg])
             with open(final_result_path+f'/final_all_cpresults_avg_{self.algoname}.csv', 'a') as f:
                 new_row_all_avg.to_csv(f, header=f.tell()==0, index=False)

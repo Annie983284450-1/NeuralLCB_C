@@ -11,69 +11,37 @@ from core.bandit_algorithm import BanditAlgorithm
 from core.bandit_dataset import BanditDataset
 from tensorflow.keras.models import Sequential, clone_model
 from core.utils import inv_sherman_morrison, inv_sherman_morrison_single_sample, vectorize_tree
-
 import importlib
 import algorithms.neural_bandit_model  # Import the entire module
-
 # Reload the module
 importlib.reload(algorithms.neural_bandit_model)
-
 from algorithms.neural_bandit_model import NeuralBanditModel, NeuralBanditModelV2
-
- 
 import importlib
 import cp_funs.PI
-
 importlib.reload(cp_funs.PI)
 from cp_funs.PI import prediction_interval
-
- 
-# import cp_funs.utils_cp as util 
 import importlib
- 
 import warnings
-
 import time as time
 import math
-# import matplotlib.pyplot as plt
-# from statsmodels.tsa.statespace.sarimax import SARIMAX
-# from statsmodels.tsa.statespace.exponential_smoothing import ExponentialSmoothing
-# from statsmodels.tsa.statespace.dynamic_factor_mq import DynamicFactorMQ
-# from sklearn.linear_model import LogisticRegression
 import numpy as np
 import pandas as pd
-# import os
-# import tensorflow.keras as keras
-# from tensorflow.keras.models import Sequential, clone_model
-# from tensorflow.keras.layers import Dense
-# from tensorflow.keras.layers import Dropout
-# from tensorflow.keras.optimizers import Adam
-# from tensorflow.keras.models import load_model
-# from tensorflow.keras.callbacks import EarlyStopping
-# import sys
 import tensorflow as tf
 tf.get_logger().setLevel('ERROR')
 warnings.filterwarnings("ignore")
 import multiprocessing 
 import dill
  
-
 multiprocessing.get_context().Process().Pickle = dill
 import importlib
 import core.bandit_dataset
 importlib.reload(core.bandit_dataset)
 from core.bandit_dataset import BanditDataset
- 
-
 # if algorithms.neural_offline_bandit_cp import PT, PI cannot import algorithms.neural_offline_bandit_cp, there would be circular import error
 # from algorithms.neural_offline_bandit_cp import ApproxNeuraLCBV2_cp, NeuralBanditModelV2, NeuralBanditModel
 # ======================================================================
 # ========================================================================
 # the ApproxNeuraLCB with conformal prediction
-
-
-
-
 class ApproxNeuraLCB_cp(BanditAlgorithm):
 
     def __init__(self, hparams, res_dir, update_freq=1, name='ApproxNeuraLCB_cp'):
@@ -83,7 +51,7 @@ class ApproxNeuraLCB_cp(BanditAlgorithm):
         # learning rate 1e-3
         opt = optax.adam(hparams.lr)
         self.nn = NeuralBanditModelV2(opt, hparams, '{}-nn2'.format(name))
-        # self.nn = NeuralBanditModel(opt, hparams, '{}-net'.format(name))
+      
         # data buffer for incoming data, update each round when we have a new (c,a, r)
         self.data = BanditDataset(hparams.context_dim, hparams.num_actions, hparams.buffer_s, '{}-data'.format(name))
         self.diag_Lambda = [jnp.ones(self.nn.num_params) * hparams.lambd0 for _ in range(hparams.num_actions)]
@@ -217,8 +185,10 @@ class ApproxNeuraLCB_cp(BanditAlgorithm):
             preds = self.nn.out(self.nn.params, contexts, actions)    
         else:
             preds = self.Ensemble_pred_interval_centers 
-        print(f"preds.shape:{preds.shape}")
-        print(f'Predictions: {preds}')
+        # print(f"preds.shape:{preds.shape}")
+        # print(f'Predictions: {preds}')
+
+
         '''
         Both monitor() and update() compute some common quantities such as:
 

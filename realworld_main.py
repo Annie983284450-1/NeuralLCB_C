@@ -17,7 +17,7 @@ from core.contextual_bandit import contextual_bandit_runner, contextual_bandit_r
 
 from algorithms.neural_offline_bandit_cp import ApproxNeuraLCB_cp 
 from algorithms.comparison_bandit_cp import ExactNeuraLCBV2_cp, NeuralGreedyV2_cp, NeuraLCB_cp
- 
+from algorithms.neural_lin_lcb_cp import ApproxNeuralLinLCBV2_cp, ApproxNeuralLinLCBJointModel_cp
  
 from algorithms.neural_offline_bandit import ExactNeuraLCBV2, NeuralGreedyV2, ApproxNeuraLCBV2
 from algorithms.lin_lcb import LinLCB 
@@ -26,7 +26,7 @@ from algorithms.uniform_sampling import UniformSampling
 from algorithms.neural_lin_lcb import ExactNeuralLinLCBV2, ExactNeuralLinGreedyV2, ApproxNeuralLinLCBV2, ApproxNeuralLinGreedyV2, \
     ApproxNeuralLinLCBJointModel, NeuralLinGreedyJointModel
 
-from algorithms.neural_lin_lcb_cp import ApproxNeuralLinLCBV2_cp
+from algorithms.neural_lin_lcb_cp import ApproxNeuralLinLCBV2_cp,ExactNeuralLinLCBV2_cp
 # data class is defined in this script!!
 from data.realworld_data import *
 from data.sepsisdataclass import *
@@ -261,25 +261,11 @@ def main(unused_argv):
                         subset_r = FLAGS.subset_r) 
     else:
         raise NotImplementedError
-    # sys.exit()
 
-    # if FLAGS.data_type == 'mnist': # Use 1000 test points for mnist 
-    #     # FLAGS.num_test_contexts = 1000  
-    #     num_test_contexts=1000
-    #     FLAGS.test_freq = 100
-    #     FLAGS.chunk_size = 1
-    
-    # returned dataset = (contexts, actions, rewards, test_contexts, mean_test_rewards) 
-    # rewards are added with noise, while mean_(test_)rewards are pure rewards
     dataset = data.reset_data()
-    # print(f'Contexts: {dataset[0]}')
     context_dim = dataset[0].shape[1] 
     print(f'context_dim: {context_dim}')
-    # print(f'Actions: {dataset[1]}')
-    # print(f'rewards: {dataset[2]}')
-    # print(f'test_contexts: {dataset[3]}')
-    # print(f'mean_test_rewards: {dataset[4]}')
-    # sys.exit()
+  
     context_dim = dataset[0].shape[1] 
     num_actions = data.num_actions 
    
@@ -409,7 +395,10 @@ def main(unused_argv):
             'ExactNeuraLCBV2_cp': ExactNeuraLCBV2_cp,
             'NeuralGreedyV2_cp': NeuralGreedyV2_cp,
             'ApproxNeuraLCB_cp': ApproxNeuraLCB_cp,
-            'NeuraLCB_cp': NeuraLCB_cp
+            'NeuraLCB_cp': NeuraLCB_cp,
+            'ApproxNeuralLinLCBV2_cp': ApproxNeuralLinLCBV2_cp,
+            'ExactNeuralLinLCBV2_cp': ExactNeuralLinLCBV2_cp,
+            'ApproxNeuralLinLCBJointModel_cp': ApproxNeuralLinLCBJointModel_cp
         }
         if FLAGS.algo_group not in ALGO_MAP:
             raise ValueError(f"Unknown algo_group: {FLAGS.algo_group}")

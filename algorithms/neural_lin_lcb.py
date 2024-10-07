@@ -72,7 +72,6 @@ class ApproxNeuralLinLCBV2(BanditAlgorithm):
         self.update_freq = update_freq 
         opt = optax.adam(0.0001) # dummy
         self.nn = NeuralBanditModelV2(opt, hparams, '{}-net'.format(name))
-        
         self.reset(self.hparams.seed)
 
     def reset(self, seed): 
@@ -202,7 +201,13 @@ class ApproxNeuralLinLCBJointModel(BanditAlgorithm):
     def reset(self, seed): 
         # self.y_hat = jnp.zeros(shape=(self.hparams.num_actions, self.nn.num_params))
         self.y_hat = jnp.zeros(shape=(self.nn.num_params,)) 
+
+
+
         self.diag_Lambda = jnp.ones(self.nn.num_params) * self.hparams.lambd0  
+
+
+        
         self.nn.reset(seed) 
 
     def sample_action(self, contexts):

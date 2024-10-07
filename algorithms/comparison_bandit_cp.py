@@ -29,9 +29,8 @@ class ExactNeuraLCBV2_cp(BanditAlgorithm):
         self.update_freq = update_freq
         opt = optax.adam(hparams.lr)
         # opt = optax.adam(self.hparams.lr)
-        self.nn = NeuralBanditModelV2(opt, hparams, '{}-net'.format(name))
-        # self.nn = NeuralBanditModelV2(opt, self.hparams, '{}-net'.format(self.name))
-      
+        self.nn = NeuralBanditModelV2(opt, hparams, '{}_nn2'.format(self.name))
+       
         self.data = BanditDataset(hparams.context_dim, hparams.num_actions, hparams.buffer_s, '{}-data'.format(name))
         # self.nn.num_params: the number of network parameters (i.e., p)
 
@@ -203,7 +202,7 @@ class NeuralGreedyV2_cp(BanditAlgorithm):
         self.hparams = hparams 
         self.update_freq = update_freq 
         opt = optax.adam(hparams.lr)
-        self.nn = NeuralBanditModelV2(opt, hparams, '{}-net'.format(name))
+        self.nn = NeuralBanditModelV2(opt, hparams, '{}_nn2'.format(name))
         self.data = BanditDataset(hparams.context_dim, hparams.num_actions, hparams.buffer_s, '{}-data'.format(name))
         self.prediction_interval_model = None
         self.res_dir  = res_dir
@@ -340,8 +339,8 @@ class NeuraLCB_cp(BanditAlgorithm):
         self.hparams = hparams 
         opt = optax.adam(hparams.lr) 
         # here is why NeuraLCB is different from ApproxNeuraLCBV2
-        # we have "self.nn = NeuralBanditModelV2(opt, hparams, '{}-net'.format(name))" in ApproxNeuraLCBV2
-        self.nn = NeuralBanditModel(opt, hparams, '{}-nn'.format(name))
+         
+        self.nn = NeuralBanditModel(opt, hparams, '{}_nn'.format(self.name))
         self.data = BanditDataset(hparams.context_dim, hparams.num_actions, hparams.buffer_s, 'bandit_data')
         self.diag_Lambda = jnp.array([hparams.lambd0 * jnp.ones(self.nn.num_params) for _ in range(self.hparams.num_actions)]) # (num_actions, p)
         self.update_freq = update_freq
@@ -662,7 +661,7 @@ class NeuralGreedy(BanditAlgorithm):
         self.name = name 
         self.hparams = hparams 
         opt = optax.adam(hparams.lr)
-        self.nn = NeuralBanditModel(opt, hparams, 'nn')
+        self.nn = NeuralBanditModel(opt, hparams, '{}_nn'.format(self.name))
         self.data = BanditDataset(hparams.context_dim, hparams.num_actions, hparams.buffer_s, 'bandit_data')
 
     def sample_action(self, contexts):
