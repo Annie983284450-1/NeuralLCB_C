@@ -333,7 +333,7 @@ def main(unused_argv):
     # Algorithms 
     #================================================================
     original_stdout = sys.stdout
-    print(f'$$$$$########## $$$$$########## algorithm: FLAGS.algo_group $$$$$##########$$$$$##########')
+    print(f'$$$$$########## $$$$$########## algorithm: {FLAGS.algo_group}$$$$$##########$$$$$##########')
     with open(res_dir+f'/trainwin_{FLAGS.num_train_sepsis_pat_win}test_win_{FLAGS.num_test_pat_septic_win}_{FLAGS.algo_group}_log.txt', 'w') as f:
         sys.stdout = f 
     # if res_dir:
