@@ -172,7 +172,7 @@ class ApproxNeuraLCBV2(BanditAlgorithm):
         # based on the gradients computed during training
         opt = optax.adam(hparams.lr)
  
-        self.nn = NeuralBanditModelV2(opt, hparams, '{}-net'.format(name))
+        self.nn = NeuralBanditModelV2(opt, hparams, '{}-nn2'.format(name))
         """BanditDataset(): sDefine a data buffer for contextual bandit algorithms. """
 
         self.data = BanditDataset(hparams.context_dim, hparams.num_actions, hparams.buffer_s, '{}-data'.format(name))
