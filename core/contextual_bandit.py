@@ -103,15 +103,15 @@ def contextual_bandit_runner_v2(algos, data, \
                     else: 
                         t1 = time.time()
                         cp_experts = ['ApproxNeuraLCB_cp', 'ExactNeuraLCBV2_cp', 'NeuralGreedyV2_cp', 'NeuraLCB_cp',\
-                                       'ApproxNeuralLinLCBV2_cp','ExactNeuralLinLCBV2_cp', 'ApproxNeuralLinLCBJointModel_cp',\
-                                        'ApproxNeuraLCBV2']
+                                       'ApproxNeuralLinLCBV2_cp','ExactNeuralLinLCBV2_cp', 'ApproxNeuralLinLCBJointModel_cp']
                         # predicted actions using NeuraLCB and conformal predicsion
                         # if algo.name == 'ApproxNeuraLCB_cp':
+                        nocp_experts = ['ApproxNeuraLCBV2', 'ExactNeuraLCBV2', 'NeuralGreedyV2']
                         if algo.name in cp_experts:
                             print(f'test_contexts.shape == {cmab.test_contexts.shape}')
                             test_actions = algo.sample_action(cmab.test_contexts, opt_vals, opt_actions) 
-                        # elif algo.name == 'ExactNeuraLCBV2_cp':
-                        #     test_actions = algo.sample_action(cmab.test_contexts, opt_vals, opt_actions)
+                        elif algo.name in nocp_experts:
+                            test_actions = algo.sample_action(cmab.test_contexts)
                         else:
                             # test_actions = algo.sample_action(cmab.test_contexts) 
                             sys.exit('Wrong algo group!!')

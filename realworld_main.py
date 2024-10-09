@@ -388,7 +388,7 @@ def main(unused_argv):
         # }
 
 
-        ALGO_MAP = {
+        ALGO_MAP_cp = {
             'NeuralGreedyV2_cp': NeuralGreedyV2_cp,
             'ApproxNeuralLinLCBV2_cp': ApproxNeuralLinLCBV2_cp,
             'ApproxNeuralLinLCBJointModel_cp': ApproxNeuralLinLCBJointModel_cp,
@@ -397,10 +397,22 @@ def main(unused_argv):
 	        'ExactNeuralLinLCBV2_cp': ExactNeuralLinLCBV2_cp,  # run if we have time
             'ApproxNeuraLCBV2': ApproxNeuraLCBV2
         }
-        if FLAGS.algo_group not in ALGO_MAP:
-            raise ValueError(f"Unknown algo_group: {FLAGS.algo_group}")
-        else:
+
+        ALGO_MAP = {
+            'NeuralGreedyV2': NeuralGreedyV2,
+            'ApproxNeuralLinLCBV2': ApproxNeuralLinLCBV2,
+            'ApproxNeuralLinLCBJointModel': ApproxNeuralLinLCBJointModel,
+            'ExactNeuraLCBV2': ExactNeuraLCBV2, # run if we have time
+	        'ExactNeuralLinLCBV2': ExactNeuralLinLCBV2,  # run if we have time
+            'ApproxNeuraLCBV2': ApproxNeuraLCBV2
+        }
+        if FLAGS.algo_group in ALGO_MAP_cp:
+            # raise ValueError(f"Unknown algo_group: {FLAGS.algo_group}")
             print(f'@@@@@@@@@~~~~~~~~~~~~~~~ Algorithm Testing ==== {FLAGS.algo_group}~~~~~~~~~~~~~~~@@@@@@@@@')
+        elif FLAGS.algo_group in ALGO_MAP:
+            print(f'@@@@@@@@@~~~~~~~~~~~~~~~ Algorithm Testing ==== {FLAGS.algo_group}~~~~~~~~~~~~~~~@@@@@@@@@')
+        else:
+            raise ValueError(f"Unknown algo_group: {FLAGS.algo_group}")
 
         # Get the algorithm class
         algo_class = ALGO_MAP[FLAGS.algo_group]
