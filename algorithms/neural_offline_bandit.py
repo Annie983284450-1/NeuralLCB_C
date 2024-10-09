@@ -162,7 +162,7 @@ an example of hparams:
 '''
 class ApproxNeuraLCBV2(BanditAlgorithm):
     """NeuraLCB using exact confidence matrix and NeuralBanditModelV2. """
-    def __init__(self, hparams, update_freq=1, name='ApproxNeuraLCBV2'):
+    def __init__(self, hparams, res_dir, update_freq=1, name='ApproxNeuraLCBV2'):
         self.name = name 
         self.hparams = hparams 
         self.update_freq = update_freq
@@ -179,6 +179,7 @@ class ApproxNeuraLCBV2(BanditAlgorithm):
 
         self.diag_Lambda = [jnp.ones(self.nn.num_params)* hparams.lambd0 for _ in range(hparams.num_actions)]
          # (num_actions, p)
+        self.res_dir = res_dir
 
     def reset(self, seed): 
         self.diag_Lambda = [ # 'hparams.lambd0', 0.1
@@ -298,8 +299,8 @@ class ApproxNeuraLCBV2(BanditAlgorithm):
         # this is the predictions from the neural networks????
         # (num_samples,)
         preds = self.nn.out(self.nn.params, contexts, actions)
-        print(f"contexts.shape:{contexts.shape}")
-        print(f"preds.shape:{preds.shape}")
+        # print(f"contexts.shape:{contexts.shape}")
+        # print(f"preds.shape:{preds.shape}")
 
 
         cnfs = []

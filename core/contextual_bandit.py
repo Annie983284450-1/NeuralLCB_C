@@ -144,7 +144,7 @@ def contextual_bandit_runner_v2(algos, data, \
                     subopts[j].append(test_subopt) 
                     act_errs[j].append(1 - action_acc) 
                     # regrets_results = pd.DataFrame(columns=[ 'algo_name', 'train_size','regrets',    'act_errs',    'sel_stats', 'opt_stats'])
-                    regrets_results.loc[len(regrets_results)] = [algo.name,  i+1,         test_subopt, 1 - action_acc, sel_stats,   opt_stats]
+                    regrets_results.loc[len(regrets_results)] = [algo.name,  i+1, test_subopt, 1 - action_acc, sel_stats,   opt_stats]
                     new_row_regret = regrets_results
                     
                     if not isinstance(new_row_regret , pd.DataFrame):
