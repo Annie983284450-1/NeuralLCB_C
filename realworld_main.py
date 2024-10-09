@@ -394,7 +394,8 @@ def main(unused_argv):
             'ApproxNeuralLinLCBJointModel_cp': ApproxNeuralLinLCBJointModel_cp,
             'ApproxNeuraLCB_cp': ApproxNeuraLCB_cp, # finished already
             'ExactNeuraLCBV2_cp': ExactNeuraLCBV2_cp, # run if we have time
-	        'ExactNeuralLinLCBV2_cp': ExactNeuralLinLCBV2_cp  # run if we have time
+	        'ExactNeuralLinLCBV2_cp': ExactNeuralLinLCBV2_cp,  # run if we have time
+            'ApproxNeuraLCBV2': ApproxNeuraLCBV2
         }
         if FLAGS.algo_group not in ALGO_MAP:
             raise ValueError(f"Unknown algo_group: {FLAGS.algo_group}")

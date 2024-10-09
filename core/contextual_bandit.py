@@ -103,7 +103,8 @@ def contextual_bandit_runner_v2(algos, data, \
                     else: 
                         t1 = time.time()
                         cp_experts = ['ApproxNeuraLCB_cp', 'ExactNeuraLCBV2_cp', 'NeuralGreedyV2_cp', 'NeuraLCB_cp',\
-                                       'ApproxNeuralLinLCBV2_cp','ExactNeuralLinLCBV2_cp', 'ApproxNeuralLinLCBJointModel_cp']
+                                       'ApproxNeuralLinLCBV2_cp','ExactNeuralLinLCBV2_cp', 'ApproxNeuralLinLCBJointModel_cp',\
+                                        'ApproxNeuraLCBV2']
                         # predicted actions using NeuraLCB and conformal predicsion
                         # if algo.name == 'ApproxNeuraLCB_cp':
                         if algo.name in cp_experts:
