@@ -272,6 +272,7 @@ def main(unused_argv):
 
     
     hparams = edict({
+        # (m,m)
         'layer_sizes': [100,100], 
         # 'layer_sizes': [5,5], 
         's_init': 1, 
