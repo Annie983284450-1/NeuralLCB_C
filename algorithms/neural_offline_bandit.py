@@ -29,7 +29,7 @@ class ExactNeuraLCBV2(BanditAlgorithm):
         self.update_freq = update_freq
         opt = optax.adam(hparams.lr)
         # opt = optax.adam(self.hparams.lr)
-        self.nn = NeuralBanditModelV2(opt, hparams, '{}-net'.format(name))
+        self.nn = NeuralBanditModelV2(opt, hparams, '{}-nn2'.format(name))
        
       
         self.data = BanditDataset(hparams.context_dim, hparams.num_actions, hparams.buffer_s, '{}-data'.format(name))
@@ -339,7 +339,7 @@ class NeuralGreedyV2(BanditAlgorithm):
         self.hparams = hparams 
         self.update_freq = update_freq 
         opt = optax.adam(hparams.lr)
-        self.nn = NeuralBanditModelV2(opt, hparams, '{}-net'.format(name))
+        self.nn = NeuralBanditModelV2(opt, hparams, '{}-nn2'.format(name))
         self.data = BanditDataset(hparams.context_dim, hparams.num_actions, hparams.buffer_s, '{}-data'.format(name))
 
     def reset(self, seed): 
