@@ -366,6 +366,13 @@ def main(unused_argv):
             algos = [
                 algo_class(hparams, res_dir=FLAGS.res_dir, B = FLAGS.B, update_freq=FLAGS.update_freq)
             ]
+            # Create the prefix string using f-string
+            algo_prefix = (
+                f"{FLAGS.algo_group}-gridsearch_epochs={hparams.num_steps}_m={min(hparams.layer_sizes)}"
+                f"_layern={hparams.layer_n}_buffer={hparams.buffer_s}_bs={hparams.batch_size}"
+                f"_lr={hparams.lr}_beta={hparams.beta}_lambda={hparams.lambd}_lambda0={hparams.lambd0}"
+                f"_B={hparams.B}"
+            )
         elif FLAGS.algo_group in ALGO_MAP:
             print(f'@@@@@@@@@~~~~~~~~~~~~~~~ Algorithm Testing ==== {FLAGS.algo_group}~~~~~~~~~~~~~~~@@@@@@@@@')
             # Get the algorithm class
@@ -375,18 +382,18 @@ def main(unused_argv):
             algos = [
                 algo_class(hparams, update_freq=FLAGS.update_freq)
             ]
+            # Create the prefix string using f-string
+            algo_prefix = (
+                f"{FLAGS.algo_group}-gridsearch_epochs={hparams.num_steps}_m={min(hparams.layer_sizes)}"
+                f"_layern={hparams.layer_n}_buffer={hparams.buffer_s}_bs={hparams.batch_size}"
+                f"_lr={hparams.lr}_beta={hparams.beta}_lambda={hparams.lambd}_lambda0={hparams.lambd0}"
+            )
         
         else:
             raise ValueError(f"Unknown algo_group: {FLAGS.algo_group}")
 
 
-        # Create the prefix string using f-string
-        algo_prefix = (
-            f"{FLAGS.algo_group}-gridsearch_epochs={hparams.num_steps}_m={min(hparams.layer_sizes)}"
-            f"_layern={hparams.layer_n}_buffer={hparams.buffer_s}_bs={hparams.batch_size}"
-            f"_lr={hparams.lr}_beta={hparams.beta}_lambda={hparams.lambd}_lambda0={hparams.lambd0}"
-            f"_B={hparams.B}"
-        )
+
 
 
         
