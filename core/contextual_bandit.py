@@ -101,7 +101,7 @@ def contextual_bandit_runner_v2(algos, data, \
                                        'ApproxNeuralLinLCBV2_cp','ExactNeuralLinLCBV2_cp', 'ApproxNeuralLinLCBJointModel_cp']
                         # predicted actions using NeuraLCB and conformal predicsion
                         # if algo.name == 'ApproxNeuraLCB_cp':
-                        nocp_experts = ['ApproxNeuraLCBV2', 'ExactNeuraLCBV2', 'NeuralGreedyV2']
+                        nocp_experts = ['ApproxNeuraLCBV2', 'ExactNeuraLCBV2', 'NeuralGreedyV2','ApproxNeuralLinLCBJointModel' ]
                         if algo.name in cp_experts:
                             # print(f'test_contexts.shape == {cmab.test_contexts.shape}')
                             test_actions = algo.sample_action(cmab.test_contexts, opt_vals, opt_actions) 

@@ -92,20 +92,27 @@ help_text: string describes the flag
 
 # flags.DEFINE_string('algo_group', 'approx-neural_cp', 'conformal prediction/neural')
 flags.DEFINE_string('algo_group', 'ApproxNeuraLCB_cp', 'conformal prediction/neural')
-flags.DEFINE_integer('B', 10, 'number of bootstraps')
+flags.DEFINE_string('data_type', 'sepsis', 'Dataset to sample from')
+flags.DEFINE_string('policy', 'eps-greedy', 'Offline policy, eps-greedy/subset')
+ 
 
-# flags.DEFINE_string('algo_group', 'ExactNeuraLCBV2_cp', 'conformal prediction/neural')
-# flags.DEFINE_string('algo_group', 'NeuralGreedyV2_cp', 'conformal prediction/neural')
-flags.DEFINE_boolean('is_window', True, 'to use the window sized data or not?') 
 
 flags.DEFINE_integer('num_train_sepsis_pat_win', 10 , 'Number of septic windows for training.') 
 flags.DEFINE_integer('num_test_pat_septic_win', 1, 'Number of septic windows for testing.') 
 flags.DEFINE_integer('win_size', 8, 'Window size used for training and testing.')
-
- 
-
-# flags.DEFINE_string('data_type', 'mushroom', 'Dataset to sample from')
-
+flags.DEFINE_integer('B', 10, 'number of bootstraps')
+flags.DEFINE_integer('update_freq', 1, 'Update frequency')
+flags.DEFINE_integer('freq_summary', 10, 'Summary frequency')
+flags.DEFINE_integer('test_freq', 10, 'Test frequency')
+# flags.DEFINE_integer('num_sim', 10, 'Number of simulations')
+flags.DEFINE_integer('num_sim', 1, 'Number of simulations')
+flags.DEFINE_integer('chunk_size', 500, 'Chunk size')
+# flags.DEFINE_integer('chunk_size', 5, 'Chunk size')
+flags.DEFINE_integer('batch_size', 32, 'Batch size')
+# flags.DEFINE_integer('batch_size', 4, 'Batch size')
+flags.DEFINE_integer('num_steps', 100, 'Number of steps to train NN.') 
+# flags.DEFINE_integer('num_steps', 10, 'Number of steps to train NN.') 
+flags.DEFINE_integer('buffer_s', -1, 'Size in the train data buffer.')
 # let's test on mnistm cuz this is the only dataset available/opened
 
     # dataclasses = {'mushroom':MushroomData, 'jester':JesterData, 'statlog':StatlogData, 'covertype':CoverTypeData, 'stock': StockData,
@@ -114,70 +121,25 @@ flags.DEFINE_integer('win_size', 8, 'Window size used for training and testing.'
 
 # flags.DEFINE_string('data_type', 'mnist', 'Dataset to sample from')
 # flags.DEFINE_string('data_type', 'covertype', 'Dataset to sample from')
-flags.DEFINE_string('data_type', 'sepsis', 'Dataset to sample from')
 
-flags.DEFINE_string('policy', 'eps-greedy', 'Offline policy, eps-greedy/subset')
 # flags.DEFINE_string('policy', 'online', 'Offline policy, eps-greedy/subset')
 flags.DEFINE_float('eps', 0.1, 'Probability of selecting a random action in eps-greedy')
 flags.DEFINE_float('subset_r', 0.5, 'The ratio of the action spaces to be selected in offline data')
-
-
-# num_train_sepsis_pat_win = 20
-# num_test_pat_septic_win = 5
-# num_train_sepsis_pat_win = 1000
-# num_test_pat_septic_win = 250
-# # win_size= 8 
-# print(f'num_train_sepsis_pat_win === {num_train_sepsis_pat_win}')
-# print(f'num_test_pat_septic_win === {num_test_pat_septic_win}')
-
-# is_window = True
-# # this might only corresponding to a few hundreds patients
-# if is_window:
-
-#     flags.DEFINE_integer('num_contexts', num_train_sepsis_pat_win*win_size*2, 'Number of contexts for training.') 
-#     flags.DEFINE_integer('num_test_contexts', num_test_pat_septic_win*win_size*13, 'Number of contexts for test.') 
-# else:
-
-#     flags.DEFINE_integer('num_contexts', 500, 'Number of contexts for training.') 
-#     flags.DEFINE_integer('num_test_contexts', 100, 'Number of contexts for test.') 
-
-flags.DEFINE_boolean('verbose', True, 'verbose') 
-flags.DEFINE_boolean('debug', True, 'debug') 
-flags.DEFINE_boolean('normalize', False, 'normalize the regret') 
-flags.DEFINE_integer('update_freq', 1, 'Update frequency')
-flags.DEFINE_integer('freq_summary', 10, 'Summary frequency')
-
-flags.DEFINE_integer('test_freq', 10, 'Test frequency')
-# flags.DEFINE_string('algo_group', 'approx-neural', 'baseline/neural')
-
-
-
-
-
-
-# flags.DEFINE_integer('num_sim', 10, 'Number of simulations')
-flags.DEFINE_integer('num_sim', 1, 'Number of simulations')
-
 flags.DEFINE_float('noise_std', 0.01, 'Noise std')
-
-flags.DEFINE_integer('chunk_size', 500, 'Chunk size')
-# flags.DEFINE_integer('chunk_size', 5, 'Chunk size')
-flags.DEFINE_integer('batch_size', 32, 'Batch size')
-# flags.DEFINE_integer('batch_size', 4, 'Batch size')
-flags.DEFINE_integer('num_steps', 100, 'Number of steps to train NN.') 
-# flags.DEFINE_integer('num_steps', 10, 'Number of steps to train NN.') 
-
- 
-flags.DEFINE_integer('buffer_s', -1, 'Size in the train data buffer.')
-flags.DEFINE_bool('data_rand', True, 'Where randomly sample a data batch or  use the latest samples in the buffer' )
-
 flags.DEFINE_float('rbf_sigma', 1, 'RBF sigma for KernLCB') # [0.1, 1, 10]
-
 # NeuraLCB 
 flags.DEFINE_float('beta', 0.1, 'confidence paramter') # [0.01, 0.05, 0.1, 0.5, 1, 5, 10] 
 flags.DEFINE_float('lr', 1e-3, 'learning rate') 
 flags.DEFINE_float('lambd0', 0.1, 'minimum eigenvalue') 
 flags.DEFINE_float('lambd', 1e-4, 'regularization parameter')
+
+
+flags.DEFINE_boolean('is_window', True, 'to use the window sized data or not?') 
+flags.DEFINE_boolean('verbose', True, 'verbose') 
+flags.DEFINE_boolean('debug', True, 'debug') 
+flags.DEFINE_boolean('normalize', False, 'normalize the regret')
+flags.DEFINE_bool('data_rand', True, 'Where randomly sample a data batch or  use the latest samples in the buffer' )
+
 
 #================================================================
 # Network parameters
@@ -390,6 +352,7 @@ def main(unused_argv):
             'ExactNeuraLCBV2': ExactNeuraLCBV2, # run if we have time
 	        'ExactNeuralLinLCBV2': ExactNeuralLinLCBV2,  # run if we have time
             'ApproxNeuraLCBV2': ApproxNeuraLCBV2
+           
         }
 
         if FLAGS.algo_group in ALGO_MAP_cp:
@@ -412,8 +375,6 @@ def main(unused_argv):
             algos = [
                 algo_class(hparams, update_freq=FLAGS.update_freq)
             ]
-        
-        
         
         else:
             raise ValueError(f"Unknown algo_group: {FLAGS.algo_group}")
