@@ -23,14 +23,14 @@ from cp_funs.PI import prediction_interval
 
 class ExactNeuraLCBV2(BanditAlgorithm):
     """NeuraLCB using exact confidence matrix and NeuralBanditModelV2. """
-    def __init__(self, hparams, res_dir, update_freq=1, name='ExactNeuraLCBV2'):
+    def __init__(self, hparams, update_freq=1, name='ExactNeuraLCBV2'):
         self.name = name 
         self.hparams = hparams 
         self.update_freq = update_freq
         opt = optax.adam(hparams.lr)
         # opt = optax.adam(self.hparams.lr)
         self.nn = NeuralBanditModelV2(opt, hparams, '{}_nn2'.format(name))
-        self.res_dir=res_dir
+    
        
       
         self.data = BanditDataset(hparams.context_dim, hparams.num_actions, hparams.buffer_s, '{}-data'.format(name))
@@ -163,7 +163,7 @@ an example of hparams:
 '''
 class ApproxNeuraLCBV2(BanditAlgorithm):
     """NeuraLCB using exact confidence matrix and NeuralBanditModelV2. """
-    def __init__(self, hparams, res_dir, update_freq=1, name='ApproxNeuraLCBV2'):
+    def __init__(self, hparams,   update_freq=1, name='ApproxNeuraLCBV2'):
         self.name = name 
         self.hparams = hparams 
         self.update_freq = update_freq
@@ -180,7 +180,7 @@ class ApproxNeuraLCBV2(BanditAlgorithm):
 
         self.diag_Lambda = [jnp.ones(self.nn.num_params)* hparams.lambd0 for _ in range(hparams.num_actions)]
          # (num_actions, p)
-        self.res_dir = res_dir
+     
 
     def reset(self, seed): 
         self.diag_Lambda = [ # 'hparams.lambd0', 0.1
@@ -336,15 +336,14 @@ class ApproxNeuraLCBV2(BanditAlgorithm):
 
 
 class NeuralGreedyV2(BanditAlgorithm):
-    def __init__(self, hparams, res_dir, update_freq=1, name='NeuralGreedyV2'):
+    def __init__(self, hparams,   update_freq=1, name='NeuralGreedyV2'):
         self.name = name 
         self.hparams = hparams 
         self.update_freq = update_freq 
         opt = optax.adam(hparams.lr)
         self.nn = NeuralBanditModelV2(opt, hparams, '{}_nn2'.format(name))
         self.data = BanditDataset(hparams.context_dim, hparams.num_actions, hparams.buffer_s, '{}-data'.format(name))
-        self.res_dir = res_dir
-
+         
     def reset(self, seed): 
         self.nn.reset(seed) 
         self.data.reset()

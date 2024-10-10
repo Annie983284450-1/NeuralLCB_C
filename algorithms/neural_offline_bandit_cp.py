@@ -44,7 +44,7 @@ from core.bandit_dataset import BanditDataset
 # the ApproxNeuraLCB with conformal prediction
 class ApproxNeuraLCB_cp(BanditAlgorithm):
 
-    def __init__(self, hparams, res_dir, update_freq=1, name='ApproxNeuraLCB_cp'):
+    def __init__(self, hparams, res_dir, B, update_freq=1, name='ApproxNeuraLCB_cp'):
         self.name = name 
         self.hparams = hparams 
         self.update_freq = update_freq
@@ -57,7 +57,8 @@ class ApproxNeuraLCB_cp(BanditAlgorithm):
         self.diag_Lambda = [jnp.ones(self.nn.num_params) * hparams.lambd0 for _ in range(hparams.num_actions)]
         self.prediction_interval_model = None
         self.res_dir  = res_dir
-        self.Ensemble_pred_interval_centers = []   
+        self.Ensemble_pred_interval_centers = [] 
+        self.B =B  
     def reset(self, seed): 
         self.diag_Lambda = [jnp.ones(self.nn.num_params) * self.hparams.lambd0 for _ in range(self.hparams.num_actions)]
         # self.nn.reset(seed) # with NeuralBanditV2()
@@ -140,8 +141,9 @@ class ApproxNeuraLCB_cp(BanditAlgorithm):
                         actions, 
                         test_actions,
                         filename,
-                        self.name)
-        self.Ensemble_pred_interval_centers = self.prediction_interval_model.fit_bootstrap_models_online(B=10, miss_test_idx=[])
+                        self.name,
+                        self.B)
+        self.Ensemble_pred_interval_centers = self.prediction_interval_model.fit_bootstrap_models_online(B=self.B, miss_test_idx=[])
         # print(f'self.Ensemble_prediction_interval_centers:{self.Ensemble_pred_interval_centers}')
         PI_dfs, results = self.prediction_interval_model.run_experiments(alpha=0.05, stride=8,methods=['Ensemble'])       
         

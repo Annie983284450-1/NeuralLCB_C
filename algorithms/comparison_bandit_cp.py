@@ -23,8 +23,9 @@ from cp_funs.PI import prediction_interval
 #this is actually the algo in the paper. it should be the best-performing. theoretically I mean
 class ExactNeuraLCBV2_cp(BanditAlgorithm):
     """NeuraLCB using exact confidence matrix and NeuralBanditModelV2. """
-    def __init__(self, hparams,res_dir, update_freq=1, name='ExactNeuraLCBV2_cp'):
+    def __init__(self, hparams,res_dir,B,  update_freq=1, name='ExactNeuraLCBV2_cp'):
         self.name = name 
+        self.B = B
         self.hparams = hparams 
         self.update_freq = update_freq
         opt = optax.adam(hparams.lr)
@@ -115,8 +116,9 @@ class ExactNeuraLCBV2_cp(BanditAlgorithm):
                         actions, 
                         test_actions,
                         filename,
-                        self.name)
-        self.Ensemble_pred_interval_centers = self.prediction_interval_model.fit_bootstrap_models_online(B=10, miss_test_idx=[])
+                        self.name, 
+                        self.B)
+        self.Ensemble_pred_interval_centers = self.prediction_interval_model.fit_bootstrap_models_online(B=self.B, miss_test_idx=[])
         # print(f'self.Ensemble_prediction_interval_centers:{self.Ensemble_pred_interval_centers}')
         PI_dfs, results = self.prediction_interval_model.run_experiments(alpha=0.05, stride=8,methods=['Ensemble'])       
         return sampled_test_actions
@@ -199,7 +201,7 @@ class ExactNeuraLCBV2_cp(BanditAlgorithm):
  
 
 class NeuralGreedyV2_cp(BanditAlgorithm):
-    def __init__(self, hparams, res_dir, update_freq=1, name='NeuralGreedyV2_cp'):
+    def __init__(self, hparams, res_dir,B,  update_freq=1, name='NeuralGreedyV2_cp'):
         self.name = name 
         self.hparams = hparams 
         self.update_freq = update_freq 
@@ -209,6 +211,7 @@ class NeuralGreedyV2_cp(BanditAlgorithm):
         self.prediction_interval_model = None
         self.res_dir  = res_dir
         self.Ensemble_pred_interval_centers = []   
+        self.B =B
 
     def reset(self, seed): 
         self.nn.reset(seed) 
@@ -263,8 +266,9 @@ class NeuralGreedyV2_cp(BanditAlgorithm):
                         actions, 
                         test_actions,
                         filename,
-                        self.name)
-        self.Ensemble_pred_interval_centers = self.prediction_interval_model.fit_bootstrap_models_online(B=10, miss_test_idx=[])
+                        self.name,
+                        self.B)
+        self.Ensemble_pred_interval_centers = self.prediction_interval_model.fit_bootstrap_models_online(B=self.B, miss_test_idx=[])
         # print(f'self.Ensemble_prediction_interval_centers:{self.Ensemble_pred_interval_centers}')
         PI_dfs, results = self.prediction_interval_model.run_experiments(alpha=0.05, stride=8,methods=['Ensemble'])       
 

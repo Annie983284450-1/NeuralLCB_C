@@ -56,7 +56,7 @@ class prediction_interval():
         Create prediction intervals using different methods (i.e., EnbPI, J+aB ICP, Weighted, Time-series)
     '''
     def __init__(self,  nn_model,  # The neural network model (NeuralBanditModelV2)
-                X_train, X_predict, Y_train, Y_predict,  actions, test_actions, filename, algoname):
+                X_train, X_predict, Y_train, Y_predict,  actions, test_actions, filename, algoname, B):
         
         # self.nn_model = algo.nn  # NeuralBanditModelV2(opt, hparams, '{}-nn2'.format(name))
         self.nn_model= nn_model
@@ -76,7 +76,7 @@ class prediction_interval():
         self.Ensemble_train_interval_centers = []   
         self.beta_hat_bins = []
         self.filename = filename
-      
+        self.B = B
     def fit_bootstrap_models_online(self,  B, miss_test_idx):
         '''
           Train B bootstrap estimators from subsets of (X_train, Y_train), compute aggregated predictors, and compute the residuals
@@ -268,7 +268,7 @@ class prediction_interval():
 
 
                 new_row_all_avg = pd.DataFrame([new_row_all_avg])
-            with open(final_result_path+f'/final_all_cpresults_avg_{self.algoname}.csv', 'a') as f:
+            with open(final_result_path+f'/final_all_cpresults_avg_{self.algoname}_B={self.B}.csv', 'a') as f:
                 new_row_all_avg.to_csv(f, header=f.tell()==0, index=False)
 
             # print(f'~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')

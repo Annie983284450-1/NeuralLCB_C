@@ -92,6 +92,8 @@ help_text: string describes the flag
 
 # flags.DEFINE_string('algo_group', 'approx-neural_cp', 'conformal prediction/neural')
 flags.DEFINE_string('algo_group', 'ApproxNeuraLCB_cp', 'conformal prediction/neural')
+flags.DEFINE_integer('B', 10, 'number of bootstraps')
+
 # flags.DEFINE_string('algo_group', 'ExactNeuraLCBV2_cp', 'conformal prediction/neural')
 # flags.DEFINE_string('algo_group', 'NeuralGreedyV2_cp', 'conformal prediction/neural')
 flags.DEFINE_boolean('is_window', True, 'to use the window sized data or not?') 
@@ -292,7 +294,8 @@ def main(unused_argv):
         'num_train_sepsis_pat_win': FLAGS.num_train_sepsis_pat_win,
         'num_test_pat_septic_win': FLAGS.num_test_pat_septic_win,
         'data_type':FLAGS.data_type,
-        'max_test_batch': FLAGS.batch_size
+        'max_test_batch': FLAGS.batch_size,
+        'B': FLAGS.B
         # 'policy_prefix', policy_prefix
     })
 
@@ -335,20 +338,6 @@ def main(unused_argv):
         sys.stdout = f 
     # if res_dir:
 
-        # if FLAGS.algo_group == 'approx-neural':
-        # if FLAGS.algo_group == 'approx-neural_cp':
-        #     algos = [
-        #         # class UniformSampling(BanditAlgorithm)
-        #             # UniformSampling(lin_hparams),
-        #             # NeuralGreedyV2(hparams, update_freq = FLAGS.update_freq), 
-        #             # class ApproxNeuraLCBV2(BanditAlgorithm)
-        #             ApproxNeuraLCB_cp(hparams, res_dir = FLAGS.res_dir, update_freq = FLAGS.update_freq)
-        #             # ApproxNeuraLCBV2(hparams, update_freq = FLAGS.update_freq)
-        #         ]
-        #     algo_prefix = 'approx-neural-gridsearch_epochs={}_m={}_layern={}_buffer={}_bs={}_lr={}_beta={}_lambda={}_lambda0={}'.format(
-        #         hparams.num_steps, min(hparams.layer_sizes), hparams.layer_n, hparams.buffer_s, hparams.batch_size, hparams.lr, \
-        #         hparams.beta, hparams.lambd, hparams.lambd0
-        #     )
  
 
         if FLAGS.algo_group == 'kern': # for tuning KernLCB
@@ -402,27 +391,40 @@ def main(unused_argv):
 	        'ExactNeuralLinLCBV2': ExactNeuralLinLCBV2,  # run if we have time
             'ApproxNeuraLCBV2': ApproxNeuraLCBV2
         }
+
         if FLAGS.algo_group in ALGO_MAP_cp:
             # raise ValueError(f"Unknown algo_group: {FLAGS.algo_group}")
             print(f'@@@@@@@@@~~~~~~~~~~~~~~~ Algorithm Testing ==== {FLAGS.algo_group}~~~~~~~~~~~~~~~@@@@@@@@@')
+        
+            # Get the algorithm class
+            algo_class = ALGO_MAP_cp[FLAGS.algo_group]
+
+            # Create the algorithm instance
+            algos = [
+                algo_class(hparams, res_dir=FLAGS.res_dir, B = FLAGS.B, update_freq=FLAGS.update_freq)
+            ]
         elif FLAGS.algo_group in ALGO_MAP:
             print(f'@@@@@@@@@~~~~~~~~~~~~~~~ Algorithm Testing ==== {FLAGS.algo_group}~~~~~~~~~~~~~~~@@@@@@@@@')
+            # Get the algorithm class
+            algo_class = ALGO_MAP[FLAGS.algo_group]
+
+            # Create the algorithm instance
+            algos = [
+                algo_class(hparams, update_freq=FLAGS.update_freq)
+            ]
+        
+        
+        
         else:
             raise ValueError(f"Unknown algo_group: {FLAGS.algo_group}")
 
-        # Get the algorithm class
-        algo_class = ALGO_MAP[FLAGS.algo_group]
-
-        # Create the algorithm instance
-        algos = [
-            algo_class(hparams, res_dir=FLAGS.res_dir, update_freq=FLAGS.update_freq)
-        ]
 
         # Create the prefix string using f-string
         algo_prefix = (
             f"{FLAGS.algo_group}-gridsearch_epochs={hparams.num_steps}_m={min(hparams.layer_sizes)}"
             f"_layern={hparams.layer_n}_buffer={hparams.buffer_s}_bs={hparams.batch_size}"
             f"_lr={hparams.lr}_beta={hparams.beta}_lambda={hparams.lambd}_lambda0={hparams.lambd0}"
+            f"_B={hparams.B}"
         )
 
 
@@ -440,7 +442,7 @@ def main(unused_argv):
         start  =  time.time()
         # regrets, errs = contextual_bandit_runner(algos, data, FLAGS.num_sim, FLAGS.update_freq, FLAGS.test_freq, FLAGS.verbose, FLAGS.debug, FLAGS.normalize, file_name, res_dir)
         regrets, errs = contextual_bandit_runner_v2(algos, data, \
-            FLAGS.num_sim, FLAGS.test_freq, FLAGS.verbose, FLAGS.debug, FLAGS.normalize, res_dir,algo_prefix,file_name,sim)
+            FLAGS.num_sim, FLAGS.test_freq, FLAGS.verbose, FLAGS.debug, FLAGS.normalize, res_dir,algo_prefix,file_name,sim, FLAGS.B)
 
         np.savez(file_name, regrets=regrets, errs=errs)
 

@@ -32,7 +32,7 @@ def action_accuracy(pred_actions, opt_actions):
  
 
 def contextual_bandit_runner_v2(algos, data, \
-            num_sim, test_freq, verbose, debug, normalize, res_dir = None ,algo_prefix = None, file_name=None, sim=None):
+            num_sim, test_freq, verbose, debug, normalize, res_dir = None ,algo_prefix = None, file_name=None, sim=None, B=10):
     """Run an offline contextual bandit problem on a set of algorithms in the same dataset. 
 
     Args:
@@ -50,15 +50,10 @@ def contextual_bandit_runner_v2(algos, data, \
             pass  # Just opening in 'w' mode truncates the file
         for j,algo in enumerate(algos): 
                     # Open in write mode to truncate the file
-            with open(res_dir+f'/final_all_cpresults_avg_{algo.name}.csv', 'w') as f:
+            with open(res_dir+f'/final_all_cpresults_avg_{algo.name}_B={B}.csv', 'w') as f:
                     pass  # Just opening in 'w' mode truncates the file      
         print('Simulation: {}/{}'.format(sim + 1, num_sim))
         cmab = OfflineContextualBandit(*data.reset_data(sim))
-
-
-
-
-
         for algo in algos:
             algo.reset(sim * 1111)
         subopts = [[] for _ in range(len(algos))]
@@ -108,7 +103,7 @@ def contextual_bandit_runner_v2(algos, data, \
                         # if algo.name == 'ApproxNeuraLCB_cp':
                         nocp_experts = ['ApproxNeuraLCBV2', 'ExactNeuraLCBV2', 'NeuralGreedyV2']
                         if algo.name in cp_experts:
-                            print(f'test_contexts.shape == {cmab.test_contexts.shape}')
+                            # print(f'test_contexts.shape == {cmab.test_contexts.shape}')
                             test_actions = algo.sample_action(cmab.test_contexts, opt_vals, opt_actions) 
                         elif algo.name in nocp_experts:
                             test_actions = algo.sample_action(cmab.test_contexts)

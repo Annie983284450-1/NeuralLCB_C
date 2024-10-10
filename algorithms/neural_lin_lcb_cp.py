@@ -19,7 +19,7 @@ from core.bandit_dataset import BanditDataset
 
 # ======================== ========================ExactNeuralLinLCBV2_cp================================================
 class ExactNeuralLinLCBV2_cp(BanditAlgorithm):
-    def __init__(self, hparams, res_dir, update_freq=1, name='ExactNeuralLinLCBV2_cp'):
+    def __init__(self, hparams, res_dir, B,  update_freq=1, name='ExactNeuralLinLCBV2_cp'):
         self.name = name 
         self.hparams = hparams 
         self.update_freq = update_freq 
@@ -31,6 +31,7 @@ class ExactNeuralLinLCBV2_cp(BanditAlgorithm):
         self.prediction_interval_model = None
         self.res_dir  = res_dir
         self.Ensemble_pred_interval_centers = []   
+        self.B = B
 
     def reset(self, seed): 
         self.y_hat = jnp.zeros(shape=(self.hparams.num_actions, self.nn.num_params))
@@ -100,8 +101,9 @@ class ExactNeuralLinLCBV2_cp(BanditAlgorithm):
                         actions, 
                         test_actions,
                         filename,
-                        self.name)
-        self.Ensemble_pred_interval_centers = self.prediction_interval_model.fit_bootstrap_models_online(B=10, miss_test_idx=[])
+                        self.name,
+                        self.B)
+        self.Ensemble_pred_interval_centers = self.prediction_interval_model.fit_bootstrap_models_online(B=self.B, miss_test_idx=[])
         # print(f'self.Ensemble_prediction_interval_centers:{self.Ensemble_pred_interval_centers}')
         PI_dfs, results = self.prediction_interval_model.run_experiments(alpha=0.05, stride=8,methods=['Ensemble'])       
         
@@ -177,7 +179,7 @@ class ExactNeuralLinLCBV2_cp(BanditAlgorithm):
 
 
 class ApproxNeuralLinLCBV2_cp(BanditAlgorithm):
-    def __init__(self, hparams, res_dir, update_freq=1, name='ApproxNeuralLinLCBV2_cp'):
+    def __init__(self, hparams, res_dir, B, update_freq=1, name='ApproxNeuralLinLCBV2_cp'):
         self.name = name 
         self.hparams = hparams 
         self.update_freq = update_freq 
@@ -188,6 +190,7 @@ class ApproxNeuralLinLCBV2_cp(BanditAlgorithm):
         self.res_dir  = res_dir
         self.Ensemble_pred_interval_centers = []   
         self.reset(self.hparams.seed)
+        self.B = B
 
     def reset(self, seed): 
         # self.y_hat = jnp.zeros(shape=(self.hparams.num_actions, self.nn.num_params))
@@ -258,8 +261,9 @@ class ApproxNeuralLinLCBV2_cp(BanditAlgorithm):
                         actions, 
                         test_actions,
                         filename,
-                        self.name)
-        self.Ensemble_pred_interval_centers = self.prediction_interval_model.fit_bootstrap_models_online(B=10, miss_test_idx=[])
+                        self.name,
+                        self.B)
+        self.Ensemble_pred_interval_centers = self.prediction_interval_model.fit_bootstrap_models_online(B=self.B, miss_test_idx=[])
         # print(f'self.Ensemble_prediction_interval_centers:{self.Ensemble_pred_interval_centers}')
         PI_dfs, results = self.prediction_interval_model.run_experiments(alpha=0.05, stride=8,methods=['Ensemble'])       
         
@@ -333,12 +337,13 @@ class ApproxNeuralLinLCBJointModel_cp(BanditAlgorithm):
     Sigma_t = lambda I + \sum_{i=1}^t phi(x_i,a_i) ph(x_i,a_i)^T  
     theta_t = Sigma_t^{-1} \sum_{i=1}^t phi(x_i,a_i) y_i ""
     """
-    def __init__(self, hparams, res_dir, update_freq=1, name='ApproxNeuralLinLCBJointModel_cp'):
+    def __init__(self, hparams, res_dir, B, update_freq=1, name='ApproxNeuralLinLCBJointModel_cp'):
         self.name = name 
         self.hparams = hparams 
         self.update_freq = update_freq 
         opt = optax.adam(0.0001) # dummy
         self.nn = NeuralBanditModelV2(opt, hparams, '{}_nn2'.format(name))
+        self.B = B
         
         self.reset(self.hparams.seed)
         self.prediction_interval_model = None
@@ -413,8 +418,9 @@ class ApproxNeuralLinLCBJointModel_cp(BanditAlgorithm):
                         actions, 
                         test_actions,
                         filename,
-                        self.name)
-        self.Ensemble_pred_interval_centers = self.prediction_interval_model.fit_bootstrap_models_online(B=10, miss_test_idx=[])
+                        self.name,
+                        self.B)
+        self.Ensemble_pred_interval_centers = self.prediction_interval_model.fit_bootstrap_models_online(B=self.B, miss_test_idx=[])
         # print(f'self.Ensemble_prediction_interval_centers:{self.Ensemble_pred_interval_centers}')
         PI_dfs, results = self.prediction_interval_model.run_experiments(alpha=0.05, stride=8,methods=['Ensemble'])       
         
