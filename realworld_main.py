@@ -100,7 +100,7 @@ flags.DEFINE_string('policy', 'eps-greedy', 'Offline policy, eps-greedy/subset')
 flags.DEFINE_integer('num_train_sepsis_pat_win', 10 , 'Number of septic windows for training.') 
 flags.DEFINE_integer('num_test_pat_septic_win', 1, 'Number of septic windows for testing.') 
 flags.DEFINE_integer('win_size', 8, 'Window size used for training and testing.')
-flags.DEFINE_integer('B', 10, 'number of bootstraps')
+flags.DEFINE_integer('B', 0, 'number of bootstraps')
 flags.DEFINE_integer('update_freq', 1, 'Update frequency')
 flags.DEFINE_integer('freq_summary', 10, 'Summary frequency')
 flags.DEFINE_integer('test_freq', 10, 'Test frequency')
@@ -294,134 +294,121 @@ def main(unused_argv):
     #================================================================
     # Algorithms 
     #================================================================
+
+
+
+
+    if FLAGS.algo_group == 'kern': # for tuning KernLCB
+        algos = [
+            UniformSampling(lin_hparams),
+            KernLCB(lin_hparams), 
+        ]
+
+        algo_prefix = 'kern-gridsearch_beta={}_rbf-sigma={}_maxnum={}'.format(
+            hparams.beta, lin_hparams.rbf_sigma, lin_hparams.max_num_sample
+        )
+
+    if FLAGS.algo_group == 'neurallinlcb': # Tune NeuralLinLCB seperately  
+        algos = [
+            UniformSampling(lin_hparams),
+            ApproxNeuralLinLCBJointModel(hparams)
+        ]
+
+        algo_prefix = 'neurallinlcb-gridsearch_m={}_layern={}_beta={}_lambda0={}'.format(
+            min(hparams.layer_sizes), hparams.layer_n, hparams.beta, hparams.lambd0
+        )
+
+
+    # Create a dictionary to map algo_group names to their respective classes
+    # ALGO_MAP = {
+    #     'ExactNeuraLCBV2_cp': ExactNeuraLCBV2_cp,
+    #     'NeuralGreedyV2_cp': NeuralGreedyV2_cp,
+    #     'ApproxNeuraLCB_cp': ApproxNeuraLCB_cp,
+    #     'NeuraLCB_cp': NeuraLCB_cp,
+    #     'ApproxNeuralLinLCBV2_cp': ApproxNeuralLinLCBV2_cp,
+    #     'ExactNeuralLinLCBV2_cp': ExactNeuralLinLCBV2_cp,
+    #     'ApproxNeuralLinLCBJointModel_cp': ApproxNeuralLinLCBJointModel_cp
+    # }
+
+
+    ALGO_MAP_cp = {
+        'NeuralGreedyV2_cp': NeuralGreedyV2_cp,
+        'ApproxNeuralLinLCBV2_cp': ApproxNeuralLinLCBV2_cp,
+        'ApproxNeuralLinLCBJointModel_cp': ApproxNeuralLinLCBJointModel_cp,
+        'ApproxNeuraLCB_cp': ApproxNeuraLCB_cp, # finished already
+        'ExactNeuraLCBV2_cp': ExactNeuraLCBV2_cp, # run if we have time
+        'ExactNeuralLinLCBV2_cp': ExactNeuralLinLCBV2_cp,  # run if we have time
+        'ApproxNeuraLCBV2': ApproxNeuraLCBV2
+    }
+
+    ALGO_MAP = {
+        'NeuralGreedyV2': NeuralGreedyV2,
+        'ApproxNeuralLinLCBV2': ApproxNeuralLinLCBV2,
+        'ApproxNeuralLinLCBJointModel': ApproxNeuralLinLCBJointModel,
+        'ExactNeuraLCBV2': ExactNeuraLCBV2, # run if we have time
+        'ExactNeuralLinLCBV2': ExactNeuralLinLCBV2,  # run if we have time
+        'ApproxNeuraLCBV2': ApproxNeuraLCBV2
+        
+    }
+
+    if FLAGS.algo_group in ALGO_MAP_cp:
+        # raise ValueError(f"Unknown algo_group: {FLAGS.algo_group}")
+        print(f'@@@@@@@@@~~~~~~~~~~~~~~~ Algorithm Testing ==== {FLAGS.algo_group}~~~~~~~~~~~~~~~@@@@@@@@@')
+    
+        # Get the algorithm class
+        algo_class = ALGO_MAP_cp[FLAGS.algo_group]
+
+        # Create the algorithm instance
+        algos = [
+            algo_class(hparams, res_dir=FLAGS.res_dir, B = FLAGS.B, update_freq=FLAGS.update_freq)
+        ]
+        # Create the prefix string using f-string
+        algo_prefix = (
+            f"{FLAGS.algo_group}-gridsearch_epochs={hparams.num_steps}_m={min(hparams.layer_sizes)}"
+            f"_layern={hparams.layer_n}_buffer={hparams.buffer_s}_bs={hparams.batch_size}"
+            f"_lr={hparams.lr}_beta={hparams.beta}_lambda={hparams.lambd}_lambda0={hparams.lambd0}"
+            f"_B={hparams.B}"
+        )
+        nohup_output = res_dir+f'/trainwin_{FLAGS.num_train_sepsis_pat_win}test_win_{FLAGS.num_test_pat_septic_win}_{FLAGS.algo_group}_B={FLAGS.B}_log.txt'
+    elif FLAGS.algo_group in ALGO_MAP:
+        print(f'@@@@@@@@@~~~~~~~~~~~~~~~ Algorithm Testing ==== {FLAGS.algo_group}~~~~~~~~~~~~~~~@@@@@@@@@')
+        # Get the algorithm class
+        algo_class = ALGO_MAP[FLAGS.algo_group]
+
+        # Create the algorithm instance
+        algos = [
+            algo_class(hparams, update_freq=FLAGS.update_freq)
+        ]
+        # Create the prefix string using f-string
+        algo_prefix = (
+            f"{FLAGS.algo_group}-gridsearch_epochs={hparams.num_steps}_m={min(hparams.layer_sizes)}"
+            f"_layern={hparams.layer_n}_buffer={hparams.buffer_s}_bs={hparams.batch_size}"
+            f"_lr={hparams.lr}_beta={hparams.beta}_lambda={hparams.lambd}_lambda0={hparams.lambd0}"
+        )
+        nohup_output = res_dir+f'/trainwin_{FLAGS.num_train_sepsis_pat_win}test_win_{FLAGS.num_test_pat_septic_win}_{FLAGS.algo_group}log.txt'
+    
+    else:
+        raise ValueError(f"Unknown algo_group: {FLAGS.algo_group}")
+    
+    file_name = os.path.join(res_dir, algo_prefix) + '.npz' 
+    
+
     original_stdout = sys.stdout
     print(f'$$$$$########## $$$$$########## algorithm: {FLAGS.algo_group}$$$$$##########$$$$$##########')
-    with open(res_dir+f'/trainwin_{FLAGS.num_train_sepsis_pat_win}test_win_{FLAGS.num_test_pat_septic_win}_{FLAGS.algo_group}_log.txt', 'w') as f:
+    with open(nohup_output, 'w') as f:
         sys.stdout = f 
     # if res_dir:
-
- 
-
-        if FLAGS.algo_group == 'kern': # for tuning KernLCB
-            algos = [
-                UniformSampling(lin_hparams),
-                KernLCB(lin_hparams), 
-            ]
-
-            algo_prefix = 'kern-gridsearch_beta={}_rbf-sigma={}_maxnum={}'.format(
-                hparams.beta, lin_hparams.rbf_sigma, lin_hparams.max_num_sample
-            )
-
-        if FLAGS.algo_group == 'neurallinlcb': # Tune NeuralLinLCB seperately  
-            algos = [
-                UniformSampling(lin_hparams),
-                ApproxNeuralLinLCBJointModel(hparams)
-            ]
-
-            algo_prefix = 'neurallinlcb-gridsearch_m={}_layern={}_beta={}_lambda0={}'.format(
-                min(hparams.layer_sizes), hparams.layer_n, hparams.beta, hparams.lambd0
-            )
-
-
-        # Create a dictionary to map algo_group names to their respective classes
-        # ALGO_MAP = {
-        #     'ExactNeuraLCBV2_cp': ExactNeuraLCBV2_cp,
-        #     'NeuralGreedyV2_cp': NeuralGreedyV2_cp,
-        #     'ApproxNeuraLCB_cp': ApproxNeuraLCB_cp,
-        #     'NeuraLCB_cp': NeuraLCB_cp,
-        #     'ApproxNeuralLinLCBV2_cp': ApproxNeuralLinLCBV2_cp,
-        #     'ExactNeuralLinLCBV2_cp': ExactNeuralLinLCBV2_cp,
-        #     'ApproxNeuralLinLCBJointModel_cp': ApproxNeuralLinLCBJointModel_cp
-        # }
-
-
-        ALGO_MAP_cp = {
-            'NeuralGreedyV2_cp': NeuralGreedyV2_cp,
-            'ApproxNeuralLinLCBV2_cp': ApproxNeuralLinLCBV2_cp,
-            'ApproxNeuralLinLCBJointModel_cp': ApproxNeuralLinLCBJointModel_cp,
-            'ApproxNeuraLCB_cp': ApproxNeuraLCB_cp, # finished already
-            'ExactNeuraLCBV2_cp': ExactNeuraLCBV2_cp, # run if we have time
-	        'ExactNeuralLinLCBV2_cp': ExactNeuralLinLCBV2_cp,  # run if we have time
-            'ApproxNeuraLCBV2': ApproxNeuraLCBV2
-        }
-
-        ALGO_MAP = {
-            'NeuralGreedyV2': NeuralGreedyV2,
-            'ApproxNeuralLinLCBV2': ApproxNeuralLinLCBV2,
-            'ApproxNeuralLinLCBJointModel': ApproxNeuralLinLCBJointModel,
-            'ExactNeuraLCBV2': ExactNeuraLCBV2, # run if we have time
-	        'ExactNeuralLinLCBV2': ExactNeuralLinLCBV2,  # run if we have time
-            'ApproxNeuraLCBV2': ApproxNeuraLCBV2
-           
-        }
-
-        if FLAGS.algo_group in ALGO_MAP_cp:
-            # raise ValueError(f"Unknown algo_group: {FLAGS.algo_group}")
-            print(f'@@@@@@@@@~~~~~~~~~~~~~~~ Algorithm Testing ==== {FLAGS.algo_group}~~~~~~~~~~~~~~~@@@@@@@@@')
-        
-            # Get the algorithm class
-            algo_class = ALGO_MAP_cp[FLAGS.algo_group]
-
-            # Create the algorithm instance
-            algos = [
-                algo_class(hparams, res_dir=FLAGS.res_dir, B = FLAGS.B, update_freq=FLAGS.update_freq)
-            ]
-            # Create the prefix string using f-string
-            algo_prefix = (
-                f"{FLAGS.algo_group}-gridsearch_epochs={hparams.num_steps}_m={min(hparams.layer_sizes)}"
-                f"_layern={hparams.layer_n}_buffer={hparams.buffer_s}_bs={hparams.batch_size}"
-                f"_lr={hparams.lr}_beta={hparams.beta}_lambda={hparams.lambd}_lambda0={hparams.lambd0}"
-                f"_B={hparams.B}"
-            )
-        elif FLAGS.algo_group in ALGO_MAP:
-            print(f'@@@@@@@@@~~~~~~~~~~~~~~~ Algorithm Testing ==== {FLAGS.algo_group}~~~~~~~~~~~~~~~@@@@@@@@@')
-            # Get the algorithm class
-            algo_class = ALGO_MAP[FLAGS.algo_group]
-
-            # Create the algorithm instance
-            algos = [
-                algo_class(hparams, update_freq=FLAGS.update_freq)
-            ]
-            # Create the prefix string using f-string
-            algo_prefix = (
-                f"{FLAGS.algo_group}-gridsearch_epochs={hparams.num_steps}_m={min(hparams.layer_sizes)}"
-                f"_layern={hparams.layer_n}_buffer={hparams.buffer_s}_bs={hparams.batch_size}"
-                f"_lr={hparams.lr}_beta={hparams.beta}_lambda={hparams.lambd}_lambda0={hparams.lambd0}"
-            )
-        
-        else:
-            raise ValueError(f"Unknown algo_group: {FLAGS.algo_group}")
-
-
-
-
-
         
         #==============================
         # Runner 
         #==============================
-        # file path for saving the results
-        file_name = os.path.join(res_dir, algo_prefix) + '.npz' 
-        # file_path = os.path.join(res_dir, algo_prefix)
-        
-        
-        # this is the core function that run all the experiments
-        
         start  =  time.time()
         # regrets, errs = contextual_bandit_runner(algos, data, FLAGS.num_sim, FLAGS.update_freq, FLAGS.test_freq, FLAGS.verbose, FLAGS.debug, FLAGS.normalize, file_name, res_dir)
         regrets, errs = contextual_bandit_runner_v2(algos, data, \
             FLAGS.num_sim, FLAGS.test_freq, FLAGS.verbose, FLAGS.debug, FLAGS.normalize, res_dir,algo_prefix,file_name,sim, FLAGS.B)
-
         np.savez(file_name, regrets=regrets, errs=errs)
-
         print(f'total time for contextual bandit runner: {time.time()-start} seconds')
-
-
-
-
     sys.stdout = original_stdout
-
-
 # thissetup is only executed only if the script is run directly from the command line, not when imported as a module in another python project scrpit.
 # app() ensures that all the command-line arguments are parsed
 if __name__ == '__main__': 
