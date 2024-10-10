@@ -27,6 +27,7 @@ from algorithms.neural_lin_lcb import ExactNeuralLinLCBV2, ExactNeuralLinGreedyV
     ApproxNeuralLinLCBJointModel, NeuralLinGreedyJointModel
 
 from algorithms.neural_lin_lcb_cp import ApproxNeuralLinLCBV2_cp,ExactNeuralLinLCBV2_cp
+# from algorithms.neural_lin_lcb import ApproxNeuralLinLCBJointModel, ApproxNeuralLinLCBV2, ApproxNeuralLinGreedyV2
 # data class is defined in this script!!
 from data.realworld_data import *
 from data.sepsisdataclass import *
@@ -126,11 +127,6 @@ flags.DEFINE_float('subset_r', 0.5, 'The ratio of the action spaces to be select
 # # win_size= 8 
 # print(f'num_train_sepsis_pat_win === {num_train_sepsis_pat_win}')
 # print(f'num_test_pat_septic_win === {num_test_pat_septic_win}')
-
-
-
-
-
 
 # is_window = True
 # # this might only corresponding to a few hundreds patients

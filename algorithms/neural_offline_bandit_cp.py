@@ -50,7 +50,7 @@ class ApproxNeuraLCB_cp(BanditAlgorithm):
         self.update_freq = update_freq
         # learning rate 1e-3
         opt = optax.adam(hparams.lr)
-        self.nn = NeuralBanditModelV2(opt, hparams, '{}-nn2'.format(name))
+        self.nn = NeuralBanditModelV2(opt, hparams, '{}_nn2'.format(name))
       
         # data buffer for incoming data, update each round when we have a new (c,a, r)
         self.data = BanditDataset(hparams.context_dim, hparams.num_actions, hparams.buffer_s, '{}-data'.format(name))

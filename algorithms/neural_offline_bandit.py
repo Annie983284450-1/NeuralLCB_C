@@ -23,13 +23,14 @@ from cp_funs.PI import prediction_interval
 
 class ExactNeuraLCBV2(BanditAlgorithm):
     """NeuraLCB using exact confidence matrix and NeuralBanditModelV2. """
-    def __init__(self, hparams, update_freq=1, name='ExactNeuraLCBV2'):
+    def __init__(self, hparams, res_dir, update_freq=1, name='ExactNeuraLCBV2'):
         self.name = name 
         self.hparams = hparams 
         self.update_freq = update_freq
         opt = optax.adam(hparams.lr)
         # opt = optax.adam(self.hparams.lr)
-        self.nn = NeuralBanditModelV2(opt, hparams, '{}-nn2'.format(name))
+        self.nn = NeuralBanditModelV2(opt, hparams, '{}_nn2'.format(name))
+        self.res_dir=res_dir
        
       
         self.data = BanditDataset(hparams.context_dim, hparams.num_actions, hparams.buffer_s, '{}-data'.format(name))
@@ -172,7 +173,7 @@ class ApproxNeuraLCBV2(BanditAlgorithm):
         # based on the gradients computed during training
         opt = optax.adam(hparams.lr)
  
-        self.nn = NeuralBanditModelV2(opt, hparams, '{}-nn2'.format(name))
+        self.nn = NeuralBanditModelV2(opt, hparams, '{}_nn2'.format(name))
         """BanditDataset(): sDefine a data buffer for contextual bandit algorithms. """
 
         self.data = BanditDataset(hparams.context_dim, hparams.num_actions, hparams.buffer_s, '{}-data'.format(name))
@@ -335,13 +336,14 @@ class ApproxNeuraLCBV2(BanditAlgorithm):
 
 
 class NeuralGreedyV2(BanditAlgorithm):
-    def __init__(self, hparams, update_freq=1, name='NeuralGreedyV2'):
+    def __init__(self, hparams, res_dir, update_freq=1, name='NeuralGreedyV2'):
         self.name = name 
         self.hparams = hparams 
         self.update_freq = update_freq 
         opt = optax.adam(hparams.lr)
-        self.nn = NeuralBanditModelV2(opt, hparams, '{}-nn2'.format(name))
+        self.nn = NeuralBanditModelV2(opt, hparams, '{}_nn2'.format(name))
         self.data = BanditDataset(hparams.context_dim, hparams.num_actions, hparams.buffer_s, '{}-data'.format(name))
+        self.res_dir = res_dir
 
     def reset(self, seed): 
         self.nn.reset(seed) 
@@ -373,7 +375,9 @@ class NeuralGreedyV2(BanditAlgorithm):
         self.nn.train(self.data, self.hparams.num_steps)
 
     def monitor(self, contexts=None, actions=None, rewards=None):
-        norm = jnp.hstack(( jnp.ravel(param) for param in jax.tree_leaves(self.nn.params)))
+        # norm = jnp.hstack(( jnp.ravel(param) for param in jax.tree_leaves(self.nn.params)))
+        norm = jnp.hstack([jnp.ravel(param) if param.shape != (1,) else param.reshape(1,) for param in jax.tree_leaves(self.nn.params)])
+
 
         convoluted_contexts = self.nn.action_convolution(contexts, actions)
 
