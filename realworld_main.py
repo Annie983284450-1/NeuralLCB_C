@@ -100,7 +100,7 @@ flags.DEFINE_string('policy', 'eps-greedy', 'Offline policy, eps-greedy/subset')
 flags.DEFINE_integer('num_train_sepsis_pat_win', 10 , 'Number of septic windows for training.') 
 flags.DEFINE_integer('num_test_pat_septic_win', 1, 'Number of septic windows for testing.') 
 flags.DEFINE_integer('win_size', 8, 'Window size used for training and testing.')
-flags.DEFINE_integer('B', 0, 'number of bootstraps')
+flags.DEFINE_integer('B', 10, 'number of bootstraps')
 flags.DEFINE_integer('update_freq', 1, 'Update frequency')
 flags.DEFINE_integer('freq_summary', 10, 'Summary frequency')
 flags.DEFINE_integer('test_freq', 10, 'Test frequency')
@@ -385,7 +385,7 @@ def main(unused_argv):
             f"_layern={hparams.layer_n}_buffer={hparams.buffer_s}_bs={hparams.batch_size}"
             f"_lr={hparams.lr}_beta={hparams.beta}_lambda={hparams.lambd}_lambda0={hparams.lambd0}"
         )
-        nohup_output = res_dir+f'/trainwin_{FLAGS.num_train_sepsis_pat_win}test_win_{FLAGS.num_test_pat_septic_win}_{FLAGS.algo_group}log.txt'
+        nohup_output = res_dir+f'/trainwin_{FLAGS.num_train_sepsis_pat_win}test_win_{FLAGS.num_test_pat_septic_win}_{FLAGS.algo_group}_B={hparams.B}log.txt'
     
     else:
         raise ValueError(f"Unknown algo_group: {FLAGS.algo_group}")

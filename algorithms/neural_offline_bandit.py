@@ -102,11 +102,14 @@ class ExactNeuraLCBV2(BanditAlgorithm):
         # u = self.nn.grad_out(self.nn.params, convoluted_contexts) / jnp.sqrt(self.nn.m)  # (num_samples, p)
         u = self.nn.grad_out(self.nn.params, contexts, actions) / jnp.sqrt(self.nn.m)
         for i in range(contexts.shape[0]):
-            jax.ops.index_update(self.Lambda_inv, actions[i], \
-                inv_sherman_morrison_single_sample(u[i,:], self.Lambda_inv[actions[i],:,:]))
+            # jax.ops.index_update(self.Lambda_inv, actions[i], \
+            #     inv_sherman_morrison_single_sample(u[i,:], self.Lambda_inv[actions[i],:,:]))
+            self.Lambda_inv = self.Lambda_inv.at[actions[i]].set(inv_sherman_morrison_single_sample(u[i, :], self.Lambda_inv[actions[i], :, :]))
+
 
     def monitor(self, contexts=None, actions=None, rewards=None):
-        norm = jnp.hstack(( jnp.ravel(param) for param in jax.tree_leaves(self.nn.params)))
+        # norm = jnp.hstack(( jnp.ravel(param) for param in jax.tree_leaves(self.nn.params)))
+        norm = jnp.hstack([jnp.ravel(param) if param.shape != (1,) else param.reshape(1,) for param in jax.tree_leaves(self.nn.params)])
 
         preds = self.nn.out(self.nn.params, contexts, actions) # (num_samples,)
 

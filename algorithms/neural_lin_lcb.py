@@ -127,7 +127,8 @@ class ApproxNeuralLinLCBV2(BanditAlgorithm):
             # jax.ops.index_add(self.y_hat, actions[i], rewards[i] * u[i,:])
 
     def monitor(self, contexts=None, actions=None, rewards=None):
-        norm = jnp.hstack(( jnp.ravel(param) for param in jax.tree_leaves(self.nn.params)))
+        # norm = jnp.hstack(( jnp.ravel(param) for param in jax.tree_leaves(self.nn.params)))
+        norm = jnp.hstack([jnp.ravel(param) if param.shape != (1,) else param.reshape(1,) for param in jax.tree_leaves(self.nn.params)])
 
         preds = []
         cnfs = []

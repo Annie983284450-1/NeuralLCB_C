@@ -49,9 +49,10 @@ def contextual_bandit_runner_v2(algos, data, \
         with open(regret_csv, 'w') as f:
             pass  # Just opening in 'w' mode truncates the file
         for j,algo in enumerate(algos): 
+            if 'cp' in algo.name.split('_'): # create the conformal prediction result csv file
                     # Open in write mode to truncate the file
-            with open(res_dir+f'/final_all_cpresults_avg_{algo.name}_B={B}.csv', 'w') as f:
-                    pass  # Just opening in 'w' mode truncates the file      
+                with open(res_dir+f'/final_all_cpresults_avg_{algo.name}_B={B}.csv', 'w') as f:
+                        pass  # Just opening in 'w' mode truncates the file      
         print('Simulation: {}/{}'.format(sim + 1, num_sim))
         cmab = OfflineContextualBandit(*data.reset_data(sim))
         for algo in algos:
@@ -101,7 +102,7 @@ def contextual_bandit_runner_v2(algos, data, \
                                        'ApproxNeuralLinLCBV2_cp','ExactNeuralLinLCBV2_cp', 'ApproxNeuralLinLCBJointModel_cp']
                         # predicted actions using NeuraLCB and conformal predicsion
                         # if algo.name == 'ApproxNeuraLCB_cp':
-                        nocp_experts = ['ApproxNeuraLCBV2', 'ExactNeuraLCBV2', 'NeuralGreedyV2','ApproxNeuralLinLCBJointModel' ]
+                        nocp_experts = ['ApproxNeuraLCBV2', 'ExactNeuraLCBV2', 'NeuralGreedyV2','ApproxNeuralLinLCBJointModel','ApproxNeuralLinLCBV2']
                         if algo.name in cp_experts:
                             # print(f'test_contexts.shape == {cmab.test_contexts.shape}')
                             test_actions = algo.sample_action(cmab.test_contexts, opt_vals, opt_actions) 
