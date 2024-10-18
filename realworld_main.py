@@ -17,7 +17,7 @@ from core.contextual_bandit import contextual_bandit_runner, contextual_bandit_r
 
 from algorithms.neural_offline_bandit_cp import ApproxNeuraLCB_cp 
 from algorithms.comparison_bandit_cp import ExactNeuraLCBV2_cp, NeuralGreedyV2_cp, NeuraLCB_cp
-from algorithms.neural_lin_lcb_cp import ApproxNeuralLinLCBV2_cp, ApproxNeuralLinLCBJointModel_cp
+from algorithms.neural_lin_lcb_cp import ApproxNeuralLinLCBV2_cp, ApproxNeuralLinLCBJointModel_cp,ExactNeuralLinLCBV2_cp
  
 from algorithms.neural_offline_bandit import ExactNeuraLCBV2, NeuralGreedyV2, ApproxNeuraLCBV2
 from algorithms.lin_lcb import LinLCB 
@@ -26,7 +26,7 @@ from algorithms.uniform_sampling import UniformSampling
 from algorithms.neural_lin_lcb import ExactNeuralLinLCBV2, ExactNeuralLinGreedyV2, ApproxNeuralLinLCBV2, ApproxNeuralLinGreedyV2, \
     ApproxNeuralLinLCBJointModel, NeuralLinGreedyJointModel
 
-from algorithms.neural_lin_lcb_cp import ApproxNeuralLinLCBV2_cp,ExactNeuralLinLCBV2_cp
+# from algorithms.neural_lin_lcb_cp import ApproxNeuralLinLCBV2_cp,ExactNeuralLinLCBV2_cp
 # from algorithms.neural_lin_lcb import ApproxNeuralLinLCBJointModel, ApproxNeuralLinLCBV2, ApproxNeuralLinGreedyV2
 # data class is defined in this script!!
 from data.realworld_data import *
@@ -337,8 +337,7 @@ def main(unused_argv):
         'ApproxNeuralLinLCBJointModel_cp': ApproxNeuralLinLCBJointModel_cp,
         'ApproxNeuraLCB_cp': ApproxNeuraLCB_cp, # finished already
         'ExactNeuraLCBV2_cp': ExactNeuraLCBV2_cp, # run if we have time
-        'ExactNeuralLinLCBV2_cp': ExactNeuralLinLCBV2_cp,  # run if we have time
-        'ApproxNeuraLCBV2': ApproxNeuraLCBV2
+        'ExactNeuralLinLCBV2_cp': ExactNeuralLinLCBV2_cp  # run if we have time   
     }
 
     ALGO_MAP = {
@@ -348,7 +347,6 @@ def main(unused_argv):
         'ExactNeuraLCBV2': ExactNeuraLCBV2, # run if we have time
         'ExactNeuralLinLCBV2': ExactNeuralLinLCBV2,  # run if we have time
         'ApproxNeuraLCBV2': ApproxNeuraLCBV2
-        
     }
 
     if FLAGS.algo_group in ALGO_MAP_cp:
