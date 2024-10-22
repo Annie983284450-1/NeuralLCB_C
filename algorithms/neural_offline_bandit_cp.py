@@ -42,6 +42,10 @@ from core.bandit_dataset import BanditDataset
 # ======================================================================
 # ========================================================================
 # the ApproxNeuraLCB with conformal prediction
+
+
+
+
 class ApproxNeuraLCB_cp(BanditAlgorithm):
 
     def __init__(self, hparams, res_dir, B, update_freq=1, name='ApproxNeuraLCB_cp'):
@@ -51,8 +55,6 @@ class ApproxNeuraLCB_cp(BanditAlgorithm):
         # learning rate 1e-3
         opt = optax.adam(hparams.lr)
         self.nn = NeuralBanditModelV2(opt, hparams, '{}_nn2'.format(name))
-      
-        # data buffer for incoming data, update each round when we have a new (c,a, r)
         self.data = BanditDataset(hparams.context_dim, hparams.num_actions, hparams.buffer_s, '{}-data'.format(name))
         self.diag_Lambda = [jnp.ones(self.nn.num_params) * hparams.lambd0 for _ in range(hparams.num_actions)]
         self.prediction_interval_model = None
@@ -67,8 +69,6 @@ class ApproxNeuraLCB_cp(BanditAlgorithm):
         # print(f'self.data.rewards.shape:{self.data.rewards}')
         # self.prediction_interval_model = None
     # line 5 in NeuraLCB Bmode
-    # here is where conformal prediction and NeuraLCB integrated together
-
     def sample_action(self, test_contexts, opt_vals, opt_actions):
         # flags.DEFINE_integer('chunk_size', 500, 'Chunk size')
         # flags.DEFINE_integer('batch_size', 32, 'Batch size')

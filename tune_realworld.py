@@ -57,36 +57,66 @@ elif hyper_mode == 'best':
     rbfsigma_space = [10] #10 for mnist, 0.1 for mushroom
  #
 
-def create_commands(data_type='mushroom', algo_group='approx-neural', num_sim=3, policy='eps-greedy'):
+# def create_commands(data_type='mushroom', algo_group='approx-neural', num_sim=3, policy='eps-greedy'):
+#     commands = []
+#     if algo_group == 'approx-neural':
+#         for lr in lr_space:
+#             for batch_size,num_steps,buffer_s in train_mode_space:
+#                 for beta in beta_space:
+#                     commands.append('python realworld_main.py --data_type {} --algo_group {} --num_sim {} --batch_size {} --num_steps {} --buffer_s {} --beta {} --lr {} --policy {}'.format(data_type,algo_group,num_sim,batch_size,num_steps,buffer_s,beta,lr,policy))
+
+#     elif algo_group == 'neurallinlcb':
+#         for beta in beta_space:
+#             commands.append('python realworld_main.py --data_type {} --algo_group {} --num_sim {}  --beta {} --policy {}'.format(data_type,algo_group,num_sim,beta,policy))
+
+    
+#     elif algo_group == 'neural-greedy':
+#         for lr in lr_space:
+#             for batch_size,num_steps,buffer_s in train_mode_space:
+#                 commands.append('python realworld_main.py --data_type {} --algo_group {} --num_sim {} --batch_size {} --num_steps {} --buffer_s {} --lr {} --policy {}'.format(data_type,algo_group,num_sim,batch_size,num_steps,buffer_s,lr,policy))
+
+#     elif algo_group == 'kern':
+#         for rbf_sigma in rbfsigma_space:
+#             commands.append('python realworld_main.py --data_type {} --algo_group {} --num_sim {} --rbf_sigma {} --policy {}'.format(data_type,algo_group,num_sim,rbf_sigma,policy))
+
+#     elif algo_group == 'baseline': # no tuning 
+#         commands.append('python realworld_main.py --data_type {} --algo_group {} --num_sim {} --policy {}'.format(data_type,algo_group,num_sim,policy))
+
+#     else:
+#         raise NotImplementedError
+
+#     return commands
+def create_commands(data_type='sepsis', algo_group='ApproxNeuraLCB_cp', num_sim=3, policy='eps-greedy'):
     commands = []
-    if algo_group == 'approx-neural':
+    if algo_group == 'ApproxNeuraLCB_cp':
         for lr in lr_space:
             for batch_size,num_steps,buffer_s in train_mode_space:
                 for beta in beta_space:
                     commands.append('python realworld_main.py --data_type {} --algo_group {} --num_sim {} --batch_size {} --num_steps {} --buffer_s {} --beta {} --lr {} --policy {}'.format(data_type,algo_group,num_sim,batch_size,num_steps,buffer_s,beta,lr,policy))
+                    # commands.append('python realworld_main.py --data_type {} --algo_group {} --num_sim {}  --beta {} --policy {}'.format(data_type,algo_group,num_sim,beta,policy))
+                    # commands.append('python realworld_main.py --data_type {} --algo_group {} --num_sim {} --batch_size {} --num_steps {} --buffer_s {} --lr {} --policy {}'.format(data_type,algo_group,num_sim,batch_size,num_steps,buffer_s,lr,policy))
 
-    elif algo_group == 'neurallinlcb':
+    elif algo_group == 'ApproxNeuralLinLCBV2_cp' or 'ApproxNeuralLinLCBJointModel_cp':
         for beta in beta_space:
             commands.append('python realworld_main.py --data_type {} --algo_group {} --num_sim {}  --beta {} --policy {}'.format(data_type,algo_group,num_sim,beta,policy))
 
     
-    elif algo_group == 'neural-greedy':
+    elif algo_group == 'NeuralGreedyV2_cp':
         for lr in lr_space:
             for batch_size,num_steps,buffer_s in train_mode_space:
                 commands.append('python realworld_main.py --data_type {} --algo_group {} --num_sim {} --batch_size {} --num_steps {} --buffer_s {} --lr {} --policy {}'.format(data_type,algo_group,num_sim,batch_size,num_steps,buffer_s,lr,policy))
 
-    elif algo_group == 'kern':
-        for rbf_sigma in rbfsigma_space:
-            commands.append('python realworld_main.py --data_type {} --algo_group {} --num_sim {} --rbf_sigma {} --policy {}'.format(data_type,algo_group,num_sim,rbf_sigma,policy))
+    # elif algo_group == 'kern':
+    #     for rbf_sigma in rbfsigma_space:
+    #         commands.append('python realworld_main.py --data_type {} --algo_group {} --num_sim {} --rbf_sigma {} --policy {}'.format(data_type,algo_group,num_sim,rbf_sigma,policy))
 
-    elif algo_group == 'baseline': # no tuning 
-        commands.append('python realworld_main.py --data_type {} --algo_group {} --num_sim {} --policy {}'.format(data_type,algo_group,num_sim,policy))
+    # elif algo_group == 'baseline': # no tuning 
+    #     commands.append('python realworld_main.py --data_type {} --algo_group {} --num_sim {} --policy {}'.format(data_type,algo_group,num_sim,policy))
 
     else:
         raise NotImplementedError
 
     return commands
-
 
 def run_exps():
     commands = []
