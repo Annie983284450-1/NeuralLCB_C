@@ -93,7 +93,7 @@ def create_commands(data_type='sepsis', algo_group='ApproxNeuraLCB_cp', num_sim=
         # Grid search space: used for grid search in the paper
         lr_space = [1e-4,1e-3]
         train_mode_space = [(1,1,1),(50,100,-1)]
-        beta_space = [0.01, 0.05, 5,10] #[0.01, 0.05, 1,5,10]
+        beta_space = [0.01, 0.05, 1, 5,10] #[0.01, 0.05, 1,5,10]
         rbfsigma_space = [1] #[0.1, 1,10]
     elif hyper_mode == 'best':
         # The best searc sapce inferred fro prior experiments 

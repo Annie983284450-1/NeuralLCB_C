@@ -189,21 +189,12 @@ class SepsisData(object):
             test_noseptic_wins =  test_noseptic_wins[0:self.num_test_pat_noseptic_win]
             test_wins = []
             train_wins = []
-            # print(f'sepsis_train_wins  = {sepsis_train_wins }')
-            # print(f'nosepsis_train_wins = {nosepsis_train_wins }')
-            # print(f'test_septic_wins  = {test_septic_wins }')
-            # print(f'test_noseptic_wins = {test_noseptic_wins }')
-            # print(f'sepsis_train_wins.type = {sepsis_train_wins.type}')
-            # print(f'nosepsis_train_wins.type = {nosepsis_train_wins.type}')
-            # print(f'test_septic_wins.type = {test_septic_wins.type}')
-            # print(f'test_noseptic_wins.type = {test_noseptic_wins.type}')
+    
             train_wins = sepsis_train_wins + nosepsis_train_wins
             test_wins = test_septic_wins + test_noseptic_wins
             train_df = df[df['pat_id'].isin(train_wins)]
             test_df = df[df['pat_id'].isin(test_wins)]
-            # train_df = train_df[:min(num_contexts, len(train_df))].reset_index(drop=True)
-            # test_df = test_df[:min(num_test_contexts, len(test_df))].reset_index(drop=True)
-
+   
 
         else:    
             file_name = './data/SepsisData/fully_imputed.csv'
