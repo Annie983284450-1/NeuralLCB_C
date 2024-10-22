@@ -9,7 +9,9 @@ import numpy as np
 parser = argparse.ArgumentParser()
 
  
-parser.add_argument('--task', type=str, default='run_exps', choices=['run_exps','collect_results'])
+# parser.add_argument('--task', type=str, default='run_exps', choices=['run_exps','collect_results'])
+parser.add_argument('--task', type=str, default='run_exps', choices=['run_exps'])
+
 parser.add_argument('--data_types', nargs='+', type=str, default=['sepsis'])
 parser.add_argument('--algo_groups', nargs='+', type=str, default=['ApproxNeuraLCB_cp'])
 parser.add_argument('--policies', nargs='+', type=str, default=['eps-greedy'])
@@ -141,20 +143,20 @@ def run_exps():
     random.shuffle(commands)
     multi_gpu_launcher(commands, args.gpus, args.models_per_gpu)
 
-def collect_results():
-    filenames = glob.glob(os.path.join(args.result_dir,"*.npz"))
-    results = {}
-    for filename in filenames:
-        k = np.load(filename)
-        regret = k['arr_0'][:,1,:]
-        regret = np.min(regret,1) # best regret of a run
-        regret = np.mean(regret)
-        results[filename] = regret
+# def collect_results():
+#     filenames = glob.glob(os.path.join(args.result_dir,"*.npz"))
+#     results = {}
+#     for filename in filenames:
+#         k = np.load(filename)
+#         regret = k['arr_0'][:,1,:]
+#         regret = np.min(regret,1) # best regret of a run
+#         regret = np.mean(regret)
+#         results[filename] = regret
     
-    filenames.sort(key=lambda x: results[x])
+#     filenames.sort(key=lambda x: results[x])
     
-    for filename in filenames:
-        print('{}:   {}'.format(filename,results[filename]))
+#     for filename in filenames:
+#         print('{}:   {}'.format(filename,results[filename]))
 
 if __name__ == '__main__':
     eval(args.task)()
