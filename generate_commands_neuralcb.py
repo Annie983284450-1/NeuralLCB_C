@@ -1,3 +1,4 @@
+
 import os
 import subprocess
 import time
@@ -8,12 +9,11 @@ import numpy as np
 
 parser = argparse.ArgumentParser()
 
- 
 parser.add_argument('--task', type=str, default='run_exps', choices=['run_exps','collect_results'])
-parser.add_argument('--data_types', nargs='+', type=str, default=['sepsis'])
-parser.add_argument('--algo_groups', nargs='+', type=str, default=['ApproxNeuraLCB_cp'])
+parser.add_argument('--data_types', nargs='+', type=str, default=['mushroom'])
+parser.add_argument('--algo_groups', nargs='+', type=str, default=['approx-neural'])
 parser.add_argument('--policies', nargs='+', type=str, default=['eps-greedy'])
-parser.add_argument('--num_sim', type=int, default=1)
+parser.add_argument('--num_sim', type=int, default=10)
 parser.add_argument('--models_per_gpu', type=int, default=3)
 parser.add_argument('--gpus', nargs='+', type=int, default=[0], help='gpus indices used for multi_gpu')
 
@@ -43,69 +43,27 @@ def multi_gpu_launcher(commands,gpus,models_per_gpu):
         if p is not None:
             p.wait()
 
-# hyper_mode = 'best' # ['full', 'best']
-# if hyper_mode == 'full':
-#     # Grid search space: used for grid search in the paper
-#     lr_space = [1e-4,1e-3]
-#     train_mode_space = [(1,1,1),(50,100,-1)]
-#     beta_space = [0.01, 0.05, 1,5,10]
-#     rbfsigma_space = [1] #[0.1, 1,10]
-# elif hyper_mode == 'best':
-#     # The best searc sapce inferred fro prior experiments 
-#     lr_space = [1e-4]
-#     train_mode_space = [(1,1,1)]
-#     beta_space = [1]
-#     rbfsigma_space = [10] #10 for mnist, 0.1 for mushroom
+hyper_mode = 'best' # ['full', 'best']
+if hyper_mode == 'full':
+    # Grid search space: used for grid search in the paper
+    lr_space = [1e-4,1e-3]
+    train_mode_space = [(1,1,1),(50,100,-1)]
+    beta_space = [0.01, 0.05, 1,5,10]
+    rbfsigma_space = [1] #[0.1, 1,10]
+elif hyper_mode == 'best':
+    # The best searc sapce inferred fro prior experiments 
+    lr_space = [1e-4]
+    train_mode_space = [(1,1,1)]
+    beta_space = [1]
+    rbfsigma_space = [10] #10 for mnist, 0.1 for mushroom
  
-# def create_commands(data_type='mushroom', algo_group='approx-neural', num_sim=3, policy='eps-greedy'):
-#     commands = []
-#     if algo_group == 'approx-neural':
-#         for lr in lr_space:
-#             for batch_size,num_steps,buffer_s in train_mode_space:
-#                 for beta in beta_space:
-#                     commands.append('python realworld_main.py --data_type {} --algo_group {} --num_sim {} --batch_size {} --num_steps {} --buffer_s {} --beta {} --lr {} --policy {}'.format(data_type,algo_group,num_sim,batch_size,num_steps,buffer_s,beta,lr,policy))
-
-#     elif algo_group == 'neurallinlcb':
-#         for beta in beta_space:
-#             commands.append('python realworld_main.py --data_type {} --algo_group {} --num_sim {}  --beta {} --policy {}'.format(data_type,algo_group,num_sim,beta,policy))
-
-    
-#     elif algo_group == 'neural-greedy':
-#         for lr in lr_space:
-#             for batch_size,num_steps,buffer_s in train_mode_space:
-#                 commands.append('python realworld_main.py --data_type {} --algo_group {} --num_sim {} --batch_size {} --num_steps {} --buffer_s {} --lr {} --policy {}'.format(data_type,algo_group,num_sim,batch_size,num_steps,buffer_s,lr,policy))
-
-#     elif algo_group == 'kern':
-#         for rbf_sigma in rbfsigma_space:
-#             commands.append('python realworld_main.py --data_type {} --algo_group {} --num_sim {} --rbf_sigma {} --policy {}'.format(data_type,algo_group,num_sim,rbf_sigma,policy))
-
-#     elif algo_group == 'baseline': # no tuning 
-#         commands.append('python realworld_main.py --data_type {} --algo_group {} --num_sim {} --policy {}'.format(data_type,algo_group,num_sim,policy))
-
-#     else:
-#         raise NotImplementedError
-
-#     return commands
 def create_commands(data_type='sepsis', algo_group='ApproxNeuraLCB_cp', num_sim=1, policy='eps-greedy'):
-    # hyper_mode = 'best' # ['full', 'best']
-    hyper_mode = 'full' # ['full', 'best']
-    if hyper_mode == 'full':
-        # Grid search space: used for grid search in the paper
-        lr_space = [1e-4,1e-3]
-        train_mode_space = [(1,1,1),(50,100,-1)]
-        beta_space = [0.01, 0.05, 5,10] #[0.01, 0.05, 1,5,10]
-        rbfsigma_space = [1] #[0.1, 1,10]
-    elif hyper_mode == 'best':
-        # The best searc sapce inferred fro prior experiments 
-        lr_space = [1e-4]
-        train_mode_space = [(1,1,1)]
-        beta_space = [1]
-        rbfsigma_space = [10] #10 for mnist, 0.1 for mushroom
     commands = []
     if algo_group == 'ApproxNeuraLCB_cp':
         for lr in lr_space:
             for batch_size,num_steps,buffer_s in train_mode_space:
                 for beta in beta_space:
+
                     commands.append('python realworld_main.py --data_type {} --algo_group {} --num_sim {} --batch_size {} --num_steps {} --buffer_s {} --beta {} --lr {} --policy {}'.format(data_type,algo_group,num_sim,batch_size,num_steps,buffer_s,beta,lr,policy))
                     # commands.append('python realworld_main.py --data_type {} --algo_group {} --num_sim {}  --beta {} --policy {}'.format(data_type,algo_group,num_sim,beta,policy))
                     # commands.append('python realworld_main.py --data_type {} --algo_group {} --num_sim {} --batch_size {} --num_steps {} --buffer_s {} --lr {} --policy {}'.format(data_type,algo_group,num_sim,batch_size,num_steps,buffer_s,lr,policy))
@@ -158,3 +116,16 @@ def collect_results():
 
 if __name__ == '__main__':
     eval(args.task)()
+
+    # with open(final_result_path+'/'+'_'.join(self.experts)+'/execution_info.txt', 'w') as file:
+    #     file.write(f'Total excution time: {(time.time() - start_time)} seconds\n')
+    #     file.write(f'num_test_sepsis_pat = {num_test_sepsis_pat}\n')
+    #     file.write(f'num_train_sepsis_pat = {num_train_sepsis_pat}\n')
+    #     file.write(f'num_train_nosepsis_pat = {num_train_nosepsis_pat}\n')
+    #     file.write(f'tot_trial = {tot_trial}\n')
+    #     file.write(f'refit_step = {refit_step}\n') 
+    #     file.write(f'No of experts = {self.k}\n')
+    #     file.write(f'Experts = {list(expert_dict.keys())}\n')
+    #     file.write(f'The models have been fitted for {num_fitting} times.\n')
+    #     file.write(f'Machine: {machine}\n')
+    #     file.write(f'Multiprocessing: True \n')

@@ -97,8 +97,8 @@ flags.DEFINE_string('policy', 'eps-greedy', 'Offline policy, eps-greedy/subset')
  
 
 
-flags.DEFINE_integer('num_train_sepsis_pat_win', 10 , 'Number of septic windows for training.') 
-flags.DEFINE_integer('num_test_pat_septic_win', 1, 'Number of septic windows for testing.') 
+flags.DEFINE_integer('num_train_sepsis_pat_win', 5 , 'Number of septic windows for training.') 
+flags.DEFINE_integer('num_test_pat_septic_win', 2, 'Number of septic windows for testing.') 
 flags.DEFINE_integer('win_size', 8, 'Window size used for training and testing.')
 flags.DEFINE_integer('B', 10, 'number of bootstraps')
 flags.DEFINE_integer('update_freq', 1, 'Update frequency')
