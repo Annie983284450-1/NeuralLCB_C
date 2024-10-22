@@ -5,13 +5,16 @@ import argparse
 import random
 import glob
 import numpy as np
+import platform
+ 
+
+
 
 parser = argparse.ArgumentParser()
 
  
 # parser.add_argument('--task', type=str, default='run_exps', choices=['run_exps','collect_results'])
 parser.add_argument('--task', type=str, default='run_exps', choices=['run_exps'])
-
 parser.add_argument('--data_types', nargs='+', type=str, default=['sepsis'])
 parser.add_argument('--algo_groups', nargs='+', type=str, default=['ApproxNeuraLCB_cp'])
 parser.add_argument('--policies', nargs='+', type=str, default=['eps-greedy'])
@@ -22,7 +25,92 @@ parser.add_argument('--gpus', nargs='+', type=int, default=[0], help='gpus indic
 parser.add_argument('--result_dir', type=str, default='results/stock_d=21_a=8_pi=eps-greedy0.1_std=0.1', help='result directory for collect_results()')
 args = parser.parse_args()
 
-def multi_gpu_launcher(commands,gpus,models_per_gpu):
+
+
+def multi_gpu_launcher(commands, gpus=None, models_per_gpu=1):
+    """
+    Launch commands on the local machine or server, using all GPUs in parallel.
+    Works on Windows (1 GPU), Linux, and macOS with multiple GPUs.
+    """
+    system_platform = platform.system()
+    
+    # Detect GPUs if not specified
+    if gpus is None:
+        if system_platform == "Windows" or system_platform == "Linux":
+            gpus = detect_gpus()
+        elif system_platform == "Darwin":
+            gpus = []  # macOS doesn't have CUDA by default
+
+    if not gpus:
+        raise RuntimeError("No GPUs detected or specified.")
+
+    procs = [None] * (len(gpus) * models_per_gpu)
+
+    while len(commands) > 0:
+        for i, proc in enumerate(procs):
+            gpu_idx = gpus[i % len(gpus)]
+            if (proc is None) or (proc.poll() is not None):
+                cmd = commands.pop(0)
+
+                if system_platform == "Linux" or system_platform == "Darwin":  # Linux/macOS
+                    env = os.environ.copy()
+                    env["CUDA_VISIBLE_DEVICES"] = str(gpu_idx)
+                    new_proc = subprocess.Popen(cmd, shell=True, env=env)
+                
+                elif system_platform == "Windows":
+                    # Windows specific case
+                    if len(gpus) == 1:
+                        # Only one GPU on Windows, run all tasks on it
+                        new_proc = subprocess.Popen(cmd, shell=True, creationflags=subprocess.CREATE_NEW_PROCESS_GROUP)
+                    else:
+                        if get_gpu_utilization(gpu_idx) < 50:
+                            new_proc = subprocess.Popen(cmd, shell=True, creationflags=subprocess.CREATE_NEW_PROCESS_GROUP)
+                        else:
+                            continue  # Skip if GPU is too busy
+
+                procs[i] = new_proc
+                break
+        time.sleep(1)
+
+    # Wait for the last few tasks to finish before returning
+    for p in procs:
+        if p is not None:
+            p.wait()
+
+
+def detect_gpus():
+    """
+    Detect available GPUs using nvidia-smi (if available).
+    """
+    try:
+        result = subprocess.run(
+            ["nvidia-smi", "--query-gpu=index", "--format=csv,noheader"],
+            stdout=subprocess.PIPE, text=True, check=True
+        )
+        gpu_indices = result.stdout.strip().split("\n")
+        return [int(idx) for idx in gpu_indices]
+    except Exception as e:
+        print(f"Error detecting GPUs: {e}")
+        return [0]  # Default to GPU 0 if detection fails or only one GPU present
+
+
+def get_gpu_utilization(gpu_idx):
+    """
+    Query the current GPU utilization using nvidia-smi.
+    """
+    try:
+        result = subprocess.run(
+            ["nvidia-smi", "--query-gpu=utilization.gpu", "--format=csv,nounits,noheader"],
+            stdout=subprocess.PIPE, text=True, check=True
+        )
+        utilization = result.stdout.splitlines()[gpu_idx]
+        return int(utilization.strip())
+    except Exception as e:
+        print(f"Error querying GPU {gpu_idx}: {e}")
+        return 100  # Assume full utilization if query fails
+
+
+def multi_gpu_launcher_linux_mac(commands,gpus,models_per_gpu):
     """
     Launch commands on the local machine, using all GPUs in parallel.
     """
@@ -45,6 +133,10 @@ def multi_gpu_launcher(commands,gpus,models_per_gpu):
         if p is not None:
             p.wait()
 
+
+ 
+
+ 
 # hyper_mode = 'best' # ['full', 'best']
 # if hyper_mode == 'full':
 #     # Grid search space: used for grid search in the paper
