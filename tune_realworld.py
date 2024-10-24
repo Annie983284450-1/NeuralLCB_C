@@ -138,6 +138,7 @@ def create_commands(data_type='sepsis', algo_group='ApproxNeuraLCB_cp', num_sim=
     # hyper_mode = 'best' # ['full', 'best']
     test = False
     hyper_mode = 'beta_tune' # ['full', 'best']
+    hyper_mode = 'beta_batchsize50_numstep100_buffers-1'
 
 
 
@@ -169,6 +170,13 @@ def create_commands(data_type='sepsis', algo_group='ApproxNeuraLCB_cp', num_sim=
     elif hyper_mode == 'beta_tune':
         lr_space = [1e-3]
         train_mode_space = [(1,1,1)]
+        # beta_space = [0.01, 0.05, 1, 5,10] #[0.01, 0.05, 1,5,10]
+        beta_space = [0.01, 0.05, 1, 5,10]
+        rbfsigma_space = [1] #[0.1, 1,10]
+        noise_std_space = [0.1]
+    elif hyper_mode == 'beta_batchsize50_numstep100_buffers-1':
+        lr_space = [1e-3]
+        train_mode_space = [(50,100,-1)]
         # beta_space = [0.01, 0.05, 1, 5,10] #[0.01, 0.05, 1,5,10]
         beta_space = [0.01, 0.05, 1, 5,10]
         rbfsigma_space = [1] #[0.1, 1,10]
