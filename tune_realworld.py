@@ -136,13 +136,28 @@ def multi_gpu_launcher_linux_mac(commands,gpus,models_per_gpu):
  
 def create_commands(data_type='sepsis', algo_group='ApproxNeuraLCB_cp', num_sim=1, policy='eps-greedy'):
     # hyper_mode = 'best' # ['full', 'best']
-    test = True
-    hyper_mode = 'full' # ['full', 'best']
+    test = False
+    hyper_mode = 'beta_tune' # ['full', 'best']
+
+
+
+    # flags.DEFINE_float('eps', 0.1, 'Probability of selecting a random action in eps-greedy')
+    # flags.DEFINE_float('subset_r', 0.5, 'The ratio of the action spaces to be selected in offline data')
+    # flags.DEFINE_float('noise_std', 0.01, 'Noise std')
+    # flags.DEFINE_float('rbf_sigma', 1, 'RBF sigma for KernLCB') # [0.1, 1, 10]
+    # # NeuraLCB 
+    # flags.DEFINE_float('beta', 0.1, 'confidence paramter') # [0.01, 0.05, 0.1, 0.5, 1, 5, 10] 
+    # flags.DEFINE_float('lr', 1e-3, 'learning rate') 
+    # flags.DEFINE_float('lambd0', 0.1, 'minimum eigenvalue') 
+    # flags.DEFINE_float('lambd', 1e-4, 'regularization parameter')
+
     if hyper_mode == 'full':
         # Grid search space: used for grid search in the paper
         lr_space = [1e-4,1e-3]
         train_mode_space = [(1,1,1),(50,100,-1)]
-        beta_space = [0.01, 0.05, 1, 5,10] #[0.01, 0.05, 1,5,10]
+        # beta_space = [0.01, 0.05, 1, 5,10] #[0.01, 0.05, 1,5,10]
+
+        beta_space = [0.01, 0.05, 1, 5,10]
         rbfsigma_space = [1] #[0.1, 1,10]
         noise_std_space = [0.05, 0.1]
     elif hyper_mode == 'best':
@@ -151,6 +166,13 @@ def create_commands(data_type='sepsis', algo_group='ApproxNeuraLCB_cp', num_sim=
         train_mode_space = [(1,1,1)]
         beta_space = [1]
         rbfsigma_space = [10] #10 for mnist, 0.1 for mushroom
+    elif hyper_mode == 'beta_tune':
+        lr_space = [1e-3]
+        train_mode_space = [(1,1,1)]
+        # beta_space = [0.01, 0.05, 1, 5,10] #[0.01, 0.05, 1,5,10]
+        beta_space = [0.01, 0.05, 1, 5,10]
+        rbfsigma_space = [1] #[0.1, 1,10]
+        noise_std_space = [0.1]
     commands = []
     if algo_group == 'ApproxNeuraLCB_cp':
         for lr in lr_space:
