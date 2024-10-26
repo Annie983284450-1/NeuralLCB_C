@@ -1,14 +1,21 @@
 import sys
 import os 
+ 
 
 if os.name == 'nt':
-    # windows
+    # Windows
     neruallcb_path = r'E:\phd thesis ideas\NeuralLCB_C'
 elif os.name == 'posix':
     if sys.platform == 'darwin':
-        # neruallcb_path = r'C:\Users\98328\Desktop\phd thesis ideas\offline_neural_bandits-main'
         # macOS
         neruallcb_path = '/Users/anniezhou/Desktop/NeuralLCB_C'
+    elif 'el9' in os.uname().release:
+        # Red Hat Enterprise Linux 9
+        neruallcb_path = '/storage/home/hcoda1/6/azhou60/path_to_neurallcb_on_redhat'
+    else:
+        # Generic Linux case if needed
+        neruallcb_path = '/path/to/neurallcb_on_generic_linux'
+
 
 if neruallcb_path not in sys.path:
     sys.path.append(neruallcb_path)

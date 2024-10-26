@@ -69,7 +69,7 @@ class ApproxNeuraLCB_cp(BanditAlgorithm):
         # print(f'self.data.rewards.shape:{self.data.rewards}')
         # self.prediction_interval_model = None
     # line 5 in NeuraLCB Bmode
-    def sample_action(self, test_contexts, opt_vals, opt_actions):
+    def sample_action(self, test_contexts, opt_vals, opt_actions,res_dir, algo_prefix):
         # flags.DEFINE_integer('chunk_size', 500, 'Chunk size')
         # flags.DEFINE_integer('batch_size', 32, 'Batch size')
         cs = self.hparams.chunk_size
@@ -145,7 +145,9 @@ class ApproxNeuraLCB_cp(BanditAlgorithm):
                         self.B)
         self.Ensemble_pred_interval_centers = self.prediction_interval_model.fit_bootstrap_models_online(B=self.B, miss_test_idx=[])
         # print(f'self.Ensemble_prediction_interval_centers:{self.Ensemble_pred_interval_centers}')
-        PI_dfs, results = self.prediction_interval_model.run_experiments(alpha=0.05, stride=8,methods=['Ensemble'])       
+        alphacp_ls = np.linspace(0.05,0.25,5)
+        for alphacp in alphacp_ls:
+            PI_dfs, results = self.prediction_interval_model.run_experiments(alpha=alphacp, stride=8,methods=['Ensemble'],res_dir=res_dir, algo_prefix=algo_prefix)       
         
         # return jnp.hstack(acts)
         return sampled_test_actions

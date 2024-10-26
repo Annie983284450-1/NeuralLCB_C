@@ -44,15 +44,22 @@ def contextual_bandit_runner_v2(algos, data, \
     regrets = [] # (num_sim, num_algos, T) 
     errs = [] # (num_sim, num_algos, T) 
     # for sim in range(num_sim):
+    alphacp_ls = np.linspace(0.05,0.25,5)
     if res_dir:
+        # create a regret csv file to store all the regrets
         regret_csv = res_dir+'/'+ algo_prefix+f'.csv'
+        
         with open(regret_csv, 'w') as f:
             pass  # Just opening in 'w' mode truncates the file
+        # create a PI csv to store all the prediction intervals for all the neuralcb algos
         for j,algo in enumerate(algos): 
+
             if 'cp' in algo.name.split('_'): # create the conformal prediction result csv file
                     # Open in write mode to truncate the file
-                with open(res_dir+f'/final_all_cpresults_avg_{algo.name}_B={B}.csv', 'w') as f:
-                        pass  # Just opening in 'w' mode truncates the file      
+                for alphacp in alphacp_ls:
+                    final_all_cpresults_avg_csv_alphacp = res_dir+'/'+ algo_prefix+f'_PIs(alpha={alphacp}).csv'
+                    with open(final_all_cpresults_avg_csv_alphacp, 'w') as f:
+                            pass  # Just opening in 'w' mode truncates the file      
         print('Simulation: {}/{}'.format(sim + 1, num_sim))
         cmab = OfflineContextualBandit(*data.reset_data(sim))
         for algo in algos:
@@ -105,7 +112,7 @@ def contextual_bandit_runner_v2(algos, data, \
                         nocp_experts = ['ApproxNeuraLCBV2', 'ExactNeuraLCBV2', 'NeuralGreedyV2','ApproxNeuralLinLCBJointModel','ApproxNeuralLinLCBV2']
                         if algo.name in cp_experts:
                             # print(f'test_contexts.shape == {cmab.test_contexts.shape}')
-                            test_actions = algo.sample_action(cmab.test_contexts, opt_vals, opt_actions) 
+                            test_actions = algo.sample_action(cmab.test_contexts, opt_vals, opt_actions, res_dir, algo_prefix ) 
                         elif algo.name in nocp_experts:
                             test_actions = algo.sample_action(cmab.test_contexts)
                         else:

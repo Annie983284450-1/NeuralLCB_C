@@ -1,0 +1,31 @@
+---------------------------------------
+Begin Slurm Prolog: Oct-04-2024 18:15:47
+Job ID:    1550744
+User ID:   azhou60
+Account:   gts-bzhao94
+Job name:  neuralcbcptest
+Partition: cpu-small
+QOS:       inferno
+---------------------------------------
+
+CondaError: Run 'conda init' before 'conda deactivate'
+
+Traceback (most recent call last):
+  File "/storage/home/hcoda1/6/azhou60/NeuralLCB_C/realworld_main.py", line 18, in <module>
+    from algorithms.neural_offline_bandit_cp import ApproxNeuraLCB_cp
+  File "/storage/home/hcoda1/6/azhou60/NeuralLCB_C/algorithms/neural_offline_bandit_cp.py", line 12, in <module>
+    from tensorflow.keras.models import Sequential, clone_model
+ModuleNotFoundError: No module named 'tensorflow'
+---------------------------------------
+Begin Slurm Epilog: Oct-04-2024 18:15:55
+Job ID:        1550744
+Array Job ID:  _4294967294
+User ID:       azhou60
+Account:       gts-bzhao94
+Job name:      neuralcbcptest
+Resources:     cpu=1,mem=2G,node=1
+Rsrc Used:     cput=00:00:08,vmem=0,walltime=00:00:08,mem=88K,energy_used=0
+Partition:     cpu-small
+QOS:           inferno
+Nodes:         atl1-1-02-008-12-2
+---------------------------------------

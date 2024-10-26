@@ -1,0 +1,29 @@
+---------------------------------------
+Begin Slurm Prolog: Oct-04-2024 18:03:48
+Job ID:    1550680
+User ID:   azhou60
+Account:   gts-bzhao94
+Job name:  neuralcbcptest
+Partition: cpu-small
+QOS:       inferno
+---------------------------------------
+
+CondaError: Run 'conda init' before 'conda deactivate'
+
+Traceback (most recent call last):
+  File "/storage/home/hcoda1/6/azhou60/NeuralLCB_C/realworld_main.py", line 6, in <module>
+    from easydict import EasyDict as edict
+ModuleNotFoundError: No module named 'easydict'
+---------------------------------------
+Begin Slurm Epilog: Oct-04-2024 18:04:46
+Job ID:        1550680
+Array Job ID:  _4294967294
+User ID:       azhou60
+Account:       gts-bzhao94
+Job name:      neuralcbcptest
+Resources:     cpu=1,mem=2G,node=1
+Rsrc Used:     cput=00:00:58,vmem=0,walltime=00:00:58,mem=134080K,energy_used=0
+Partition:     cpu-small
+QOS:           inferno
+Nodes:         atl1-1-02-008-12-2
+---------------------------------------

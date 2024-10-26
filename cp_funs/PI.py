@@ -32,24 +32,7 @@ import core.bandit_dataset
 importlib.reload(core.bandit_dataset)
 from core.bandit_dataset import BanditDataset
 import copy
-
-# if algorithms.neural_offline_bandit_cp import PT, PI cannot import algorithms.neural_offline_bandit_cp, there would be circular import error
-# from algorithms.neural_offline_bandit_cp import ApproxNeuraLCBV2_cp, NeuralBanditModelV2, NeuralBanditModel
-
-
-
-# This is how self.Ensemble_pred_interval_centers is calculated. 
-
-# When 
-
-# model.name.split('_')[1] == 'nn',
-
-# boot_predictions[b] = model.out(model.params, np.r_[self.X_train, self.X_predict]).flatten() # for NeuralBanditModel 
-
-# this is the case i am dealing with. It seems that now boo_predictions[b] is 2D instead of 1D compared to when model.name.split('_')[1] == 'nn2'. How could I change the code and deal with 
-
-# boot_predictions[b] when model.name.split('_')[1] == 'nn'.
-
+ 
 
 class prediction_interval():
     '''
@@ -226,7 +209,7 @@ class prediction_interval():
 
 
 # main function
-    def run_experiments(self, alpha, stride,  methods=['Ensemble']):
+    def run_experiments(self, alpha, stride,  methods=['Ensemble'],res_dir=None, algo_prefix= None):
         """
         Run conformal prediction experiments.
         Args:
@@ -265,10 +248,11 @@ class prediction_interval():
             final_result_path = self.filename
             new_row_all_avg = results
             if not isinstance(new_row_all_avg, pd.DataFrame):
-
-
                 new_row_all_avg = pd.DataFrame([new_row_all_avg])
-            with open(final_result_path+f'/final_all_cpresults_avg_{self.algoname}_B={self.B}.csv', 'a') as f:
+            # final_all_cpresults_avg_csv = res_dir+'/'+ algo_prefix+f'_PIs.csv'
+            # with open(final_result_path+f'/final_all_cpresults_avg_{self.algoname}_B={self.B}.csv', 'a') as f:
+            final_all_cpresults_avg_csv = res_dir+'/'+ algo_prefix+f'_PIs(alpha={alpha}).csv'
+            with open(final_all_cpresults_avg_csv, 'a') as f:
                 new_row_all_avg.to_csv(f, header=f.tell()==0, index=False)
 
             # print(f'~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')

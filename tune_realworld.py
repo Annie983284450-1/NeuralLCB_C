@@ -19,7 +19,7 @@ parser.add_argument('--data_types', nargs='+', type=str, default=['sepsis'])
 parser.add_argument('--algo_groups', nargs='+', type=str, default=['ApproxNeuraLCB_cp'])
 parser.add_argument('--policies', nargs='+', type=str, default=['eps-greedy'])
 parser.add_argument('--num_sim', type=int, default=1)
-parser.add_argument('--models_per_gpu', type=int, default=1)
+parser.add_argument('--models_per_gpu', type=int, default=2)
 parser.add_argument('--gpus', nargs='+', type=int, default=[0], help='gpus indices used for multi_gpu')
 
 parser.add_argument('--result_dir', type=str, default='results/stock_d=21_a=8_pi=eps-greedy0.1_std=0.1', help='result directory for collect_results()')
@@ -27,7 +27,7 @@ args = parser.parse_args()
 
 
 
-def multi_gpu_launcher(commands, gpus=None, models_per_gpu=1):
+def multi_gpu_launcher(commands, gpus=None, models_per_gpu=2):
     """
     Launch commands on the local machine or server, using all GPUs in parallel.
     Works on Windows (1 GPU), Linux, and macOS with multiple GPUs.
@@ -38,6 +38,7 @@ def multi_gpu_launcher(commands, gpus=None, models_per_gpu=1):
     if gpus is None:
         if system_platform == "Windows" or system_platform == "Linux":
             gpus = detect_gpus()
+            print(f'{gpus} GPU detected!!!')
         elif system_platform == "Darwin":
             gpus = []  # macOS doesn't have CUDA by default
 
@@ -76,7 +77,6 @@ def multi_gpu_launcher(commands, gpus=None, models_per_gpu=1):
     for p in procs:
         if p is not None:
             p.wait()
-
 
 def detect_gpus():
     """
@@ -136,9 +136,12 @@ def multi_gpu_launcher_linux_mac(commands,gpus,models_per_gpu):
  
 def create_commands(data_type='sepsis', algo_group='ApproxNeuraLCB_cp', num_sim=1, policy='eps-greedy'):
     # hyper_mode = 'best' # ['full', 'best']
-    test = False
-    hyper_mode = 'beta_tune' # ['full', 'best']
-    hyper_mode = 'beta_batchsize50_numstep100_buffers-1'
+    # test = False
+    test = True
+    # hyper_mode = 'beta_tune' # ['full', 'best']
+    # hyper_mode = 'betatune_batchsize50_numstep100_buffers-1'
+    hyper_mode = 'full'
+    # hyper_mode = 'beta_lr_tune'
 
 
 
@@ -167,6 +170,13 @@ def create_commands(data_type='sepsis', algo_group='ApproxNeuraLCB_cp', num_sim=
         train_mode_space = [(1,1,1)]
         beta_space = [1]
         rbfsigma_space = [10] #10 for mnist, 0.1 for mushroom
+    elif hyper_mode == 'beta_lr_tune':
+        lr_space = [1e-4,1e-3]
+        train_mode_space = [(1,1,1)]
+        # beta_space = [0.01, 0.05, 1, 5,10] #[0.01, 0.05, 1,5,10]
+        beta_space = [0.01, 0.05, 1, 5,10]
+        rbfsigma_space = [1] #[0.1, 1,10]
+        noise_std_space = [0.1]
     elif hyper_mode == 'beta_tune':
         lr_space = [1e-3]
         train_mode_space = [(1,1,1)]
@@ -174,7 +184,7 @@ def create_commands(data_type='sepsis', algo_group='ApproxNeuraLCB_cp', num_sim=
         beta_space = [0.01, 0.05, 1, 5,10]
         rbfsigma_space = [1] #[0.1, 1,10]
         noise_std_space = [0.1]
-    elif hyper_mode == 'beta_batchsize50_numstep100_buffers-1':
+    elif hyper_mode == 'betatune_batchsize50_numstep100_buffers-1':
         lr_space = [1e-3]
         train_mode_space = [(50,100,-1)]
         # beta_space = [0.01, 0.05, 1, 5,10] #[0.01, 0.05, 1,5,10]
@@ -235,20 +245,6 @@ def run_exps():
     random.shuffle(commands)
     multi_gpu_launcher(commands, args.gpus, args.models_per_gpu)
 
-# def collect_results():
-#     filenames = glob.glob(os.path.join(args.result_dir,"*.npz"))
-#     results = {}
-#     for filename in filenames:
-#         k = np.load(filename)
-#         regret = k['arr_0'][:,1,:]
-#         regret = np.min(regret,1) # best regret of a run
-#         regret = np.mean(regret)
-#         results[filename] = regret
-    
-#     filenames.sort(key=lambda x: results[x])
-    
-#     for filename in filenames:
-#         print('{}:   {}'.format(filename,results[filename]))
 
 if __name__ == '__main__':
     eval(args.task)()

@@ -367,7 +367,8 @@ def main(unused_argv):
             f"_lr={hparams.lr}_beta={hparams.beta}_lambda={hparams.lambd}_lambda0={hparams.lambd0}"
             f"_B={hparams.B}"
         )
-        nohup_output = res_dir+f'/trainwin_{FLAGS.num_train_sepsis_pat_win}test_win_{FLAGS.num_test_pat_septic_win}_{FLAGS.algo_group}_B={FLAGS.B}_log.txt'
+        # nohup_output = res_dir+f'/trainwin_{FLAGS.num_train_sepsis_pat_win}test_win_{FLAGS.num_test_pat_septic_win}_{FLAGS.algo_group}_B={FLAGS.B}_log.txt'
+        nohup_output = os.path.join(res_dir, algo_prefix) + '.log' 
     elif FLAGS.algo_group in ALGO_MAP:
         print(f'@@@@@@@@@~~~~~~~~~~~~~~~ Algorithm Testing ==== {FLAGS.algo_group}~~~~~~~~~~~~~~~@@@@@@@@@')
         # Get the algorithm class
@@ -383,8 +384,8 @@ def main(unused_argv):
             f"_layern={hparams.layer_n}_buffer={hparams.buffer_s}_bs={hparams.batch_size}"
             f"_lr={hparams.lr}_beta={hparams.beta}_lambda={hparams.lambd}_lambda0={hparams.lambd0}"
         )
-        nohup_output = res_dir+f'/trainwin_{FLAGS.num_train_sepsis_pat_win}test_win_{FLAGS.num_test_pat_septic_win}_{FLAGS.algo_group}_B={hparams.B}log.txt'
-    
+        # nohup_output = res_dir+f'/trainwin_{FLAGS.num_train_sepsis_pat_win}test_win_{FLAGS.num_test_pat_septic_win}_{FLAGS.algo_group}_B={hparams.B}log.txt'
+        nohup_output = os.path.join(res_dir, algo_prefix) + '.log' 
     else:
         raise ValueError(f"Unknown algo_group: {FLAGS.algo_group}")
     
