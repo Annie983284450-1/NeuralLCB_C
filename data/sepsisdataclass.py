@@ -11,7 +11,7 @@ elif os.name == 'posix':
         neruallcb_path = '/Users/anniezhou/Desktop/NeuralLCB_C'
     elif 'el9' in os.uname().release:
         # Red Hat Enterprise Linux 9
-        neruallcb_path = '/storage/home/hcoda1/6/azhou60/path_to_neurallcb_on_redhat'
+        neruallcb_path = '/storage/home/hcoda1/6/azhou60/p-bzhao94-0/neuralcb_results'
     else:
         # Generic Linux case if needed
         neruallcb_path = '/path/to/neurallcb_on_generic_linux'
@@ -199,6 +199,13 @@ class SepsisData(object):
     
             train_wins = sepsis_train_wins + nosepsis_train_wins
             test_wins = test_septic_wins + test_noseptic_wins
+
+            np.random.seed(12345)  # Set a seed for reproducibility
+            # shuffle the dataset
+            np.random.shuffle(train_wins)
+            np.random.shuffle(test_wins)
+
+
             train_df = df[df['pat_id'].isin(train_wins)]
             test_df = df[df['pat_id'].isin(test_wins)]
    
@@ -210,26 +217,12 @@ class SepsisData(object):
             df = pd.read_csv(file_name)
             train_patients_file = './data/SepsisData/train_set.npy'
             test_patients_file = './data/SepsisData/test_set.npy'
-
-
-
-
             # Load train and test patient IDs
             train_patients = np.load(train_patients_file, allow_pickle=True)
             test_patients = np.load(test_patients_file, allow_pickle=True)
-
             train_patients_ids = [patient.replace('.psv', '') for patient in train_patients]
             test_patients_ids = [patient.replace('.psv', '') for patient in test_patients]
-
-
-
-            # Drop the column 'HospAdmTim' as per your requirement
             df = df.drop(['HospAdmTime'], axis=1)
-            # print(f'df.head():{df.head()}')
-            
-            # print(f'train_patients:{train_patients_ids}')
-            # print(f'test_patients:{test_patients_ids}')
-            # Separate dataset into train and test sets based on patient IDs
             train_df = df[df['pat_id'].isin(train_patients_ids)]
             test_df = df[df['pat_id'].isin(test_patients_ids)]
 
@@ -277,7 +270,7 @@ class SepsisData(object):
         Reset the dataset using random indices for simulation purposes.
         """
         print(f'^^^^^^^^^^^ Running SepsisData.reset_data() ^^^^^^^^^^^^^')
-        # No shuffling or leakage is allowed since we are grouping by patient ID
+         
         train_indices = np.arange(self.num_train_samples)
         test_indices = np.arange(self.num_test_samples)
         

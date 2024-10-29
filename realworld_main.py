@@ -97,13 +97,13 @@ flags.DEFINE_string('policy', 'eps-greedy', 'Offline policy, eps-greedy/subset')
  
 
 
-flags.DEFINE_integer('num_train_sepsis_pat_win', 1000, 'Number of septic windows for training.') 
+flags.DEFINE_integer('num_train_sepsis_pat_win', 2000, 'Number of septic windows for training.') 
 flags.DEFINE_integer('num_test_pat_septic_win', 250, 'Number of septic windows for testing.') 
 flags.DEFINE_integer('win_size', 8, 'Window size used for training and testing.')
 flags.DEFINE_integer('B', 10, 'number of bootstraps')
 flags.DEFINE_integer('update_freq', 1, 'Update frequency')
 flags.DEFINE_integer('freq_summary', 10, 'Summary frequency')
-flags.DEFINE_integer('test_freq', 10, 'Test frequency')
+flags.DEFINE_integer('test_freq', 100, 'Test frequency')
 # flags.DEFINE_integer('num_sim', 10, 'Number of simulations')
 flags.DEFINE_integer('num_sim', 1, 'Number of simulations')
 flags.DEFINE_integer('chunk_size', 500, 'Chunk size')
@@ -150,8 +150,7 @@ def main(unused_argv):
     # this might only corresponding to a few hundreds patients
     if FLAGS.is_window:
 
-        # flags.DEFINE_integer('num_contexts', num_train_sepsis_pat_win*win_size*2, 'Number of contexts for training.') 
-        # flags.DEFINE_integer('num_test_contexts', num_test_pat_septic_win*win_size*13, 'Number of contexts for test.') 
+ 
         num_contexts = FLAGS.num_train_sepsis_pat_win * FLAGS.win_size * 2
         num_test_contexts = FLAGS.num_test_pat_septic_win * FLAGS.win_size * 13
     else:
@@ -280,14 +279,17 @@ def main(unused_argv):
     # res_dir = os.path.join('results', data_prefix) 
     sim = 0
 
-    res_dir = os.path.join(f'../neuralcb_results/sim{sim}/trainwins_{FLAGS.num_train_sepsis_pat_win}_testwins_{FLAGS.num_test_pat_septic_win}/', data_prefix) 
+    # res_dir = os.path.join(f'../neuralcb_results/sim{sim}/trainSepticWins_{FLAGS.num_train_sepsis_pat_win}_testSepticWins_{FLAGS.num_test_pat_septic_win}/', data_prefix) 
+
+    # res_dir = os.path.join(f'/storage/home/hcoda1/6/azhou60/scratch/neuralcb_results/sim{sim}/trainSepticWins_{FLAGS.num_train_sepsis_pat_win}_testSepticWins_{FLAGS.num_test_pat_septic_win}/', data_prefix) 
+    res_dir = os.path.join(f'/storage/home/hcoda1/6/azhou60/scratch/neuralcb_results/sim{sim}/trainSepticWins_{FLAGS.num_train_sepsis_pat_win}_testSepticWins_{FLAGS.num_test_pat_septic_win}/', data_prefix) 
 
 
     flags.DEFINE_string('res_dir', res_dir, 'final result path for each simulation')
     print(f'final result path === {FLAGS.res_dir}')
 
     if not os.path.exists(res_dir):
-        os.makedirs(res_dir)
+        os.makedirs(res_dir, exist_ok=True)
 
     
 
@@ -298,25 +300,25 @@ def main(unused_argv):
 
 
 
-    if FLAGS.algo_group == 'kern': # for tuning KernLCB
-        algos = [
-            UniformSampling(lin_hparams),
-            KernLCB(lin_hparams), 
-        ]
+    # if FLAGS.algo_group == 'kern': # for tuning KernLCB
+    #     algos = [
+    #         UniformSampling(lin_hparams),
+    #         KernLCB(lin_hparams), 
+    #     ]
 
-        algo_prefix = 'kern-gridsearch_beta={}_rbf-sigma={}_maxnum={}'.format(
-            hparams.beta, lin_hparams.rbf_sigma, lin_hparams.max_num_sample
-        )
+    #     algo_prefix = 'kern-gridsearch_beta={}_rbf-sigma={}_maxnum={}'.format(
+    #         hparams.beta, lin_hparams.rbf_sigma, lin_hparams.max_num_sample
+    #     )
 
-    if FLAGS.algo_group == 'neurallinlcb': # Tune NeuralLinLCB seperately  
-        algos = [
-            UniformSampling(lin_hparams),
-            ApproxNeuralLinLCBJointModel(hparams)
-        ]
+    # if FLAGS.algo_group == 'neurallinlcb': # Tune NeuralLinLCB seperately  
+    #     algos = [
+    #         UniformSampling(lin_hparams),
+    #         ApproxNeuralLinLCBJointModel(hparams)
+    #     ]
 
-        algo_prefix = 'neurallinlcb-gridsearch_m={}_layern={}_beta={}_lambda0={}'.format(
-            min(hparams.layer_sizes), hparams.layer_n, hparams.beta, hparams.lambd0
-        )
+    #     algo_prefix = 'neurallinlcb-gridsearch_m={}_layern={}_beta={}_lambda0={}'.format(
+    #         min(hparams.layer_sizes), hparams.layer_n, hparams.beta, hparams.lambd0
+    #     )
 
 
     # Create a dictionary to map algo_group names to their respective classes
@@ -368,7 +370,9 @@ def main(unused_argv):
             f"_B={hparams.B}"
         )
         # nohup_output = res_dir+f'/trainwin_{FLAGS.num_train_sepsis_pat_win}test_win_{FLAGS.num_test_pat_septic_win}_{FLAGS.algo_group}_B={FLAGS.B}_log.txt'
-        nohup_output = os.path.join(res_dir, algo_prefix) + '.log' 
+        if not os.path.exists(os.path.join(res_dir, algo_prefix)):
+            os.makedirs(os.path.join(res_dir, algo_prefix), exist_ok=True)
+        nohup_output = os.path.join(res_dir, algo_prefix) + '/'+algo_prefix+'.log' 
     elif FLAGS.algo_group in ALGO_MAP:
         print(f'@@@@@@@@@~~~~~~~~~~~~~~~ Algorithm Testing ==== {FLAGS.algo_group}~~~~~~~~~~~~~~~@@@@@@@@@')
         # Get the algorithm class
@@ -385,7 +389,9 @@ def main(unused_argv):
             f"_lr={hparams.lr}_beta={hparams.beta}_lambda={hparams.lambd}_lambda0={hparams.lambd0}"
         )
         # nohup_output = res_dir+f'/trainwin_{FLAGS.num_train_sepsis_pat_win}test_win_{FLAGS.num_test_pat_septic_win}_{FLAGS.algo_group}_B={hparams.B}log.txt'
-        nohup_output = os.path.join(res_dir, algo_prefix) + '.log' 
+        if not os.path.exists(os.path.join(res_dir, algo_prefix)):
+            os.makedirs(os.path.join(res_dir, algo_prefix), exist_ok=True)
+        nohup_output = os.path.join(res_dir, algo_prefix) + '/'+ algo_prefix+'.log' 
     else:
         raise ValueError(f"Unknown algo_group: {FLAGS.algo_group}")
     
@@ -394,6 +400,7 @@ def main(unused_argv):
 
     original_stdout = sys.stdout
     print(f'$$$$$########## $$$$$########## algorithm: {FLAGS.algo_group}$$$$$##########$$$$$##########')
+    start_runner= time.time()
     with open(nohup_output, 'w') as f:
         sys.stdout = f 
     # if res_dir:
@@ -408,6 +415,7 @@ def main(unused_argv):
         np.savez(file_name, regrets=regrets, errs=errs)
         print(f'total time for contextual bandit runner: {time.time()-start} seconds')
     sys.stdout = original_stdout
+    print(f'Total Excution time: {time.time()-start_runner}')
 # thissetup is only executed only if the script is run directly from the command line, not when imported as a module in another python project scrpit.
 # app() ensures that all the command-line arguments are parsed
 if __name__ == '__main__': 

@@ -44,7 +44,7 @@ class ExactNeuralLinLCBV2_cp(BanditAlgorithm):
 
         self.nn.reset(seed) 
 
-    def sample_action(self, contexts,opt_vals, opt_actions):
+    def sample_action(self, contexts,opt_vals, opt_actions,res_dir, algo_prefix):
         cs = self.hparams.chunk_size
         num_chunks = math.ceil(contexts.shape[0] / cs)
         acts = []
@@ -105,7 +105,10 @@ class ExactNeuralLinLCBV2_cp(BanditAlgorithm):
                         self.B)
         self.Ensemble_pred_interval_centers = self.prediction_interval_model.fit_bootstrap_models_online(B=self.B, miss_test_idx=[])
         # print(f'self.Ensemble_prediction_interval_centers:{self.Ensemble_pred_interval_centers}')
-        PI_dfs, results = self.prediction_interval_model.run_experiments(alpha=0.05, stride=8,methods=['Ensemble'])       
+        alphacp_ls = np.linspace(0.05,0.25,5)
+        for alphacp in alphacp_ls:
+            PI_dfs, results = self.prediction_interval_model.run_experiments(alpha=alphacp, stride=8,methods=['Ensemble'],res_dir=res_dir, algo_prefix=algo_prefix)       
+        
         
         # return jnp.hstack(acts)
         return sampled_test_actions
@@ -206,7 +209,7 @@ class ApproxNeuralLinLCBV2_cp(BanditAlgorithm):
 
         self.nn.reset(seed) 
 
-    def sample_action(self, contexts,opt_vals, opt_actions):
+    def sample_action(self, contexts,opt_vals, opt_actions, res_dir, algo_prefix):
         cs = self.hparams.chunk_size
         num_chunks = math.ceil(contexts.shape[0] / cs)
         acts = []
@@ -265,7 +268,10 @@ class ApproxNeuralLinLCBV2_cp(BanditAlgorithm):
                         self.B)
         self.Ensemble_pred_interval_centers = self.prediction_interval_model.fit_bootstrap_models_online(B=self.B, miss_test_idx=[])
         # print(f'self.Ensemble_prediction_interval_centers:{self.Ensemble_pred_interval_centers}')
-        PI_dfs, results = self.prediction_interval_model.run_experiments(alpha=0.05, stride=8,methods=['Ensemble'])       
+        alphacp_ls = np.linspace(0.05,0.25,5)
+        for alphacp in alphacp_ls:
+            PI_dfs, results = self.prediction_interval_model.run_experiments(alpha=alphacp, stride=8,methods=['Ensemble'],res_dir=res_dir, algo_prefix=algo_prefix)       
+       
         
         # return jnp.hstack(acts)
         return sampled_test_actions
@@ -359,7 +365,7 @@ class ApproxNeuralLinLCBJointModel_cp(BanditAlgorithm):
         self.diag_Lambda = jnp.ones(self.nn.num_params) * self.hparams.lambd0  
         self.nn.reset(seed) 
 
-    def sample_action(self, contexts, opt_vals, opt_actions):
+    def sample_action(self, contexts, opt_vals, opt_actions, res_dir, algo_prefix):
         cs = self.hparams.chunk_size
         num_chunks = math.ceil(contexts.shape[0] / cs)
         acts = []
@@ -422,8 +428,10 @@ class ApproxNeuralLinLCBJointModel_cp(BanditAlgorithm):
                         self.B)
         self.Ensemble_pred_interval_centers = self.prediction_interval_model.fit_bootstrap_models_online(B=self.B, miss_test_idx=[])
         # print(f'self.Ensemble_prediction_interval_centers:{self.Ensemble_pred_interval_centers}')
-        PI_dfs, results = self.prediction_interval_model.run_experiments(alpha=0.05, stride=8,methods=['Ensemble'])       
-        
+        alphacp_ls = np.linspace(0.05,0.25,5)
+        for alphacp in alphacp_ls:
+            PI_dfs, results = self.prediction_interval_model.run_experiments(alpha=alphacp, stride=8,methods=['Ensemble'],res_dir=res_dir, algo_prefix=algo_prefix)       
+    
         # return jnp.hstack(acts)
         return sampled_test_actions
     

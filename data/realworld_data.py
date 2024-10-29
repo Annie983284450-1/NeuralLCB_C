@@ -11,7 +11,7 @@ elif os.name == 'posix':
         neruallcb_path = '/Users/anniezhou/Desktop/NeuralLCB_C'
     elif 'el9' in os.uname().release:
         # Red Hat Enterprise Linux 9
-        neruallcb_path = '/storage/home/hcoda1/6/azhou60/path_to_neurallcb_on_redhat'
+        neruallcb_path = '/storage/home/hcoda1/6/azhou60/p-bzhao94-0/neuralcb_results'
     else:
         # Generic Linux case if needed
         neruallcb_path = '/path/to/neurallcb_on_generic_linux'

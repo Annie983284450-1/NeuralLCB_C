@@ -47,7 +47,7 @@ def contextual_bandit_runner_v2(algos, data, \
     alphacp_ls = np.linspace(0.05,0.25,5)
     if res_dir:
         # create a regret csv file to store all the regrets
-        regret_csv = res_dir+'/'+ algo_prefix+f'.csv'
+        regret_csv = res_dir+'/'+ algo_prefix+'/'+ algo_prefix+ f'.csv'
         
         with open(regret_csv, 'w') as f:
             pass  # Just opening in 'w' mode truncates the file
@@ -57,7 +57,7 @@ def contextual_bandit_runner_v2(algos, data, \
             if 'cp' in algo.name.split('_'): # create the conformal prediction result csv file
                     # Open in write mode to truncate the file
                 for alphacp in alphacp_ls:
-                    final_all_cpresults_avg_csv_alphacp = res_dir+'/'+ algo_prefix+f'_PIs(alpha={alphacp}).csv'
+                    final_all_cpresults_avg_csv_alphacp = res_dir+'/'+ algo_prefix+'/' + algo_prefix+f'_PIs(alpha={alphacp}).csv'
                     with open(final_all_cpresults_avg_csv_alphacp, 'w') as f:
                             pass  # Just opening in 'w' mode truncates the file      
         print('Simulation: {}/{}'.format(sim + 1, num_sim))
@@ -69,10 +69,10 @@ def contextual_bandit_runner_v2(algos, data, \
         opt_vals = np.max(cmab.test_mean_rewards, axis=1) 
         opt_actions = np.argmax(cmab.test_mean_rewards, axis=1) 
         for i in tqdm(range(cmab.num_contexts),ncols=75):
-            print(f' !!!@  !!!@  !!!@  !!!@  !!!@  !!!@  !!!@  !!!!!!@ ROUND{i}!@ ROUND{i}!! @#$@ ROUND {i} @#@ ROUND{i}$@ !!!!!!')
+            # print(f' !!!@  !!!@  !!!@  !!!@  !!!@  !!!@  !!!@  !!!!!!@ ROUND{i}!@ ROUND{i}!! @#$@ ROUND {i} @#@ ROUND{i}$@ !!!!!!')
             start_time = time.time()
             c,a,r = cmab.get_data(i) 
-            print(f'!!!!!!!!!!!!{i}-th data point !!!!!!!!')
+            # print(f'!!!!!!!!!!!!{i}-th data point !!!!!!!!')
 
             # actually there is always one algo in algos
 

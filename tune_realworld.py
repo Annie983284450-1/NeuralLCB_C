@@ -6,7 +6,7 @@ import random
 import glob
 import numpy as np
 import platform
- 
+import sys
 
 
 
@@ -19,11 +19,33 @@ parser.add_argument('--data_types', nargs='+', type=str, default=['sepsis'])
 parser.add_argument('--algo_groups', nargs='+', type=str, default=['ApproxNeuraLCB_cp'])
 parser.add_argument('--policies', nargs='+', type=str, default=['eps-greedy'])
 parser.add_argument('--num_sim', type=int, default=1)
-parser.add_argument('--models_per_gpu', type=int, default=2)
+parser.add_argument('--models_per_gpu', type=int, default=1)
 parser.add_argument('--gpus', nargs='+', type=int, default=[0], help='gpus indices used for multi_gpu')
 
-parser.add_argument('--result_dir', type=str, default='results/stock_d=21_a=8_pi=eps-greedy0.1_std=0.1', help='result directory for collect_results()')
+ 
+parser.add_argument('--mode', type=str, default=None, help='hyper mode')
+
 args = parser.parse_args()
+
+
+
+def test_multi_gpu_launcher(commands, gpus=None, models_per_gpu=3):
+    """
+    Launch commands on the local machine or server, using all GPUs in parallel.
+    Works on Windows (1 GPU), Linux, and macOS with multiple GPUs.
+    """
+    system_platform = platform.system()
+    
+    # Detect GPUs if not specified
+    if gpus is None:
+        if system_platform == "Windows" or system_platform == "Linux":
+            gpus = detect_gpus()
+            print(f'{gpus} GPU detected!!!')
+        elif system_platform == "Darwin":
+            gpus = []  # macOS doesn't have CUDA by default
+
+    if not gpus:
+        raise RuntimeError("No GPUs detected or specified.")
 
 
 
@@ -47,9 +69,29 @@ def multi_gpu_launcher(commands, gpus=None, models_per_gpu=2):
 
     procs = [None] * (len(gpus) * models_per_gpu)
 
+
+    # while len(commands) > 0:
+    #     for i,proc in enumerate(procs):
+    #         gpu_idx = gpus[i % len(gpus)]
+    #         if (proc is None) or (proc.poll() is not None):
+    #             # Nothing is running on this index; launch a command.
+    #             cmd = commands.pop(0)
+    #             new_proc = subprocess.Popen(
+    #                 f'CUDA_VISIBLE_DEVICES={gpu_idx} {cmd}', shell=True)
+    #             procs[i] = new_proc
+    #             break
+    #     time.sleep(1)
+
+    # Wait for the last few tasks to finish before returning
+    for p in procs:
+        if p is not None:
+            p.wait()
+
+
     while len(commands) > 0:
         for i, proc in enumerate(procs):
             gpu_idx = gpus[i % len(gpus)]
+            # if get_gpu_utilization(gpu_idx) < 50:
             if (proc is None) or (proc.poll() is not None):
                 cmd = commands.pop(0)
 
@@ -57,7 +99,9 @@ def multi_gpu_launcher(commands, gpus=None, models_per_gpu=2):
                     env = os.environ.copy()
                     env["CUDA_VISIBLE_DEVICES"] = str(gpu_idx)
                     new_proc = subprocess.Popen(cmd, shell=True, env=env)
-                
+                    # new_proc = subprocess.Popen(
+                    #     f'CUDA_VISIBLE_DEVICES={gpu_idx} {cmd}', shell=True)
+                    # new_proc = subprocess.Popen(f'srun --gres=gpu:{gpu_idx} {cmd}', shell=True)  
                 elif system_platform == "Windows":
                     # Windows specific case
                     if len(gpus) == 1:
@@ -134,26 +178,12 @@ def multi_gpu_launcher_linux_mac(commands,gpus,models_per_gpu):
             p.wait()
 
  
-def create_commands(data_type='sepsis', algo_group='ApproxNeuraLCB_cp', num_sim=1, policy='eps-greedy'):
-    # hyper_mode = 'best' # ['full', 'best']
-    # test = False
-    test = True
-    # hyper_mode = 'beta_tune' # ['full', 'best']
-    # hyper_mode = 'betatune_batchsize50_numstep100_buffers-1'
-    hyper_mode = 'full'
-    # hyper_mode = 'beta_lr_tune'
+def create_commands(data_type='sepsis', algo_group='ApproxNeuraLCB_cp', num_sim=1, policy='eps-greedy',hyper_mode = None):
+    test = False
+    # test = True
+    
+    # hyper_mode = 'A2:beta_noise005_tune'
 
-
-
-    # flags.DEFINE_float('eps', 0.1, 'Probability of selecting a random action in eps-greedy')
-    # flags.DEFINE_float('subset_r', 0.5, 'The ratio of the action spaces to be selected in offline data')
-    # flags.DEFINE_float('noise_std', 0.01, 'Noise std')
-    # flags.DEFINE_float('rbf_sigma', 1, 'RBF sigma for KernLCB') # [0.1, 1, 10]
-    # # NeuraLCB 
-    # flags.DEFINE_float('beta', 0.1, 'confidence paramter') # [0.01, 0.05, 0.1, 0.5, 1, 5, 10] 
-    # flags.DEFINE_float('lr', 1e-3, 'learning rate') 
-    # flags.DEFINE_float('lambd0', 0.1, 'minimum eigenvalue') 
-    # flags.DEFINE_float('lambd', 1e-4, 'regularization parameter')
 
     if hyper_mode == 'full':
         # Grid search space: used for grid search in the paper
@@ -169,28 +199,67 @@ def create_commands(data_type='sepsis', algo_group='ApproxNeuraLCB_cp', num_sim=
         lr_space = [1e-4]
         train_mode_space = [(1,1,1)]
         beta_space = [1]
-        rbfsigma_space = [10] #10 for mnist, 0.1 for mushroom
-    elif hyper_mode == 'beta_lr_tune':
-        lr_space = [1e-4,1e-3]
-        train_mode_space = [(1,1,1)]
-        # beta_space = [0.01, 0.05, 1, 5,10] #[0.01, 0.05, 1,5,10]
-        beta_space = [0.01, 0.05, 1, 5,10]
-        rbfsigma_space = [1] #[0.1, 1,10]
-        noise_std_space = [0.1]
-    elif hyper_mode == 'beta_tune':
+        rbfsigma_space = [10] #10 for mnist, 0.1 for mushroom 
+    elif hyper_mode == 'S1':  
         lr_space = [1e-3]
-        train_mode_space = [(1,1,1)]
-        # beta_space = [0.01, 0.05, 1, 5,10] #[0.01, 0.05, 1,5,10]
-        beta_space = [0.01, 0.05, 1, 5,10]
+        train_mode_space = [(32,100,-1)]
+        beta_space = [0.05]
         rbfsigma_space = [1] #[0.1, 1,10]
         noise_std_space = [0.1]
-    elif hyper_mode == 'betatune_batchsize50_numstep100_buffers-1':
+    elif hyper_mode == 'S2':  
         lr_space = [1e-3]
-        train_mode_space = [(50,100,-1)]
-        # beta_space = [0.01, 0.05, 1, 5,10] #[0.01, 0.05, 1,5,10]
-        beta_space = [0.01, 0.05, 1, 5,10]
+        train_mode_space = [(32,100,-1)]
+        beta_space = [0.01]
         rbfsigma_space = [1] #[0.1, 1,10]
         noise_std_space = [0.1]
+
+    elif hyper_mode == 'S3':  
+        lr_space = [1e-3]
+        train_mode_space = [(32,100,-1)]
+        beta_space = [5]
+        rbfsigma_space = [1] #[0.1, 1,10]
+        noise_std_space = [0.1]
+    elif hyper_mode == 'S4':  
+        lr_space = [1e-3]
+        train_mode_space = [(32,100,-1)]
+        beta_space = [10]
+        rbfsigma_space = [1] #[0.1, 1,10]
+        noise_std_space = [0.1]
+    elif hyper_mode == 'S5':   
+        lr_space = [1e-3]
+        train_mode_space = [(32,100,-1)]
+        beta_space = [1]
+        rbfsigma_space = [1] #[0.1, 1,10]
+        noise_std_space = [0.1]
+
+
+
+    elif hyper_mode == 'B1':  
+        lr_space = [1e-4]
+        train_mode_space = [(32,100,-1)]
+        beta_space = [0.01, 1, 5]
+        rbfsigma_space = [1] #[0.1, 1,10]
+        noise_std_space = [0.1]
+    elif hyper_mode == 'B2': # beta_noise005_tune
+        lr_space = [1e-4]
+        train_mode_space = [(32,100,-1)]
+        beta_space = [0.01, 1, 5]
+        rbfsigma_space = [1] 
+        noise_std_space = [0.05] #
+    elif hyper_mode == 'A1': # :beta_noise01_tune
+        lr_space = [1e-3]
+        train_mode_space = [(32,100,-1)]
+        beta_space = [0.01, 1, 5]
+        rbfsigma_space = [1]  
+        noise_std_space = [0.1] #
+    elif hyper_mode == 'A2': # beta_noise005_tune
+        lr_space = [1e-3]
+        train_mode_space = [(32,100,-1)]
+        beta_space = [0.01, 1, 5]
+        rbfsigma_space = [1] 
+        noise_std_space = [0.05] #
+    else:
+        sys.exit('Wrong Hyper mode!! Inpuy hyper mode!!')
     commands = []
     if algo_group == 'ApproxNeuraLCB_cp':
         for lr in lr_space:
@@ -241,9 +310,10 @@ def run_exps():
     for data_type in args.data_types:
         for algo_group in args.algo_groups:
             for policy in args.policies:
-                commands += create_commands(data_type, algo_group, args.num_sim, policy)
+                commands += create_commands(data_type, algo_group, args.num_sim, policy, args.mode)
     random.shuffle(commands)
     multi_gpu_launcher(commands, args.gpus, args.models_per_gpu)
+    # test_multi_gpu_launcher(commands, args.gpus, args.models_per_gpu)
 
 
 if __name__ == '__main__':
