@@ -23,7 +23,8 @@ class ExactNeuralLinLCBV2_cp(BanditAlgorithm):
         self.name = name 
         self.hparams = hparams 
         self.update_freq = update_freq 
-        opt = optax.adam(0.0001) # dummy
+        # opt = optax.adam(0.0001) # dummy
+        opt = optax.adam(hparams.lr)
         self.nn = NeuralBanditModelV2(opt, hparams, '{}_nn2'.format(name))
         
         self.reset(self.hparams.seed)
@@ -186,7 +187,8 @@ class ApproxNeuralLinLCBV2_cp(BanditAlgorithm):
         self.name = name 
         self.hparams = hparams 
         self.update_freq = update_freq 
-        opt = optax.adam(0.0001) # dummy
+        # opt = optax.adam(0.0001) # dummy
+        opt = optax.adam(hparams.lr)
         self.nn = NeuralBanditModelV2(opt, hparams, '{}_nn2'.format(name))
         self.data = BanditDataset(hparams.context_dim, hparams.num_actions, hparams.buffer_s, '{}-data'.format(name))
         self.prediction_interval_model = None
@@ -347,7 +349,8 @@ class ApproxNeuralLinLCBJointModel_cp(BanditAlgorithm):
         self.name = name 
         self.hparams = hparams 
         self.update_freq = update_freq 
-        opt = optax.adam(0.0001) # dummy
+        # opt = optax.adam(0.0001) # dummy
+        opt = optax.adam(hparams.lr)
         self.nn = NeuralBanditModelV2(opt, hparams, '{}_nn2'.format(name))
         self.B = B
         

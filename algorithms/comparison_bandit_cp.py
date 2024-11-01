@@ -219,7 +219,7 @@ class NeuralGreedyV2_cp(BanditAlgorithm):
         self.nn.reset(seed) 
         self.data.reset()
 
-    def sample_action(self, contexts, opt_vals, opt_actions):
+    def sample_action(self, contexts, opt_vals, opt_actions, res_dir, algo_prefix):
         preds = []
         for a in range(self.hparams.num_actions):
             actions = jnp.ones(shape=(contexts.shape[0],)) * a 
@@ -272,8 +272,10 @@ class NeuralGreedyV2_cp(BanditAlgorithm):
                         self.B)
         self.Ensemble_pred_interval_centers = self.prediction_interval_model.fit_bootstrap_models_online(B=self.B, miss_test_idx=[])
         # print(f'self.Ensemble_prediction_interval_centers:{self.Ensemble_pred_interval_centers}')
-        PI_dfs, results = self.prediction_interval_model.run_experiments(alpha=0.05, stride=8,methods=['Ensemble'])       
-
+        alphacp_ls = np.linspace(0.05,0.25,5)
+        for alphacp in alphacp_ls:
+            PI_dfs, results = self.prediction_interval_model.run_experiments(alpha=alphacp, stride=8,methods=['Ensemble'],res_dir=res_dir, algo_prefix=algo_prefix)       
+    
         return sampled_test_actions
 
     def update_buffer(self, contexts, actions, rewards): 
@@ -547,7 +549,7 @@ class ExactNeuraLCB(BanditAlgorithm):
                 acts.append(jnp.argmax(lcb, axis=1).ravel())
             return jnp.array(acts)
             
-    def sample_action(self, context, opt_vals, opt_actions):
+    def sample_action(self, context, opt_vals, opt_actions, res_dir, algo_prefix):
         """
         Args:
             context: (None, self.hparams.context_dim)
@@ -616,11 +618,15 @@ class ExactNeuraLCB(BanditAlgorithm):
                         Y_predict, 
                         actions, 
                         test_actions,
-                        filename)
-        self.Ensemble_pred_interval_centers = self.prediction_interval_model.fit_bootstrap_models_online(B=10, miss_test_idx=[])
-        print(f'self.Ensemble_prediction_interval_centers:{self.Ensemble_pred_interval_centers}')
-        PI_dfs, results = self.prediction_interval_model.run_experiments(alpha=0.05, stride=8,methods=['Ensemble'])       
-        
+                        filename,
+                        self.name,
+                        self.B)
+        self.Ensemble_pred_interval_centers = self.prediction_interval_model.fit_bootstrap_models_online(B=self.B, miss_test_idx=[])
+        # print(f'self.Ensemble_prediction_interval_centers:{self.Ensemble_pred_interval_centers}')
+        alphacp_ls = np.linspace(0.05,0.25,5)
+        for alphacp in alphacp_ls:
+            PI_dfs, results = self.prediction_interval_model.run_experiments(alpha=alphacp, stride=8,methods=['Ensemble'],res_dir=res_dir, algo_prefix=algo_prefix)       
+    
         # return jnp.hstack(acts)
         return sampled_test_actions
     def update(self, contexts, actions, rewards):

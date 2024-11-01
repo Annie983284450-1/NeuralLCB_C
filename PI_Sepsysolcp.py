@@ -27,7 +27,6 @@ import multiprocessing
 import dill
 import utils_Sepsysolcp as util
 multiprocessing.get_context().Process().Pickle = dill
-from core.bandit_dataset import BanditDataset
 
 
 
@@ -96,16 +95,21 @@ class prediction_interval():
                 saved_filename = 'No_'+str(b)+'th_boot'+'.h5'
                 saved_model_file_name = os.path.join(saved_model_path, saved_filename)
                 model = load_model(saved_model_file_name)       
-            boot_predictions[b] = model.predict(np.r_[self.X_train, self.X_predict]).flatten() # to one dimension
-            boot_predictions[b] = np.clip(boot_predictions[b], 0, max_hours+1)
+            # boot_predictions[b] = model.predict(np.r_[self.X_train, self.X_predict]).flatten() # to one dimension
+            boot_predictions[b] = model.predict_proba(np.r_[self.X_train, self.X_predict]).flatten() # to one dimension
+            
             in_boot_sample[b, boot_samples_idx[b]] = True  
         np.save(saved_model_path+'/boot_predictions.npy', boot_predictions)
         np.save(saved_model_path+'/in_boot_sample.npy', in_boot_sample)            
             # print('type of boot_precitions[b]:', type(boot_predictions[b]))
         # return boot_predictions, in_boot_sample
-   
+
+
+
+  
+     
     def fit_bootstrap_models_online_single(self, args):
-        b, boot_samples_idx_b, model_name, n, n1, Isrefit, saved_model_path, max_hours= args  
+        b, boot_samples_idx_b, model_name, n, n1, Isrefit, saved_model_path, max_hours = args  
         saved_model_path = self.final_result_path+'/saved_models/'+ model_name
         # print(f'        !!!!!Refitting {model_name}!!!!!')
         model = self.regressor
@@ -114,36 +118,12 @@ class prediction_interval():
         in_boot_sample_b = np.zeros((n), dtype=bool)
         # Do not use in_boot_sample_b = np.zeros((1, n), dtype=bool)
         # it will trigue an indexerror, because in_boot_sample_b[boot_samples_idx_b] = True and boot_samples_idx_b is a ID array
-        # if model_name != 'nn':
+       
         if Isrefit:
                 # no NN models
             if self.regressor == 'nnet':
-                pass
-                # strategy = tf.distribute.MirroredStrategy()
-                # num_gpus = strategy.num_replicas_in_sync
-                # gpu_id = b % num_gpus
-                # with tf.device(f'/gpu:{gpu_id}'):
-                #     with strategy.scope():
-                #         model = util.keras_mod(seed=12345)
-                #         opt = Adam(0.0005)
-                #         model.compile(loss='mean_squared_error', optimizer=opt)
-                #     callback = keras.callbacks.EarlyStopping(monitor='loss', patience=10)
-                #     bsize = int(0.1*len(np.unique(boot_samples_idx_b)))              
-                #     if model.name == 'NeuralNet':
-                #             # verbose definition here: https://keras.io/api/models/model_training_apis/#fit-method. 0 means silent
-                #             # NOTE: I do NOT want epoches to be too large, as we then tend to be too close to the actual Y_t, NOT f(X_t).
-                #             # Originally, epochs=1000, batch=100
-                #         model.fit(self.X_train[boot_samples_idx_b, :], self.Y_train[boot_samples_idx_b, ],
-                #                     epochs=250, batch_size=bsize, callbacks=[callback], verbose=0)
-                    
-                #     else: # 'rnet'
-                #         with strategy.scope():
-                #             # This is RNN, mainly have different shape and decrease epochs for faster computation
-                #             model.fit(self.X_train[boot_samples_idx_b, :], self.Y_train[boot_samples_idx_b, ],
-                #                         epochs=10, batch_size=bsize, callbacks=[callback], verbose=0)
-                # filename = 'No_'+str(b)+'th_boot'+'.h5'
-                # saved_model_file_name = os.path.join(saved_model_path, filename)
-                # model.save(saved_model_file_name)  
+                sys.exit('Error: nnet model is not supported in this function')
+ 
             else: # non-NN models
                 model = model.fit(self.X_train[boot_samples_idx_b, :],
                                         self.Y_train[boot_samples_idx_b, ])
@@ -154,20 +134,28 @@ class prediction_interval():
                     pickle.dump(model,f)    
         else: #Isrefit = False
             if self.regressor == 'nnet':
-            # else:
-                # saved_filename = 'No_'+str(b)+'th_boot'+'.h5'
-                # saved_model_file_name = os.path.join(saved_model_path, saved_filename)
-                # model = load_model(saved_model_file_name)    
-                pass  
+                sys.exit('Error: nnet model is not supported in this function')
             else:
                 saved_filename = 'No_'+str(b)+'th_boot'+'.pkl'
                 saved_model_file_name = os.path.join(saved_model_path, saved_filename)
                 with open(saved_model_file_name, 'rb') as f:
                     model = pickle.load(f) 
         # print(f'        saved_model_file_name: {saved_model_file_name}')
+        '''
+        predict(): This method typically returns a single prediction per sample, resulting in a 1D array of shape (n_samples,). 
+        For binary classification, this would contain either class labels (0 or 1).
+        predict_proba(): This method returns class probabilities, resulting in a 2D array of shape (n_samples, n_classes). 
+        For binary classification, the output would be of shape (n_samples, 2), 
+        where each sample gets a probability for both classes (e.g., [0.7, 0.3] for class 0 and class 1).
+        '''
         boot_predictions_b = model.predict(np.r_[self.X_train, self.X_predict]).flatten() # to one dimension
-        # the maximum cannot be larger than 49, if the hours2sepsis = 49, it means it is a nonseptic patient
-        boot_predictions_b = np.clip(boot_predictions_b, 0, max_hours+1)
+        # boot_predictions_b = model.predict_proba(np.r_[self.X_train, self.X_predict]).flatten() # to one dimension
+        # Solution: Use only the probability for class 1 (positive class)
+        boot_predictions_b = model.predict_proba(np.r_[self.X_train, self.X_predict])[:, 1].flatten()
+
+        # print(f'len(boot_predictions_{b})== {len(boot_predictions_b)}')
+
+        # boot_predictions_b = np.clip(boot_predictions_b, 0, max_hours)
         # IndexError: index 3861 is out of bounds for axis 0 with size 1
         in_boot_sample_b[boot_samples_idx_b] = True 
         # print(f'in_boot_sample_b: {in_boot_sample_b}')
@@ -192,9 +180,13 @@ class prediction_interval():
             ensemble_train_interval_center = None
         
         return i, ensemble_train_interval_center, resid_LOO, out_sample_predict, b_keep
+    
+
     def aggregation_bkeep_parallel(self, n, n1, in_boot_sample, boot_predictions):
         num_processors = multiprocessing.cpu_count()
-        num_processors_2_use =  max(1, num_processors - 4)
+        # leave at least 4 processors for other tasks
+        num_processors_2_use =  max(1, num_processors - 8)
+        # num_processors_2_use =  1
         pool = multiprocessing.Pool(processes=num_processors_2_use)
         results = pool.starmap(self.aggregation_bkeep, [(n, n1, i, in_boot_sample, boot_predictions) for i in range(n)])
         pool.close()
@@ -245,6 +237,7 @@ class prediction_interval():
             num_processors = multiprocessing.cpu_count()
             num_processors_2_use =  max(1, num_processors - 4)
             pool = multiprocessing.Pool(processes = num_processors_2_use)
+            # b, boot_samples_idx_b, model_name, n, n1, Isrefit, saved_model_path, max_hours = args
             args_list = [(b, boot_samples_idx[b], model_name, n, n1, Isrefit, saved_model_path, max_hours) for b in range(B)]
             results = pool.map(self.fit_bootstrap_models_online_single, args_list)
             pool.close()
@@ -266,11 +259,14 @@ class prediction_interval():
         
         if len(self.Ensemble_online_resid) ==0:
             print(f'len(self.Ensemble_online_resid)  == {self.Ensemble_online_resid}')
+            print('Error: Ensemble_online_resid is empty!!!')
             sys.exit()
+
             
         else:
-            # print(f'len(self.Ensemble_online_resid)  == {self.Ensemble_online_resid}')
+            print(f'len(self.Ensemble_online_resid)  == {len(self.Ensemble_online_resid)}')
             # print(f'self.Ensemble_online_resid=={self.Ensemble_online_resid}')
+            # sys.exit()
             print(f'###Max LOO training residual is {np.max(self.Ensemble_online_resid)}')
             print(f'###Min LOO training residual is {np.min(self.Ensemble_online_resid)}')
             print(f'        There are #{num_null_bkeep}/{n} training sample that do not have LOO bootstraps!!!')
@@ -404,7 +400,8 @@ class prediction_interval():
               
             # np.r_: Translates slice objects to concatenation along the first axis.
             # calculate mu_hat_b for the whole dataset for both trainning and predicting dataset
-            boot_predictions[b] = model.predict(np.r_[self.X_train, self.X_predict]).flatten() # to one dimension
+            # boot_predictions[b] = model.predict(np.r_[self.X_train, self.X_predict]).flatten() # to one dimension
+            boot_predictions[b] = model.predict_proba(np.r_[self.X_train, self.X_predict]).flatten() # to one dimension
             in_boot_sample[b, boot_samples_idx[b]] = True
         print(f'        ///Finish Fitting {B} Bootstrap for "{model_name}", took {time.time()-start} secs.///')
 
@@ -454,7 +451,8 @@ class prediction_interval():
         # Then we calculate the means of Y_predict for each Y_predict 
         sorted_out_sample_predict = out_sample_predict.mean(axis=0)  # length n1 
         # limit the predictions to [0, 500]
-        sorted_out_sample_predict = [max_hours+1 if y > max_hours+1  else y for y in sorted_out_sample_predict]
+
+        # sorted_out_sample_predict = [max_hours+1 if y > max_hours+1  else y for y in sorted_out_sample_predict]
         sorted_out_sample_predict = [0 if y <0 else y for y in sorted_out_sample_predict]
         # print(f'$$$Size of sorted_out_sample_predict: {sorted_out_sample_predict.shape}')
         # It is the similar way as how we get the resid_loo, the only difference is 
@@ -479,12 +477,12 @@ class prediction_interval():
                     # note, training data already takes out missing values, so doing it is fine
                     resid_out_sample[0] = self.Ensemble_online_resid[-1]
         # len(Ensemble_online_resid)  == n+n1
-        self.Ensemble_online_resid = np.append(
-            self.Ensemble_online_resid, resid_out_sample)
+        self.Ensemble_online_resid = np.append(self.Ensemble_online_resid, resid_out_sample)
         print(f'        ~~~~~~Finish Computing LOO residuals for "{model_name}", took {time.time()-start} secs.~~')
-        # print(f'        ###Max LOO test residual is {np.max(self.Ensemble_online_resid[n:])}')
-        # print(f'        ###Min LOO test residual is {np.min(self.Ensemble_online_resid[n:])}')
-        print('\n')
+        print(f'        ###Max LOO test residual is {np.max(self.Ensemble_online_resid[n:])}')
+        print(f'        ###Min LOO test residual is {np.min(self.Ensemble_online_resid[n:])}')
+       
+        print('\n\n')
         # sorted_out_sample_predict = out_sample_predict.mean(axis=0)  # length n1
         # self.Ensemble_pred_interval_centers is the predicted label using LOO techniques
         self.Ensemble_pred_interval_centers = sorted_out_sample_predict
@@ -539,227 +537,19 @@ class prediction_interval():
         self.Ensemble_pred_interval_ends = PIs_Ensemble
         # print(time.time()-start)
         return PIs_Ensemble
-
-
-    '''
-        Jackknife+-after-bootstrap (used in Figure 8)
-    '''
-
-    def fit_bootstrap_models(self, B):
-        '''
-          Train B bootstrap estimators and calculate LOO predictions on X_train and X_predict
-        '''
-        n = len(self.X_train)
-        boot_samples_idx = util.generate_bootstrap_samples(n, n, B)
-        n1 = len(np.r_[self.X_train, self.X_predict])
-        # P holds the predictions from individual bootstrap estimators
-        predictions = np.zeros((B, n1), dtype=float)
-        for b in range(B):
-            model = self.regressor
-            if self.regressor.__class__.__name__ == 'Sequential':
-                callback = keras.callbacks.EarlyStopping(monitor='loss', patience=10)
-                if self.regressor.name == 'NeuralNet':
-                    model.fit(self.X_train[boot_samples_idx[b], :], self.Y_train[boot_samples_idx[b], ],
-                              epochs=1000, batch_size=100, callbacks=[callback], verbose=0)
-                else:
-                    # This is RNN, mainly have different shape and decrease epochs
-                    model.fit(self.X_train[boot_samples_idx[b], :], self.Y_train[boot_samples_idx[b], ],
-                              epochs=100, batch_size=100, callbacks=[callback], verbose=0)
-            else:
-                model = model.fit(self.X_train[boot_samples_idx[b], :],
-                                  self.Y_train[boot_samples_idx[b], ])
-            predictions[b] = model.predict(np.r_[self.X_train, self.X_predict]).flatten()
-        self.JaB_boot_samples_idx = boot_samples_idx
-        self.JaB_boot_predictions = predictions
-
-    def compute_PIs_JaB(self, alpha):
-        '''
-        Using mean aggregation
-        '''
-        n = len(self.X_train)
-        n1 = len(self.X_predict)
-        boot_samples_idx = self.JaB_boot_samples_idx
-        boot_predictions = self.JaB_boot_predictions
-        B = len(boot_predictions)
-        in_boot_sample = np.zeros((B, n), dtype=bool)
-        for b in range(len(in_boot_sample)):
-            in_boot_sample[b, boot_samples_idx[b]] = True
-        resids_LOO = np.zeros(n)
-        muh_LOO_vals_testpoint = np.zeros((n, n1))
-        for i in range(n):
-            b_keep = np.argwhere(~(in_boot_sample[:, i])).reshape(-1)
-            if(len(b_keep) > 0):
-                resids_LOO[i] = np.abs(self.Y_train[i] - boot_predictions[b_keep, i].mean())
-                muh_LOO_vals_testpoint[i] = boot_predictions[b_keep, n:].mean(0)
-            else:  # if aggregating an empty set of models, predict zero everywhere
-                resids_LOO[i] = np.abs(self.Y_train[i])
-                muh_LOO_vals_testpoint[i] = np.zeros(n1)
-        ind_q = (np.ceil((1-alpha)*(n+1))).astype(int)
-        return pd.DataFrame(
-            np.c_[np.sort(muh_LOO_vals_testpoint.T - resids_LOO, axis=1).T[-ind_q],
-                  np.sort(muh_LOO_vals_testpoint.T + resids_LOO, axis=1).T[ind_q-1]],
-            columns=['lower', 'upper'])
-
-    '''
-        Split/Inductive Conformal Prediction
-    '''
-    def compute_PIs_ICP(self, alpha, l):
-        n = len(self.X_train)
-        # each trainig sample is unique in the proper_train set
-        # without replacement
-        proper_train = np.random.choice(n, l, replace=False)
-        X_train = self.X_train[proper_train, :]
-        Y_train = self.Y_train[proper_train]
-        # the calibration set is the rest 50% of the training dataset
-        # the calibration set is used to calculate the nonconformalty scores
-        X_calibrate = np.delete(self.X_train, proper_train, axis=0)
-        Y_calibrate = np.delete(self.Y_train, proper_train)
-
-        model = self.regressor
-        if self.regressor.__class__.__name__ == 'Sequential':
-            callback = keras.callbacks.EarlyStopping(monitor='loss', patience=10)
-            if self.regressor.name == 'NeuralNet':
-                model.fit(self.X_train, self.Y_train,
-                          epochs=1000, batch_size=100, callbacks=[callback], verbose=0)
-            else:
-                # This is RNN, mainly have different epochs
-                model.fit(X_train, Y_train,
-                          epochs=100, batch_size=100, callbacks=[callback], verbose=0)
-            callback = keras.callbacks.EarlyStopping(monitor='loss', patience=10)
-            model.fit(X_train, Y_train,
-                      epochs=1000, batch_size=100, callbacks=[callback], verbose=0)
-            self.ICP_fitted_func.append(model) # it only store 1 fitted ICP func.
-        else:
-            self.ICP_fitted_func.append(self.regressor.fit(X_train, Y_train))
-        predictions_calibrate = self.ICP_fitted_func[0].predict(X_calibrate).flatten()
-        # the residuals are calculated based on naive difference between the predicted velue from fiited model and the true label.
-        calibrate_residuals = np.abs(Y_calibrate-predictions_calibrate)
-        # predict the testing/prediction sets using the fitted models
-        out_sample_predict = self.ICP_fitted_func[0].predict(self.X_predict).flatten()
-        # the residuals are from the calibration residuals
-        
-        self.ICP_resid = np.append(
-            self.ICP_resid, calibrate_residuals)  # length n-l: no. training - no.proper training
-        ind_q = math.ceil(100*(1-alpha))  # 1-alpha%
-        # axis = -1: the last axis
-        width = np.abs(np.percentile(self.ICP_resid, ind_q, axis=-1).T)
-        # the width is fixed for every entry
-        PIs_ICP = pd.DataFrame(np.c_[out_sample_predict-width,
-                                     out_sample_predict+width], columns=['lower', 'upper'])
-        # print(time.time()-start)
-        return PIs_ICP
-
-    '''
-        Weighted Conformal Prediction
-    '''
-
-    def compute_PIs_Weighted_ICP(self, alpha, l):
-        '''The residuals are weighted by fitting a logistic regression on
-           (X_calibrate, C=0) \cup (X_predict, C=1'''
-        n = len(self.X_train)
-        n1 = len(self.X_predict)
-        proper_train = np.random.choice(n, l, replace=False)
-        X_train = self.X_train[proper_train, :]
-        Y_train = self.Y_train[proper_train]
-        X_calibrate = np.delete(self.X_train, proper_train, axis=0)
-        Y_calibrate = np.delete(self.Y_train, proper_train)
-        # Main difference from ICP
-        C_calibrate = np.zeros(n-l)
-        C_predict = np.ones(n1)
-        X_weight = np.r_[X_calibrate, self.X_predict]
-        C_weight = np.r_[C_calibrate, C_predict]
-        if len(X_weight.shape) > 2:
-            # Reshape for RNN
-            tot, _, shap = X_weight.shape
-            X_weight = X_weight.reshape((tot, shap))
-        clf = LogisticRegression(random_state=0).fit(X_weight, C_weight)
-        Prob = clf.predict_proba(X_weight)
-        Weights = Prob[:, 1]/(1-Prob[:, 0])  # n-l+n1 in length
-        model = self.regressor
-        if self.regressor.__class__.__name__ == 'Sequential':
-            callback = keras.callbacks.EarlyStopping(monitor='loss', patience=10)
-            if self.regressor.name == 'NeuralNet':
-                model.fit(X_train, Y_train,
-                          epochs=1000, batch_size=100, callbacks=[callback], verbose=0)
-            else:
-                # This is RNN, mainly have different epochs
-                model.fit(X_train, Y_train,
-                          epochs=100, batch_size=100, callbacks=[callback], verbose=0)
-            self.ICP_fitted_func.append(model)
-        else:
-            self.ICP_fitted_func.append(self.regressor.fit(X_train, Y_train))
-        predictions_calibrate = self.ICP_fitted_func[0].predict(X_calibrate).flatten()
-        calibrate_residuals = np.abs(Y_calibrate-predictions_calibrate)
-        out_sample_predict = self.ICP_fitted_func[0].predict(self.X_predict).flatten()
-        self.WeightCP_online_resid = np.append(
-            self.WeightCP_online_resid, calibrate_residuals)  # length n-1
-        width = np.abs(util.weighted_quantile(values=self.WeightCP_online_resid, quantiles=1-alpha,
-                                              sample_weight=Weights[:n-l]))
-        PIs_ICP = pd.DataFrame(np.c_[out_sample_predict-width,
-                                     out_sample_predict+width], columns=['lower', 'upper'])
-        # print(time.time()-start)
-        return PIs_ICP
-
+ 
+ 
+ 
     
-        '''
-            Use train_size to form model and the rest to be out-sample-prediction
-        '''
-        # Concatenate training and testing together
-        data = pd.DataFrame(np.r_[self.Y_train, self.Y_predict])
-        # Train model
-        train_size = len(self.Y_train)
-        if name == 'ARIMA(10,1,10)':
-            training_mod = SARIMAX(data[:train_size], order=(10, 1, 10))
-            mod = SARIMAX(data, order=(10, 1, 10))
-        if name == 'ExpSmoothing':
-            training_mod = ExponentialSmoothing(
-                data[:train_size], trend=True, damped_trend=True, seasonal=24)
-            mod = ExponentialSmoothing(
-                data, trend=True, damped_trend=True, seasonal=24)
-        if name == 'DynamicFactor':
-            training_mod = DynamicFactorMQ(data[:train_size])
-            mod = DynamicFactorMQ(data)
-        print('training')
-        training_res = training_mod.fit(disp=0)
-        print('training done')
-        # Use in full model
-        res = mod.filter(training_res.params)
-        # Get the insample prediction interval (which is outsample prediction interval)
-        pred = res.get_prediction(start=data.index[train_size], end=data.index[-1])
-        pred_int = pred.conf_int(alpha=alpha)  # prediction interval
-        PIs_res = pd.DataFrame(
-            np.c_[pred_int.iloc[:, 0], pred_int.iloc[:, 1]], columns=['lower', 'upper'])
-        return(PIs_res)
+ 
 
-    def Winkler_score(self, PIs_ls, data_name, methods_name, alpha):
-        # Examine if each test point is in the intervals
-        # If in, then score += width of intervals
-        # If not,
-        # If true y falls under lower end, score += width + 2*(lower end-true y)/alpha
-        # If true y lies above upper end, score += width + 2*(true y-upper end)/alpha
-        n1 = len(self.Y_predict)
-        score_ls = []
-        for i in range(len(methods_name)):
-            score = 0
-            for j in range(n1):
-                upper = PIs_ls[i].loc[j, 'upper']
-                lower = PIs_ls[i].loc[j, 'lower']
-                width = upper-lower
-                truth = self.Y_predict[j]
-                if (truth >= lower) & (truth <= upper):
-                    score += width
-                elif truth < lower:
-                    score += width + 2 * (lower-truth)/alpha
-                else:
-                    score += width + 2 * (truth-upper)/alpha
-            score_ls.append(score)
-        return(score_ls)
+ 
 
     '''
         All together
     '''
 # main function
-    def run_experiments(self, alpha, stride, data_name, itrial, true_Y_predict=[], get_plots=False, none_CP=False, methods=['Ensemble', 'ICP', 'Weighted_ICP'], max_hours=48):
+    def run_experiments(self, alpha, stride, data_name, itrial, true_Y_predict=[], get_plots=False, none_CP=False, methods=['Ensemble', 'ICP', 'Weighted_ICP'], max_hours=480):
         '''
         NOTE: I added a "true_Y_predict" option, which will be used for calibrating coverage under missing data
             In particular, this is needed when the Y_predict we use for training is NOT the same as true Y_predict
@@ -813,34 +603,50 @@ class prediction_interval():
                     PI = eval(f'compute_PIs_{method}({alpha},{l})',
                               globals(), {k: getattr(self, k) for k in dir(self)})
                 # limit the interval to [0, 500]
-                PI['lower'] = [max_hours+1 if y > max_hours+1 else y for y in PI['lower']]
-                PI['lower'] = [0 if y<0 else y for y in PI['lower']]
-                PI['upper'] = [max_hours+1 if y > max_hours+1 else y for y in PI['upper']]
-                PI['upper'] = [0 if y<0 else y for y in PI['upper']] 
+                # PI['lower'] = [max_hours+1 if y > max_hours+1 else y for y in PI['lower']]
+                # PI['lower'] = [0 if y<0 else y for y in PI['lower']]
+                # PI['upper'] = [max_hours+1 if y > max_hours+1 else y for y in PI['upper']]
+                # PI['upper'] = [0 if y<0 else y for y in PI['upper']] 
                 PI['method'] = method 
                 PI['alpha'] = alpha    
                 PI['itrial'] = itrial
 
                 PIs.append(PI)
-                # evaluate the coverage of all testing dataset
-                mean_coverage = ((np.array(PI['lower']) <= self.Y_predict) & (
-                    np.array(PI['upper']) >= self.Y_predict)).mean()
-                # skip this case
-                if len(true_Y_predict) > 0:
-                    mean_coverage = ((np.array(PI['lower']) <= true_Y_predict) & (
-                        np.array(PI['upper']) >= true_Y_predict)).mean()
-                print(f'Average Coverage is {mean_coverage}')
+
                 # width is based on the average value
                 mean_width = (PI['upper'] - PI['lower']).mean()
                 lower_mean = PI['lower'].mean()
                 upper_mean = PI['upper'].mean()
                 print(f'Average Width is {mean_width}')
+                # evaluate the coverage of all testing dataset
+                
+                print(f'len(PI[lower]): {len(PI["lower"])}')
+ 
+
+
+
+
+                # mean_coverage = ((np.array(PI['lower']) <= self.Y_predict) & (
+                #     np.array(PI['upper']) >= self.Y_predict)).mean()
+
+                coverage_0 = (self.Y_predict ==0) & (np.array(PI['lower']) <= 0.5)
+                coverage_1 = (self.Y_predict ==1) & (np.array(PI['upper']) >=0.5)
+                coverage = coverage_0 | coverage_1
+                mean_coverage = coverage.mean()
+                # skip this case
+                # if len(true_Y_predict) > 0:
+                #     mean_coverage = ((np.array(PI['lower']) <= true_Y_predict) & (
+                #         np.array(PI['upper']) >= true_Y_predict)).mean()
+                print(f'##########                      Average Coverage is {mean_coverage}')
+
+
                 print('-------------------------------------')
                 # add to the end of the dataframe
                 # the results contains the average value, but what I want might be the accurate confidence interval on an hourly basis?
                 results.loc[len(results)] = [itrial, data_name,
                                              self.regressor.__class__.__name__, method, train_size, mean_coverage, mean_width, lower_mean, upper_mean]               
             PIs_df = pd.concat(PIs, axis=1)
+            # print(results)
         return PIs_df, results 
         # return PIs_df  
 

@@ -93,6 +93,8 @@ class prediction_interval():
             # print(f'tmp_data.contexts.shape:{tmp_data.contexts.shape}')
             # print(f'tmp_data.rewards.shape:{tmp_data.rewards.shape}')
             
+
+            # use the train() herein
             model.train(tmp_data, model.hparams.num_steps)
             neuralbanditmodel_type = model.name.split('_')
             if 'nn2' in neuralbanditmodel_type:

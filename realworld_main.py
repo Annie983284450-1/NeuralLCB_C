@@ -94,7 +94,8 @@ help_text: string describes the flag
 flags.DEFINE_string('algo_group', 'ApproxNeuraLCB_cp', 'conformal prediction/neural')
 flags.DEFINE_string('data_type', 'sepsis', 'Dataset to sample from')
 flags.DEFINE_string('policy', 'eps-greedy', 'Offline policy, eps-greedy/subset')
- 
+flags.DEFINE_string('group', 'septic', 'Testing data group')
+
 
 
 flags.DEFINE_integer('num_train_sepsis_pat_win', 2000, 'Number of septic windows for training.') 
@@ -134,10 +135,10 @@ flags.DEFINE_float('lambd0', 0.1, 'minimum eigenvalue')
 flags.DEFINE_float('lambd', 1e-4, 'regularization parameter')
 
 
-flags.DEFINE_boolean('is_window', True, 'to use the window sized data or not?') 
-flags.DEFINE_boolean('verbose', True, 'verbose') 
-flags.DEFINE_boolean('debug', True, 'debug') 
-flags.DEFINE_boolean('normalize', False, 'normalize the regret')
+flags.DEFINE_bool('is_window', True, 'to use the window sized data or not?') 
+flags.DEFINE_bool('verbose', True, 'verbose') 
+flags.DEFINE_bool('debug', True, 'debug') 
+flags.DEFINE_bool('normalize', False, 'normalize the regret')
 flags.DEFINE_bool('data_rand', True, 'Where randomly sample a data batch or  use the latest samples in the buffer' )
 
 
@@ -182,19 +183,6 @@ def main(unused_argv):
         # so actually this is returning a class not a string
         DataClass = dataclasses[FLAGS.data_type]
         if FLAGS.data_type == 'sepsis':
-        # class SepsisData(object):
-        #     def __init__(self,  
-        #                 is_window,
-        #                 num_train_sepsis_pat_win,
-        #                 num_test_pat_septic_win,
-        #                 num_contexts, 
-        #                 num_test_contexts,         
-        #                 num_actions=2, 
-        #                 noise_std=0.01,
-        #                 pi='eps-greedy', 
-        #                 eps=0.1, 
-        #                 subset_r=0.5
-        #                 ):
             data = DataClass(                
                         is_window = FLAGS.is_window,
                         num_train_sepsis_pat_win= FLAGS.num_train_sepsis_pat_win,
@@ -207,7 +195,8 @@ def main(unused_argv):
                         noise_std = FLAGS.noise_std,
                         pi = FLAGS.policy, 
                         eps = FLAGS.eps, 
-                        subset_r = FLAGS.subset_r) 
+                        subset_r = FLAGS.subset_r,
+                        group = FLAGS.group) 
         else:
 
             data = DataClass(
@@ -260,21 +249,21 @@ def main(unused_argv):
         # 'policy_prefix', policy_prefix
     })
 
-    lin_hparams = edict(
-        {
-            'context_dim': hparams.context_dim, 
-            'num_actions': hparams.num_actions, 
-            'lambd0': hparams.lambd0, 
-            'beta': hparams.beta, 
-            'rbf_sigma': FLAGS.rbf_sigma, # 0.1, 1, 10
-            'max_num_sample': 1000 
-        }
-    )
+    # lin_hparams = edict(
+    #     {
+    #         'context_dim': hparams.context_dim, 
+    #         'num_actions': hparams.num_actions, 
+    #         'lambd0': hparams.lambd0, 
+    #         'beta': hparams.beta, 
+    #         'rbf_sigma': FLAGS.rbf_sigma, # 0.1, 1, 10
+    #         'max_num_sample': 1000 
+    #     }
+    # )
 
 
 
-    data_prefix = '{}_d={}_a={}_pi={}_std={}_testfreq={}'.format(FLAGS.data_type, \
-            context_dim, num_actions, policy_prefix, data.noise_std,FLAGS.test_freq)
+    data_prefix = '{}_d={}_a={}_pi={}_std={}_testfreq={}'\
+        .format(FLAGS.data_type, context_dim, num_actions, policy_prefix, data.noise_std,FLAGS.test_freq)
 
     # res_dir = os.path.join('results', data_prefix) 
     sim = 0
@@ -282,7 +271,13 @@ def main(unused_argv):
     # res_dir = os.path.join(f'../neuralcb_results/sim{sim}/trainSepticWins_{FLAGS.num_train_sepsis_pat_win}_testSepticWins_{FLAGS.num_test_pat_septic_win}/', data_prefix) 
 
     # res_dir = os.path.join(f'/storage/home/hcoda1/6/azhou60/scratch/neuralcb_results/sim{sim}/trainSepticWins_{FLAGS.num_train_sepsis_pat_win}_testSepticWins_{FLAGS.num_test_pat_septic_win}/', data_prefix) 
-    res_dir = os.path.join(f'/storage/home/hcoda1/6/azhou60/scratch/neuralcb_results/sim{sim}/trainSepticWins_{FLAGS.num_train_sepsis_pat_win}_testSepticWins_{FLAGS.num_test_pat_septic_win}/', data_prefix) 
+    # res_dir = os.path.join(f'/storage/home/hcoda1/6/azhou60/scratch/neuralcb_results/sim{sim}/trainSepticWins_{FLAGS.num_train_sepsis_pat_win}_testSepticWins_{FLAGS.num_test_pat_septic_win}/', data_prefix) 
+    res_dir = os.path.join(
+        f'/storage/home/hcoda1/6/azhou60/scratch/neuralcb_results/sim{sim}/'
+        f'trainSepticWins_{FLAGS.num_train_sepsis_pat_win}_'
+        f'testSepticWins_{FLAGS.num_test_pat_septic_win}/',
+        data_prefix
+    )
 
 
     flags.DEFINE_string('res_dir', res_dir, 'final result path for each simulation')
@@ -368,6 +363,7 @@ def main(unused_argv):
             f"_layern={hparams.layer_n}_buffer={hparams.buffer_s}_bs={hparams.batch_size}"
             f"_lr={hparams.lr}_beta={hparams.beta}_lambda={hparams.lambd}_lambda0={hparams.lambd0}"
             f"_B={hparams.B}"
+            f"_G={FLAGS.group}"
         )
         # nohup_output = res_dir+f'/trainwin_{FLAGS.num_train_sepsis_pat_win}test_win_{FLAGS.num_test_pat_septic_win}_{FLAGS.algo_group}_B={FLAGS.B}_log.txt'
         if not os.path.exists(os.path.join(res_dir, algo_prefix)):
@@ -387,6 +383,7 @@ def main(unused_argv):
             f"{FLAGS.algo_group}-gridsearch_epochs={hparams.num_steps}_m={min(hparams.layer_sizes)}"
             f"_layern={hparams.layer_n}_buffer={hparams.buffer_s}_bs={hparams.batch_size}"
             f"_lr={hparams.lr}_beta={hparams.beta}_lambda={hparams.lambd}_lambda0={hparams.lambd0}"
+            f"_G={hparams.group}"
         )
         # nohup_output = res_dir+f'/trainwin_{FLAGS.num_train_sepsis_pat_win}test_win_{FLAGS.num_test_pat_septic_win}_{FLAGS.algo_group}_B={hparams.B}log.txt'
         if not os.path.exists(os.path.join(res_dir, algo_prefix)):
@@ -395,7 +392,7 @@ def main(unused_argv):
     else:
         raise ValueError(f"Unknown algo_group: {FLAGS.algo_group}")
     
-    file_name = os.path.join(res_dir, algo_prefix) + '.npz' 
+    file_name = os.path.join(res_dir, algo_prefix) + '/' + algo_prefix+'.npz' 
     
 
     original_stdout = sys.stdout

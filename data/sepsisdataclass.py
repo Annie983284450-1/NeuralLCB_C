@@ -139,7 +139,8 @@ class SepsisData(object):
                 noise_std=0.01,
                 pi='eps-greedy', 
                 eps=0.1, 
-                subset_r=0.5
+                subset_r=0.5,
+                group = 'septic'
                 ):
         """
         Initialize the Sepsis dataset for contextual bandit setting.
@@ -162,6 +163,7 @@ class SepsisData(object):
         self.subset_r = subset_r
         self.num_train_sepsis_pat_win = num_train_sepsis_pat_win
         self.num_test_pat_septic_win = num_test_pat_septic_win
+        self.group = group
 
         # Is_window = True
         if is_window:
@@ -198,7 +200,16 @@ class SepsisData(object):
             train_wins = []
     
             train_wins = sepsis_train_wins + nosepsis_train_wins
-            test_wins = test_septic_wins + test_noseptic_wins
+
+            
+            if group == None:
+                test_wins = test_septic_wins + test_noseptic_wins
+            elif group == 'septic':
+                test_wins = test_septic_wins  
+            elif group == 'nonseptic':
+                test_wins = test_noseptic_wins
+            else:
+                sys.exit('Wrong Test Set Group!!!')
 
             np.random.seed(12345)  # Set a seed for reproducibility
             # shuffle the dataset

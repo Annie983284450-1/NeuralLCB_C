@@ -24,6 +24,9 @@ parser.add_argument('--gpus', nargs='+', type=int, default=[0], help='gpus indic
 
  
 parser.add_argument('--mode', type=str, default=None, help='hyper mode')
+parser.add_argument('--G', type=str, default='septic', help='data group')
+parser.add_argument('--test', type=int, default=0, help='data group')
+
 
 args = parser.parse_args()
 
@@ -178,11 +181,12 @@ def multi_gpu_launcher_linux_mac(commands,gpus,models_per_gpu):
             p.wait()
 
  
-def create_commands(data_type='sepsis', algo_group='ApproxNeuraLCB_cp', num_sim=1, policy='eps-greedy',hyper_mode = None):
-    test = False
+def create_commands(data_type='sepsis', algo_group='ApproxNeuraLCB_cp', num_sim=1, policy='eps-greedy',hyper_mode = None, group = 'septic', test = False):
+    # test = False
     # test = True
     
     # hyper_mode = 'A2:beta_noise005_tune'
+    # group = 'septic'
 
 
     if hyper_mode == 'full':
@@ -190,7 +194,6 @@ def create_commands(data_type='sepsis', algo_group='ApproxNeuraLCB_cp', num_sim=
         lr_space = [1e-4,1e-3]
         train_mode_space = [(1,1,1),(50,100,-1)]
         # beta_space = [0.01, 0.05, 1, 5,10] #[0.01, 0.05, 1,5,10]
-
         beta_space = [0.01, 0.05, 1, 5,10]
         rbfsigma_space = [1] #[0.1, 1,10]
         noise_std_space = [0.05, 0.1]
@@ -212,7 +215,6 @@ def create_commands(data_type='sepsis', algo_group='ApproxNeuraLCB_cp', num_sim=
         beta_space = [0.01]
         rbfsigma_space = [1] #[0.1, 1,10]
         noise_std_space = [0.1]
-
     elif hyper_mode == 'S3':  
         lr_space = [1e-3]
         train_mode_space = [(32,100,-1)]
@@ -232,74 +234,136 @@ def create_commands(data_type='sepsis', algo_group='ApproxNeuraLCB_cp', num_sim=
         rbfsigma_space = [1] #[0.1, 1,10]
         noise_std_space = [0.1]
 
-
-
-    elif hyper_mode == 'B1':  
+    elif hyper_mode == 'S6':   
         lr_space = [1e-4]
         train_mode_space = [(32,100,-1)]
-        beta_space = [0.01, 1, 5]
+        beta_space = [1]
         rbfsigma_space = [1] #[0.1, 1,10]
         noise_std_space = [0.1]
-    elif hyper_mode == 'B2': # beta_noise005_tune
+    elif hyper_mode == 'S7':   
         lr_space = [1e-4]
         train_mode_space = [(32,100,-1)]
-        beta_space = [0.01, 1, 5]
+        beta_space = [5]
         rbfsigma_space = [1] 
-        noise_std_space = [0.05] #
-    elif hyper_mode == 'A1': # :beta_noise01_tune
-        lr_space = [1e-3]
-        train_mode_space = [(32,100,-1)]
-        beta_space = [0.01, 1, 5]
-        rbfsigma_space = [1]  
-        noise_std_space = [0.1] #
-    elif hyper_mode == 'A2': # beta_noise005_tune
-        lr_space = [1e-3]
-        train_mode_space = [(32,100,-1)]
-        beta_space = [0.01, 1, 5]
-        rbfsigma_space = [1] 
-        noise_std_space = [0.05] #
+        noise_std_space = [0.1]
+
     else:
         sys.exit('Wrong Hyper mode!! Inpuy hyper mode!!')
     commands = []
-    if algo_group == 'ApproxNeuraLCB_cp':
+    if algo_group in ['ApproxNeuraLCB_cp','ApproxNeuralLinLCBV2_cp', 'ApproxNeuralLinLCBJointModel_cp']:
         for lr in lr_space:
             for batch_size,num_steps,buffer_s in train_mode_space:
                 for beta in beta_space:
                     for noise_std in noise_std_space:
-                        if test:
-                            commands.append('python realworld_main.py --num_train_sepsis_pat_win 5 --num_test_pat_septic_win 1 --data_type {} --algo_group {} --num_sim {} --batch_size {} --num_steps {} --buffer_s {} --beta {} --lr {} --policy {} --noise_std {}'.format(data_type,algo_group,num_sim,batch_size,num_steps,buffer_s,beta,lr,policy, noise_std))
-
+                        if test == 1:
+                            # commands.append('python realworld_main.py --num_train_sepsis_pat_win 5 --num_test_pat_septic_win 1 --data_type {} --algo_group {} --num_sim {} --batch_size {} --num_steps {} --buffer_s {} --beta {} --lr {} --policy {} --noise_std {}'.format(data_type,algo_group,num_sim,batch_size,num_steps,buffer_s,beta,lr,policy, noise_std))
+                            commands.append(
+                                f'python realworld_main.py '
+                                f'--num_train_sepsis_pat_win 5 '
+                                f'--num_test_pat_septic_win 1 '
+                                f'--data_type {data_type} '
+                                f'--algo_group {algo_group} '
+                                f'--num_sim {num_sim} '
+                                f'--batch_size {batch_size} '
+                                f'--num_steps {num_steps} '
+                                f'--buffer_s {buffer_s} '
+                                f'--beta {beta} '
+                                f'--lr {lr} '
+                                f'--policy {policy} '
+                                f'--noise_std {noise_std} '
+                                f'--group {group}'
+                            )
                         else:
-                            commands.append('python realworld_main.py --data_type {} --algo_group {} --num_sim {} --batch_size {} --num_steps {} --buffer_s {} --beta {} --lr {} --policy {} --noise_std {}'.format(data_type,algo_group,num_sim,batch_size,num_steps,buffer_s,beta,lr,policy, noise_std))
+                            # commands.append('python realworld_main.py --data_type {} --algo_group {} --num_sim {} --batch_size {} --num_steps {} --buffer_s {} --beta {} --lr {} --policy {} --noise_std {}'.format(data_type,algo_group,num_sim,batch_size,num_steps,buffer_s,beta,lr,policy, noise_std))
+                    
+                            commands.append(
+                                f'python realworld_main.py '
+                                f'--data_type {data_type} '
+                                f'--algo_group {algo_group} '
+                                f'--num_sim {num_sim} '
+                                f'--batch_size {batch_size} '
+                                f'--num_steps {num_steps} '
+                                f'--buffer_s {buffer_s} '
+                                f'--beta {beta} '
+                                f'--lr {lr} '
+                                f'--policy {policy} '
+                                f'--noise_std {noise_std} '
+                                f'--group {group}'
+                            )
                     # commands.append('python realworld_main.py --data_type {} --algo_group {} --num_sim {}  --beta {} --policy {}'.format(data_type,algo_group,num_sim,beta,policy))
                     # commands.append('python realworld_main.py --data_type {} --algo_group {} --num_sim {} --batch_size {} --num_steps {} --buffer_s {} --lr {} --policy {}'.format(data_type,algo_group,num_sim,batch_size,num_steps,buffer_s,lr,policy))
 
-    elif algo_group == 'ApproxNeuralLinLCBV2_cp' or 'ApproxNeuralLinLCBJointModel_cp':
-        for beta in beta_space:
-            for noise_std in noise_std_space:
-                if test: 
-                    commands.append('python realworld_main.py --num_train_sepsis_pat_win 5 --num_test_pat_septic_win 1 --data_type {} --algo_group {} --num_sim {}  --beta {} --policy {} --noise_std {}'.format(data_type,algo_group,num_sim,beta,policy, noise_std))
-                else:
-                    commands.append('python realworld_main.py --data_type {} --algo_group {} --num_sim {}  --beta {} --policy {} --noise_std {}'.format(data_type,algo_group,num_sim,beta,policy, noise_std))
+    # elif algo_group == 'ApproxNeuralLinLCBV2_cp' or 'ApproxNeuralLinLCBJointModel_cp': # no learning rate
+    #     for lr in lr_space:
+    #         for beta in beta_space: # no batch_size. cause they do not use train()
+    #             for noise_std in noise_std_space:
+    #                 if test: 
+    #                     # commands.append('python realworld_main.py --num_train_sepsis_pat_win 5 --num_test_pat_septic_win 1 --data_type {} --algo_group {} --num_sim {}  --beta {} --policy {} --noise_std {}'.format(data_type,algo_group,num_sim,beta,policy, noise_std))
+    #                     commands.append(
+    #                         f'python realworld_main.py '
+    #                         f'--num_train_sepsis_pat_win 5 '
+    #                         f'--num_test_pat_septic_win 1 '
+    #                         f'--data_type {data_type} '
+    #                         f'--algo_group {algo_group} '
+    #                         f'--num_sim {num_sim} '
+    #                         f'--beta {beta} '
+    #                         f'--lr {lr} '
+    #                         f'--policy {policy} '
+    #                         f'--noise_std {noise_std} '
+    #                         f'--group {group}'
+    #                         )
 
-    
-    elif algo_group == 'NeuralGreedyV2_cp':
+    #                 else:
+    #                     # commands.append('python realworld_main.py --data_type {} --algo_group {} --num_sim {}  --beta {} --policy {} --noise_std {}'.format(data_type,algo_group,num_sim,beta,policy, noise_std))
+
+    #                     commands.append(
+    #                     f'python realworld_main.py '
+    #                     f'--data_type {data_type} '
+    #                     f'--algo_group {algo_group} '
+    #                     f'--num_sim {num_sim} '
+    #                     f'--beta {beta} '
+    #                     f'--lr {lr} '
+    #                     f'--policy {policy} '
+    #                     f'--noise_std {noise_std} '
+    #                     f'--group {group}'
+    #                 )
+
+    elif algo_group == 'NeuralGreedyV2_cp': # 'NeuralGreedyV2_cp' does not have beta
         for lr in lr_space:
             for batch_size,num_steps,buffer_s in train_mode_space:
                 for noise_std in noise_std_space:
                     if test:
-                        commands.append('python realworld_main.py --num_train_sepsis_pat_win 5 --num_test_pat_septic_win 1 --data_type {} --algo_group {} --num_sim {} --batch_size {} --num_steps {} --buffer_s {} --lr {} --policy {} --noise_std {}'.format(data_type,algo_group,num_sim,batch_size,num_steps,buffer_s,lr,policy, noise_std))
-                       
+                        # commands.append('python realworld_main.py --num_train_sepsis_pat_win 5 --num_test_pat_septic_win 1 --data_type {} --algo_group {} --num_sim {} --batch_size {} --num_steps {} --buffer_s {} --lr {} --policy {} --noise_std {}'.format(data_type,algo_group,num_sim,batch_size,num_steps,buffer_s,lr,policy, noise_std))
+                        commands.append(
+                            f'python realworld_main.py '
+                            f'--num_train_sepsis_pat_win 5 '
+                            f'--num_test_pat_septic_win 1 '
+                            f'--data_type {data_type} '
+                            f'--algo_group {algo_group} '
+                            f'--num_sim {num_sim} '
+                            f'--batch_size {batch_size} '
+                            f'--num_steps {num_steps} '
+                            f'--buffer_s {buffer_s} '
+                            f'--lr {lr} '
+                            f'--policy {policy} '
+                            f'--noise_std {noise_std} '
+                            f'--group {group}'
+                        )
                     else:
-                        commands.append('python realworld_main.py --data_type {} --algo_group {} --num_sim {} --batch_size {} --num_steps {} --buffer_s {} --lr {} --policy {} --noise_std {}'.format(data_type,algo_group,num_sim,batch_size,num_steps,buffer_s,lr,policy, noise_std))
-
-    # elif algo_group == 'kern':
-    #     for rbf_sigma in rbfsigma_space:
-    #         commands.append('python realworld_main.py --data_type {} --algo_group {} --num_sim {} --rbf_sigma {} --policy {}'.format(data_type,algo_group,num_sim,rbf_sigma,policy))
-
-    # elif algo_group == 'baseline': # no tuning 
-    #     commands.append('python realworld_main.py --data_type {} --algo_group {} --num_sim {} --policy {}'.format(data_type,algo_group,num_sim,policy))
-
+                        # commands.append('python realworld_main.py --data_type {} --algo_group {} --num_sim {} --batch_size {} --num_steps {} --buffer_s {} --lr {} --policy {} --noise_std {}'.format(data_type,algo_group,num_sim,batch_size,num_steps,buffer_s,lr,policy, noise_std))
+                        commands.append(
+                            f'python realworld_main.py '
+                            f'--data_type {data_type} '
+                            f'--algo_group {algo_group} '
+                            f'--num_sim {num_sim} '
+                            f'--batch_size {batch_size} '
+                            f'--num_steps {num_steps} '
+                            f'--buffer_s {buffer_s} '
+                            f'--lr {lr} '
+                            f'--policy {policy} '
+                            f'--noise_std {noise_std} '
+                            f'--group {group}'
+                        )
     else:
         raise NotImplementedError
 
@@ -310,10 +374,9 @@ def run_exps():
     for data_type in args.data_types:
         for algo_group in args.algo_groups:
             for policy in args.policies:
-                commands += create_commands(data_type, algo_group, args.num_sim, policy, args.mode)
+                commands += create_commands(data_type, algo_group, args.num_sim, policy, args.mode,args.G, args.test)
     random.shuffle(commands)
     multi_gpu_launcher(commands, args.gpus, args.models_per_gpu)
-    # test_multi_gpu_launcher(commands, args.gpus, args.models_per_gpu)
 
 
 if __name__ == '__main__':
