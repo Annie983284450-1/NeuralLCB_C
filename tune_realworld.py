@@ -233,7 +233,6 @@ def create_commands(data_type='sepsis', algo_group='ApproxNeuraLCB_cp', num_sim=
         beta_space = [1]
         rbfsigma_space = [1] #[0.1, 1,10]
         noise_std_space = [0.1]
-
     elif hyper_mode == 'S6':   
         lr_space = [1e-4]
         train_mode_space = [(32,100,-1)]
@@ -250,7 +249,8 @@ def create_commands(data_type='sepsis', algo_group='ApproxNeuraLCB_cp', num_sim=
     else:
         sys.exit('Wrong Hyper mode!! Inpuy hyper mode!!')
     commands = []
-    if algo_group in ['ApproxNeuraLCB_cp','ApproxNeuralLinLCBV2_cp', 'ApproxNeuralLinLCBJointModel_cp']:
+    algo_group_ = algo_group.split('_')
+    if algo_group_[0] in ['ApproxNeuraLCB','ApproxNeuralLinLCBV2', 'ApproxNeuralLinLCBJointModel','ApproxNeuraLCBV2']:
         for lr in lr_space:
             for batch_size,num_steps,buffer_s in train_mode_space:
                 for beta in beta_space:
@@ -290,45 +290,7 @@ def create_commands(data_type='sepsis', algo_group='ApproxNeuraLCB_cp', num_sim=
                                 f'--noise_std {noise_std} '
                                 f'--group {group}'
                             )
-                    # commands.append('python realworld_main.py --data_type {} --algo_group {} --num_sim {}  --beta {} --policy {}'.format(data_type,algo_group,num_sim,beta,policy))
-                    # commands.append('python realworld_main.py --data_type {} --algo_group {} --num_sim {} --batch_size {} --num_steps {} --buffer_s {} --lr {} --policy {}'.format(data_type,algo_group,num_sim,batch_size,num_steps,buffer_s,lr,policy))
-
-    # elif algo_group == 'ApproxNeuralLinLCBV2_cp' or 'ApproxNeuralLinLCBJointModel_cp': # no learning rate
-    #     for lr in lr_space:
-    #         for beta in beta_space: # no batch_size. cause they do not use train()
-    #             for noise_std in noise_std_space:
-    #                 if test: 
-    #                     # commands.append('python realworld_main.py --num_train_sepsis_pat_win 5 --num_test_pat_septic_win 1 --data_type {} --algo_group {} --num_sim {}  --beta {} --policy {} --noise_std {}'.format(data_type,algo_group,num_sim,beta,policy, noise_std))
-    #                     commands.append(
-    #                         f'python realworld_main.py '
-    #                         f'--num_train_sepsis_pat_win 5 '
-    #                         f'--num_test_pat_septic_win 1 '
-    #                         f'--data_type {data_type} '
-    #                         f'--algo_group {algo_group} '
-    #                         f'--num_sim {num_sim} '
-    #                         f'--beta {beta} '
-    #                         f'--lr {lr} '
-    #                         f'--policy {policy} '
-    #                         f'--noise_std {noise_std} '
-    #                         f'--group {group}'
-    #                         )
-
-    #                 else:
-    #                     # commands.append('python realworld_main.py --data_type {} --algo_group {} --num_sim {}  --beta {} --policy {} --noise_std {}'.format(data_type,algo_group,num_sim,beta,policy, noise_std))
-
-    #                     commands.append(
-    #                     f'python realworld_main.py '
-    #                     f'--data_type {data_type} '
-    #                     f'--algo_group {algo_group} '
-    #                     f'--num_sim {num_sim} '
-    #                     f'--beta {beta} '
-    #                     f'--lr {lr} '
-    #                     f'--policy {policy} '
-    #                     f'--noise_std {noise_std} '
-    #                     f'--group {group}'
-    #                 )
-
-    elif algo_group == 'NeuralGreedyV2_cp': # 'NeuralGreedyV2_cp' does not have beta
+    elif algo_group == 'NeuralGreedyV2_cp' or 'NeuralGreedyV2': # 'NeuralGreedyV2_cp' does not have beta
         for lr in lr_space:
             for batch_size,num_steps,buffer_s in train_mode_space:
                 for noise_std in noise_std_space:

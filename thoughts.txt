@@ -1,7 +1,0 @@
-2024 Sept. 1
-
-I should rewrite monitor(). 
-f_W in NeuralLCB should be replaced by f_phi in conformal prediction algorithm?
-
-write a function to get loo predictions and intervals. Those loo based predictions 
-will serve as the f in gradient descent process

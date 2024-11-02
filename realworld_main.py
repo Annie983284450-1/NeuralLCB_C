@@ -383,7 +383,7 @@ def main(unused_argv):
             f"{FLAGS.algo_group}-gridsearch_epochs={hparams.num_steps}_m={min(hparams.layer_sizes)}"
             f"_layern={hparams.layer_n}_buffer={hparams.buffer_s}_bs={hparams.batch_size}"
             f"_lr={hparams.lr}_beta={hparams.beta}_lambda={hparams.lambd}_lambda0={hparams.lambd0}"
-            f"_G={hparams.group}"
+            f"_G={FLAGS.group}"
         )
         # nohup_output = res_dir+f'/trainwin_{FLAGS.num_train_sepsis_pat_win}test_win_{FLAGS.num_test_pat_septic_win}_{FLAGS.algo_group}_B={hparams.B}log.txt'
         if not os.path.exists(os.path.join(res_dir, algo_prefix)):
