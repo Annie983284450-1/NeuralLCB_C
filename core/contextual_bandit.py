@@ -34,7 +34,7 @@ def action_accuracy(pred_actions, opt_actions):
 
 
 # we will test one patient each round to mimic the real-world scenario
-def contextual_bandit_runner_v3(algos, data, \
+def contextual_bandit_runner_v3(algos, data,  sepsis_full_df, train_patients_ids,test_set,\
             num_sim, test_freq, verbose, debug, normalize, res_dir = None ,algo_prefix = None, file_name=None, sim=None, B=10):
     """Run an offline contextual bandit problem on a set of algorithms in the same dataset. 
 
@@ -42,19 +42,20 @@ def contextual_bandit_runner_v3(algos, data, \
         dataset: A tuple of (contexts, actions, mean_rewards, test_contexts, test_mean_rewards).
         algos: A list of algorithms to run on the bandit instance.  
     """
-    print(f'...... ...... ...... SStarting contextual_bandit_runner_v2() ......')
+
+    # train_dataset = (contexts, actions, rewards )
+    contexts, actions, rewards = data.get_trainset(sepsis_full_df,train_patients_ids)
+    # contexts, actions, rewards, test_contexts, test_mean_rewards
+    # test_dataset = data.get_testset(sepsis_full_df, patient_id)
+
+    print(f'...... ...... ...... Starting contextual_bandit_runner_v2() ......')
     # Create a bandit instance 
     regrets = [] # (num_sim, num_algos, T) 
     errs = [] # (num_sim, num_algos, T) 
     # for sim in range(num_sim):
     alphacp_ls = np.linspace(0.05,0.25,5)
     if res_dir:
-        # create a regret csv file to store all the regrets
-        regret_csv = res_dir+'/'+ algo_prefix+'/'+ algo_prefix+ f'.csv'
-        
-        with open(regret_csv, 'w') as f:
-            pass  # Just opening in 'w' mode truncates the file
-        # create a PI csv to store all the prediction intervals for all the neuralcb algos
+
         for j,algo in enumerate(algos): 
 
             if 'cp' in algo.name.split('_'): # create the conformal prediction result csv file
@@ -64,14 +65,18 @@ def contextual_bandit_runner_v3(algos, data, \
                     with open(final_all_cpresults_avg_csv_alphacp, 'w') as f:
                             pass  # Just opening in 'w' mode truncates the file      
         print('Simulation: {}/{}'.format(sim + 1, num_sim))
-        cmab = OfflineContextualBandit(*data.reset_data(sim))
-        for algo in algos:
-            algo.reset(sim * 1111)
-        subopts = [[] for _ in range(len(algos))]
-        act_errs = [[] for _ in range(len(algos))]
-        opt_vals = np.max(cmab.test_mean_rewards, axis=1) 
-        opt_actions = np.argmax(cmab.test_mean_rewards, axis=1) 
+        cmab = OfflineContextualBandit(contexts, actions, rewards)
+        
+        pat_idx =0 
         for i in tqdm(range(cmab.num_contexts),ncols=75):
+
+            
+            for algo in algos:
+                algo.reset(sim * 1111)
+            subopts = [[] for _ in range(len(algos))]
+            act_errs = [[] for _ in range(len(algos))]
+
+            
             # print(f' !!!@  !!!@  !!!@  !!!@  !!!@  !!!@  !!!@  !!!!!!@ ROUND{i}!@ ROUND{i}!! @#$@ ROUND {i} @#@ ROUND{i}$@ !!!!!!')
             start_time = time.time()
             c,a,r = cmab.get_data(i) 
@@ -84,7 +89,7 @@ def contextual_bandit_runner_v3(algos, data, \
                 #     # Open in write mode to truncate the file
                 #     with open(res_dir+f'/final_all_results_avg_{algo.name}.csv', 'w') as f:
                 #         pass  # Just opening in 'w' mode truncates the file
-                regrets_results = pd.DataFrame(columns=[ 'algo_name', 'train_size','regrets', 'act_errs', 'sel_stats', 'opt_stats'])
+                regrets_results = pd.DataFrame(columns=[ 'pat_id','algo_name', 'train_size','regrets', 'act_errs', 'sel_stats', 'opt_stats'])
                 print(f'~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Running {algo}^^^^^^^^^^^^^^^^~~~~~~~~~~~~~~~~~~~~~~~')
                 algo.update_buffer(c,a,r)
                 # update_freq default value 1
@@ -95,6 +100,13 @@ def contextual_bandit_runner_v3(algos, data, \
                     algo.update(c,a,r)
                 # testing 
                 if i % test_freq == 0:
+                    opt_vals = np.max(test_mean_rewards, axis=1) 
+                    opt_actions = np.argmax(test_mean_rewards, axis=1) 
+                    patient_id = test_set[pat_idx]
+                    pat_idx +=1
+
+                    test_contexts, test_mean_rewards, num_test_contexts = data.get_testset(sepsis_full_df, patient_id)
+                     
                     print(f'  ------------------------@@@@@@@@@@@@@@@@@------Testing ---i === {i} --- @@@@@@@@@@@@@@@@@------------')
                     if algo.name == 'KernLCB': 
                         algo.update()
@@ -109,33 +121,27 @@ def contextual_bandit_runner_v3(algos, data, \
                     else: 
                         t1 = time.time()
                         cp_experts = ['ApproxNeuraLCB_cp', 'ExactNeuraLCBV2_cp', 'NeuralGreedyV2_cp', 'NeuraLCB_cp',\
-                                       'ApproxNeuralLinLCBV2_cp','ExactNeuralLinLCBV2_cp', 'ApproxNeuralLinLCBJointModel_cp']
+                                    'ApproxNeuralLinLCBV2_cp','ExactNeuralLinLCBV2_cp', 'ApproxNeuralLinLCBJointModel_cp']
                         # predicted actions using NeuraLCB and conformal predicsion
                         # if algo.name == 'ApproxNeuraLCB_cp':
                         nocp_experts = ['ApproxNeuraLCBV2', 'ExactNeuraLCBV2', 'NeuralGreedyV2','ApproxNeuralLinLCBJointModel','ApproxNeuralLinLCBV2']
                         if algo.name in cp_experts:
                             # print(f'test_contexts.shape == {cmab.test_contexts.shape}')
-                            test_actions = algo.sample_action(cmab.test_contexts, opt_vals, opt_actions, res_dir, algo_prefix ) 
+                            test_actions = algo.sample_action(test_contexts, opt_vals, opt_actions, res_dir, algo_prefix ) 
                         elif algo.name in nocp_experts:
-                            test_actions = algo.sample_action(cmab.test_contexts)
+                            test_actions = algo.sample_action(test_contexts)
                         else:
                             # test_actions = algo.sample_action(cmab.test_contexts) 
                             sys.exit('Wrong algo group!!')
-                        # print(f'################# test_actions.shape==={test_actions.shape}')
-                        
-                        # print(f"#################cmab.num_test_contexts: {cmab.num_test_contexts}")
-                        # print(f"#################cmab.test_mean_rewards shape: {cmab.test_mean_rewards.shape}")
-                        # print(f"#################test_actions shape: {test_actions.shape}")
-                        # print(f'################# test_actions.shape==={test_actions.shape}')
-                        # print(f"#################test_actions.ravel() shape: {test_actions.ravel().shape}")
+
                         t2 = time.time()
                         # sys.exit()
-                        sel_vals = cmab.test_mean_rewards[np.arange(cmab.num_test_contexts), test_actions.ravel()]
+                        sel_vals = test_mean_rewards[np.arange(num_test_contexts), test_actions.ravel()]
                         if normalize:
                             test_subopt = np.mean(1 - sel_vals / opt_vals) 
                         else:
                             test_subopt = np.mean(opt_vals - sel_vals)
-                       # action_accuracy(): return np.mean(np.asarray(pred_actions == opt_actions).astype('float32'))
+                    # action_accuracy(): return np.mean(np.asarray(pred_actions == opt_actions).astype('float32'))
                         action_acc = action_accuracy(test_actions.ravel(), opt_actions.ravel()) 
 
                         if verbose:  # default true
@@ -150,16 +156,25 @@ def contextual_bandit_runner_v3(algos, data, \
                     subopts[j].append(test_subopt) 
                     act_errs[j].append(1 - action_acc) 
                     # regrets_results = pd.DataFrame(columns=[ 'algo_name', 'train_size','regrets',    'act_errs',    'sel_stats', 'opt_stats'])
-                    regrets_results.loc[len(regrets_results)] = [algo.name,  i+1, test_subopt, 1 - action_acc, sel_stats,   opt_stats]
+                    regrets_results.loc[len(regrets_results)] = [patient_id, algo.name,  i+1, test_subopt, 1 - action_acc, sel_stats,   opt_stats]
                     new_row_regret = regrets_results
+                    # create a regret csv file to store all the regrets
+                    regret_csv = res_dir+'/'+ algo_prefix+'/'+ algo_prefix+ f'.csv'
                     
+                    # with open(regret_csv, 'w') as f:
+                    #     pass  # Just opening in 'w' mode truncates the file
+                    # # create a PI csv to store all the prediction intervals for all the neuralcb algos
                     if not isinstance(new_row_regret , pd.DataFrame):
                         new_row_regret  = pd.DataFrame([new_row_regret])
-                    with open(regret_csv,  'a') as f:
+                    with open(regret_csv,  'w') as f:
                         new_row_regret.to_csv(f, header=f.tell()==0, index=False)
+
+
+                        
                     print(f'~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-                    print(f'        Regrets_results of {algo.name} when train size ==={i}: \n {regrets_results}')
+                    print(f'        Regrets_results of {algo.name} when train size ==={i}: \n {regrets_results} for patient {patient_id}')
                     print(f'~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                
         
             # time_elapsed = timeit() - start_time
             time_elapsed = time.time() - start_time
@@ -543,6 +558,7 @@ class OfflineContextualBandit(object):
     @property 
     def num_actions(self):
         return self.test_mean_rewards.shape[1] 
+        # return self.rewards.shape[1] 
     
     @property  
     def context_dim(self):
@@ -553,4 +569,54 @@ class OfflineContextualBandit(object):
         return self.test_contexts.shape[0]
 
 
+class OfflineContextualBandit1(object):
+    def __init__(self, contexts, actions, rewards, test_contexts, test_mean_rewards):
+        """
+        Args:
+            contexts: (None, context_dim) 
+            actions: (None,) 
+            mean_rewards: (None, num_actions) 
+            test_contexts: (None, context_dim)
+            test_mean_rewards: (None, num_actions)
+        """
+        self.contexts = contexts
+        self.actions = actions
+        self.rewards = rewards
+        self.order = range(self.num_contexts) 
 
+    '''
+    shuffle the order in which contexts (and their associated rewards and actions) are presented
+    to the bandit algorithms. simulte a more realistic scenario where the order of the encountering
+    different conexts is not fixed but random. 
+
+    We cannot do this on Sepsis dataset, for there might be data leakage??
+    '''
+    def reset_order(self): 
+        # np.permutation ensures that each interger is unique
+        # range from 0 to num_contexts - 1
+        self.order = np.random.permutation(self.num_contexts)
+ 
+
+    def get_data(self, number): 
+        ind = self.order[number]
+        a = self.actions[ind]
+        # The expression self.rewards[ind:ind+1, a:a+1] is used to select the reward for the chosen action
+        return self.contexts[ind:ind+1], self.actions[ind:ind+1], self.rewards[ind:ind+1, a:a+1] 
+
+ 
+        
+        
+    @property 
+    def num_contexts(self): 
+        return self.contexts.shape[0] 
+
+    @property 
+    def num_actions(self):
+        # return self.test_mean_rewards.shape[1] 
+        return self.rewards.shape[1] 
+    
+    @property  
+    def context_dim(self):
+        return self.contexts.shape[1]
+
+ 

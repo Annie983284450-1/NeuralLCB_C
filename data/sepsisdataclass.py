@@ -128,6 +128,86 @@ In cases where the outcome (reward) has some inherent randomness or uncertainty
 In such cases, you could choose a small positive value for noise_std.
 start from 0.01 to 0.1 for reward is either 0 or 1 (small values)
 '''
+
+# create a testing set with only one patient. 
+class SepsisData1(object):
+    def __init__(self,         
+                num_actions=2, 
+                noise_std=0.01,
+                pi='eps-greedy', 
+                eps=0.1, 
+                subset_r=0.5 
+                ):
+        self.name = 'sepsis1'
+        # self.num_contexts = num_contexts 
+        # self.num_test_contexts = num_test_contexts
+        self.num_actions = num_actions
+        self.noise_std = noise_std
+        self.pi = pi
+        self.eps = eps
+        self.subset_r = subset_r
+
+    def get_trainset(self,sepsis_full_df,train_patients_ids):
+        sepsis_full_df = sepsis_full_df.drop(['HospAdmTime'], axis=1)
+        train_df = sepsis_full_df[sepsis_full_df['pat_id'].isin(train_patients_ids)]
+
+
+        train_df = train_df.reset_index(drop=True)
+        train_labels = train_df['SepsisLabel'].to_numpy()
+
+        train_df = train_df.drop(['SepsisLabel', 'pat_id','hours2sepsis'], axis=1)
+        train_contexts = train_df.to_numpy()
+        self.train_contexts, self.train_rewards = classification_to_bandit_problem_sepsis(train_contexts, train_labels,train_df,  self.num_actions)
+        self.context_dim = self.train_contexts.shape[1]  # Number of features
+        print(f'SepsisData1: train_samples: {self.num_train_samples} ')
+
+
+        train_indices = np.arange(self.num_train_samples)
+        contexts = self.train_contexts[train_indices, :]
+        mean_rewards = self.train_rewards[train_indices, :]
+ 
+        # Generate rewards (if needed, noise can be added here)
+        # for training set only
+        rewards = mean_rewards + self.noise_std * np.random.normal(size=mean_rewards.shape)
+        # Simulate actions based on epsilon-greedy policy
+        # !!! the actions after reset() is already chosen
+        actions = sample_offline_policy(mean_rewards, self.num_train_samples, self.num_actions, self.pi, self.eps, self.subset_r, contexts, rewards)
+
+        train_dataset = (contexts, actions, rewards )
+        return train_dataset
+    def get_testset(self,sepsis_full_df,patient_id):
+        sepsis_full_df = sepsis_full_df.drop(['HospAdmTime'], axis=1)
+        test_df = sepsis_full_df[sepsis_full_df['pat_id']==patient_id]
+        test_df = test_df.reset_index(drop=True)
+
+        test_labels = test_df['SepsisLabel'].to_numpy()
+        
+        test_df = test_df.drop(['SepsisLabel', 'pat_id', 'hours2sepsis'], axis=1)
+        num_test_contexts = test_df.shape[0]
+        test_contexts = test_df.to_numpy()
+
+        self.test_contexts, self.test_rewards = classification_to_bandit_problem_sepsis(test_contexts, test_labels, test_df, self.num_actions)
+        print(f'SepsisData1: test_samples: {self.num_test_samples}')
+
+
+        test_indices = np.arange(self.num_test_samples)
+ 
+        test_contexts = self.test_contexts[test_indices, :]
+        mean_test_rewards = self.test_rewards[test_indices, :]
+        test_dataset = (test_contexts, mean_test_rewards, num_test_contexts)
+        return test_dataset
+
+    @property
+    def num_train_samples(self):
+        return self.train_contexts.shape[0]
+    
+    @property
+    def num_test_samples(self):
+        return self.test_contexts.shape[0]
+
+
+
+# create a testing set with all the testing patients merged into one array
 class SepsisData(object):
     def __init__(self,  
                 is_window,
@@ -221,7 +301,7 @@ class SepsisData(object):
             test_df = df[df['pat_id'].isin(test_wins)]
    
 
-        else:    
+        else:     # this does not consider the balanced dataset. abandon
             file_name = './data/SepsisData/fully_imputed.csv'
             # file_name = './data/SepsisData/fully_imputed_8windowed_max48_updated.csv'
             # Load dataset
@@ -306,6 +386,4 @@ class SepsisData(object):
         # print(f'rewards.shape:{rewards.shape}')
         return dataset
     
-
-
  

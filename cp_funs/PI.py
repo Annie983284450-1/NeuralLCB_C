@@ -211,7 +211,7 @@ class prediction_interval():
 
 
 # main function
-    def run_experiments(self, alpha, stride,  methods=['Ensemble'],res_dir=None, algo_prefix= None):
+    def run_experiments(self, alpha, stride,  methods=['Ensemble'],res_dir=None, algo_prefix= None, patient_id):
         """
         Run conformal prediction experiments.
         Args:
@@ -223,7 +223,10 @@ class prediction_interval():
             methods: Methods to be used for conformal prediction.
         """
         PIs = []
-        results = pd.DataFrame(columns=[ 'train_size', 'mean_coverage', 'avg_width', 'mean_lower', 'mean_upper'])
+        if patient_id!=None:
+            results = pd.DataFrame(columns=[ 'pat_id','train_size', 'mean_coverage', 'avg_width', 'mean_lower', 'mean_upper'])
+        elif patient_id==None: 
+            results = pd.DataFrame(columns=[ 'train_size', 'mean_coverage', 'avg_width', 'mean_lower', 'mean_upper'])
         for method in methods:
             if method == 'Ensemble':
                 PI = self.compute_PIs_Ensemble_online(alpha, stride)
@@ -246,7 +249,14 @@ class prediction_interval():
             lower_mean = PI['lower'].mean()
             upper_mean = PI['upper'].mean()
 
-            results.loc[len(results)] = [len(self.X_train), mean_coverage, mean_width, lower_mean, upper_mean]
+            if patient_id!=None:
+                # results = pd.DataFrame(columns=[ 'pat_id','train_size', 'mean_coverage', 'avg_width', 'mean_lower', 'mean_upper'])
+                results.loc[len(results)] = [patient_id,len(self.X_train), mean_coverage, mean_width, lower_mean, upper_mean]
+            elif patient_id==None: 
+                # results = pd.DataFrame(columns=[ 'train_size', 'mean_coverage', 'avg_width', 'mean_lower', 'mean_upper'])
+                results.loc[len(results)] = [len(self.X_train), mean_coverage, mean_width, lower_mean, upper_mean]
+
+            
             final_result_path = self.filename
             new_row_all_avg = results
             if not isinstance(new_row_all_avg, pd.DataFrame):

@@ -13,7 +13,7 @@ import core.contextual_bandit  # Import the entire module
 importlib.reload(core.contextual_bandit)
 
 
-from core.contextual_bandit import contextual_bandit_runner, contextual_bandit_runner_v2
+from core.contextual_bandit import contextual_bandit_runner, contextual_bandit_runner_v2,contextual_bandit_runner_v3
 
 from algorithms.neural_offline_bandit_cp import ApproxNeuraLCB_cp 
 from algorithms.comparison_bandit_cp import ExactNeuraLCBV2_cp, NeuralGreedyV2_cp, NeuraLCB_cp
@@ -42,7 +42,7 @@ import pickle
 from scipy.stats import skew
 import seaborn as sns
 # import PI_class_EnbPI_journal as EnbPI
-import PI_Sepsysolcp as EnbPI
+# import PI_Sepsysolcp as EnbPI
 import matplotlib
 # matplotlib.use('TkAgg',force=True)
 # matplotlib.use('Agg')
@@ -97,9 +97,18 @@ flags.DEFINE_string('policy', 'eps-greedy', 'Offline policy, eps-greedy/subset')
 flags.DEFINE_string('group', 'septic', 'Testing data group')
 
 
+# used for 8 hrs window
 
 flags.DEFINE_integer('num_train_sepsis_pat_win', 2000, 'Number of septic windows for training.') 
 flags.DEFINE_integer('num_test_pat_septic_win', 250, 'Number of septic windows for testing.') 
+
+# used for streaming patient one by one 
+flags.DEFINE_integer('num_train_pat_septic', 5, 'Number of septic patients for training.') 
+flags.DEFINE_integer('num_test_pat_septic', 2, 'Number of septic patients for training.') 
+
+
+
+
 flags.DEFINE_integer('win_size', 8, 'Window size used for training and testing.')
 flags.DEFINE_integer('B', 10, 'number of bootstraps')
 flags.DEFINE_integer('update_freq', 1, 'Update frequency')
@@ -176,7 +185,7 @@ def main(unused_argv):
 
 # different datasets
     dataclasses = {'mushroom':MushroomData, 'jester':JesterData, 'statlog':StatlogData, 'covertype':CoverTypeData, 'stock': StockData,
-            'adult': AdultData, 'census': CensusData, 'mnist': MnistData, 'sepsis': SepsisData
+            'adult': AdultData, 'census': CensusData, 'mnist': MnistData, 'sepsis': SepsisData, 'sepsis1': SepsisData1
     }
     
     if FLAGS.data_type in dataclasses:
@@ -197,6 +206,15 @@ def main(unused_argv):
                         eps = FLAGS.eps, 
                         subset_r = FLAGS.subset_r,
                         group = FLAGS.group) 
+        elif FLAGS.data_type == 'sepsis1': # process the dataset one by one
+            data = DataClass(
+                num_actions=2, 
+                noise_std=FLAGS.noise_std,
+                pi=FLAGS.policy, 
+                eps=FLAGS.eps, 
+                subset_r=FLAGS.subset_r 
+            )
+
         else:
 
             data = DataClass(
@@ -267,11 +285,6 @@ def main(unused_argv):
 
     # res_dir = os.path.join('results', data_prefix) 
     sim = 0
-
-    # res_dir = os.path.join(f'../neuralcb_results/sim{sim}/trainSepticWins_{FLAGS.num_train_sepsis_pat_win}_testSepticWins_{FLAGS.num_test_pat_septic_win}/', data_prefix) 
-
-    # res_dir = os.path.join(f'/storage/home/hcoda1/6/azhou60/scratch/neuralcb_results/sim{sim}/trainSepticWins_{FLAGS.num_train_sepsis_pat_win}_testSepticWins_{FLAGS.num_test_pat_septic_win}/', data_prefix) 
-    # res_dir = os.path.join(f'/storage/home/hcoda1/6/azhou60/scratch/neuralcb_results/sim{sim}/trainSepticWins_{FLAGS.num_train_sepsis_pat_win}_testSepticWins_{FLAGS.num_test_pat_septic_win}/', data_prefix) 
     res_dir = os.path.join(
         f'/storage/home/hcoda1/6/azhou60/scratch/neuralcb_results/sim{sim}/'
         f'trainSepticWins_{FLAGS.num_train_sepsis_pat_win}_'
@@ -291,42 +304,6 @@ def main(unused_argv):
     #================================================================
     # Algorithms 
     #================================================================
-
-
-
-
-    # if FLAGS.algo_group == 'kern': # for tuning KernLCB
-    #     algos = [
-    #         UniformSampling(lin_hparams),
-    #         KernLCB(lin_hparams), 
-    #     ]
-
-    #     algo_prefix = 'kern-gridsearch_beta={}_rbf-sigma={}_maxnum={}'.format(
-    #         hparams.beta, lin_hparams.rbf_sigma, lin_hparams.max_num_sample
-    #     )
-
-    # if FLAGS.algo_group == 'neurallinlcb': # Tune NeuralLinLCB seperately  
-    #     algos = [
-    #         UniformSampling(lin_hparams),
-    #         ApproxNeuralLinLCBJointModel(hparams)
-    #     ]
-
-    #     algo_prefix = 'neurallinlcb-gridsearch_m={}_layern={}_beta={}_lambda0={}'.format(
-    #         min(hparams.layer_sizes), hparams.layer_n, hparams.beta, hparams.lambd0
-    #     )
-
-
-    # Create a dictionary to map algo_group names to their respective classes
-    # ALGO_MAP = {
-    #     'ExactNeuraLCBV2_cp': ExactNeuraLCBV2_cp,
-    #     'NeuralGreedyV2_cp': NeuralGreedyV2_cp,
-    #     'ApproxNeuraLCB_cp': ApproxNeuraLCB_cp,
-    #     'NeuraLCB_cp': NeuraLCB_cp,
-    #     'ApproxNeuralLinLCBV2_cp': ApproxNeuralLinLCBV2_cp,
-    #     'ExactNeuralLinLCBV2_cp': ExactNeuralLinLCBV2_cp,
-    #     'ApproxNeuralLinLCBJointModel_cp': ApproxNeuralLinLCBJointModel_cp
-    # }
-
 
     ALGO_MAP_cp = {
         'NeuralGreedyV2_cp': NeuralGreedyV2_cp,
@@ -407,12 +384,52 @@ def main(unused_argv):
         #==============================
         start  =  time.time()
         # regrets, errs = contextual_bandit_runner(algos, data, FLAGS.num_sim, FLAGS.update_freq, FLAGS.test_freq, FLAGS.verbose, FLAGS.debug, FLAGS.normalize, file_name, res_dir)
-        regrets, errs = contextual_bandit_runner_v2(algos, data, \
-            FLAGS.num_sim, FLAGS.test_freq, FLAGS.verbose, FLAGS.debug, FLAGS.normalize, res_dir,algo_prefix,file_name,sim, FLAGS.B)
-        np.savez(file_name, regrets=regrets, errs=errs)
-        print(f'total time for contextual bandit runner: {time.time()-start} seconds')
+        if FLAGS.data_type == 'sepsis':
+            regrets, errs = contextual_bandit_runner_v2(algos, data, \
+                FLAGS.num_sim, FLAGS.test_freq, FLAGS.verbose, FLAGS.debug, FLAGS.normalize, res_dir,algo_prefix,file_name,sim, FLAGS.B)
+            np.savez(file_name, regrets=regrets, errs=errs)
+            print(f'total time for contextual bandit runner: {time.time()-start} seconds')
+        elif FLAGS.data_type == 'sepsis1': # runner v3 will process only one patient each time
+
+            #~~~~~~~~~~~~~~Testing set~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+            ratio = 1
+            test_sepsis = np.load('./data/test_sepsis.npy')
+            test_nosepsis = np.load('./data/test_nosepsis.npy')
+            test_sepsis = test_sepsis[0: FLAGS.num_test_pat_septic]
+            test_nosepsis = test_nosepsis[0:FLAGS.num_test_pat_septic*ratio]
+            print(f'test_sepsis: {len(test_sepsis)}')
+            print(f'test_nosepsis: {len(test_nosepsis)}')
+            test_set_psv = np.concatenate((test_sepsis, test_nosepsis), axis=0) 
+            test_set = [filename.replace('.psv', '') for filename in test_set_psv]
+            np.random.seed(12345)  # Set a seed for reproducibility
+            np.random.shuffle(test_set)
+            test_sepsis = [filename.replace('.psv', '') for filename in test_sepsis]
+            test_nosepsis = [filename.replace('.psv', '') for filename in test_nosepsis]
+            #~~~~~~~~~~~~~~Training set~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+            train_sepsis = np.load('./data/train_sepsis.npy')
+            train_nosepsis = np.load('./data/train_nosepsis.npy')
+            train_sepsis = train_sepsis[0:FLAGS.num_train_pat_septic]
+            train_nosepsis = train_nosepsis[0:FLAGS.num_train_pat_septic]
+            print(f'train_sepsis: {len(train_sepsis)}')
+            print(f'train_nosepsis: {len(train_nosepsis)}')
+            train_set_psv = np.concatenate((train_sepsis, train_nosepsis), axis=0)
+            train_patients_ids  = [filename.replace('.psv', '') for filename in train_set_psv]
+            np.random.seed(12345)  # Set a seed for reproducibility
+            np.random.shuffle(train_patients_ids)
+            sepsis_full_df = './data/SepsisData/fully_imputed.csv'
+            # train_dataset = (contexts, actions, rewards )
+            # train_dataset = data.get_trainset(sepsis_full_df,train_patients_ids)
+            # test_dataset = data.get_testset(sepsis_full_df, patient_id)
+            regrets, errs = contextual_bandit_runner_v3(algos, data,  sepsis_full_df, train_patients_ids,test_set,\
+                FLAGS.num_sim, FLAGS.test_freq, FLAGS.verbose, FLAGS.debug, FLAGS.normalize, res_dir,algo_prefix,file_name,sim, FLAGS.B)
+            np.savez(file_name, regrets=regrets, errs=errs)
+            print(f'total time for contextual bandit runner: {time.time()-start} seconds')
+            
     sys.stdout = original_stdout
     print(f'Total Excution time: {time.time()-start_runner}')
+
+
+
 # thissetup is only executed only if the script is run directly from the command line, not when imported as a module in another python project scrpit.
 # app() ensures that all the command-line arguments are parsed
 if __name__ == '__main__': 
