@@ -15,7 +15,7 @@ parser = argparse.ArgumentParser()
  
 # parser.add_argument('--task', type=str, default='run_exps', choices=['run_exps','collect_results'])
 parser.add_argument('--task', type=str, default='run_exps', choices=['run_exps'])
-parser.add_argument('--data_types', nargs='+', type=str, default=['sepsis'])
+parser.add_argument('--data_types', nargs='+', type=str, default=['sepsis1'])
 parser.add_argument('--algo_groups', nargs='+', type=str, default=['ApproxNeuraLCB_cp'])
 parser.add_argument('--policies', nargs='+', type=str, default=['eps-greedy'])
 parser.add_argument('--num_sim', type=int, default=1)
@@ -72,24 +72,10 @@ def multi_gpu_launcher(commands, gpus=None, models_per_gpu=2):
 
     procs = [None] * (len(gpus) * models_per_gpu)
 
-
-    # while len(commands) > 0:
-    #     for i,proc in enumerate(procs):
-    #         gpu_idx = gpus[i % len(gpus)]
-    #         if (proc is None) or (proc.poll() is not None):
-    #             # Nothing is running on this index; launch a command.
-    #             cmd = commands.pop(0)
-    #             new_proc = subprocess.Popen(
-    #                 f'CUDA_VISIBLE_DEVICES={gpu_idx} {cmd}', shell=True)
-    #             procs[i] = new_proc
-    #             break
-    #     time.sleep(1)
-
     # Wait for the last few tasks to finish before returning
     for p in procs:
         if p is not None:
             p.wait()
-
 
     while len(commands) > 0:
         for i, proc in enumerate(procs):
@@ -140,7 +126,6 @@ def detect_gpus():
         print(f"Error detecting GPUs: {e}")
         return [0]  # Default to GPU 0 if detection fails or only one GPU present
 
-
 def get_gpu_utilization(gpu_idx):
     """
     Query the current GPU utilization using nvidia-smi.
@@ -155,30 +140,30 @@ def get_gpu_utilization(gpu_idx):
     except Exception as e:
         print(f"Error querying GPU {gpu_idx}: {e}")
         return 100  # Assume full utilization if query fails
+    
+    
+# def multi_gpu_launcher_linux_mac(commands,gpus,models_per_gpu):
+#     """
+#     Launch commands on the local machine, using all GPUs in parallel.
+#     """
+#     procs = [None]*len(gpus)*models_per_gpu
 
+#     while len(commands) > 0:
+#         for i,proc in enumerate(procs):
+#             gpu_idx = gpus[i % len(gpus)]
+#             if (proc is None) or (proc.poll() is not None):
+#                 # Nothing is running on this index; launch a command.
+#                 cmd = commands.pop(0)
+#                 new_proc = subprocess.Popen(
+#                     f'CUDA_VISIBLE_DEVICES={gpu_idx} {cmd}', shell=True)
+#                 procs[i] = new_proc
+#                 break
+#         time.sleep(1)
 
-def multi_gpu_launcher_linux_mac(commands,gpus,models_per_gpu):
-    """
-    Launch commands on the local machine, using all GPUs in parallel.
-    """
-    procs = [None]*len(gpus)*models_per_gpu
-
-    while len(commands) > 0:
-        for i,proc in enumerate(procs):
-            gpu_idx = gpus[i % len(gpus)]
-            if (proc is None) or (proc.poll() is not None):
-                # Nothing is running on this index; launch a command.
-                cmd = commands.pop(0)
-                new_proc = subprocess.Popen(
-                    f'CUDA_VISIBLE_DEVICES={gpu_idx} {cmd}', shell=True)
-                procs[i] = new_proc
-                break
-        time.sleep(1)
-
-    # Wait for the last few tasks to finish before returning
-    for p in procs:
-        if p is not None:
-            p.wait()
+#     # Wait for the last few tasks to finish before returning
+#     for p in procs:
+#         if p is not None:
+#             p.wait()
 
  
 def create_commands(data_type='sepsis', algo_group='ApproxNeuraLCB_cp', num_sim=1, policy='eps-greedy',hyper_mode = None, group = 'septic', test = False):
@@ -245,7 +230,18 @@ def create_commands(data_type='sepsis', algo_group='ApproxNeuraLCB_cp', num_sim=
         beta_space = [5]
         rbfsigma_space = [1] 
         noise_std_space = [0.1]
-
+    elif hyper_mode == 'S8':   
+        lr_space = [1e-4]
+        train_mode_space = [(32,100,-1)]
+        beta_space = [0.5]
+        rbfsigma_space = [1] 
+        noise_std_space = [0.1]
+    elif hyper_mode == 'S9':   
+        lr_space = [1e-4]
+        train_mode_space = [(32,100,-1)]
+        beta_space = [10]
+        rbfsigma_space = [1] 
+        noise_std_space = [0.1]
     else:
         sys.exit('Wrong Hyper mode!! Inpuy hyper mode!!')
     commands = []
@@ -256,7 +252,6 @@ def create_commands(data_type='sepsis', algo_group='ApproxNeuraLCB_cp', num_sim=
                 for beta in beta_space:
                     for noise_std in noise_std_space:
                         if test == 1:
-                            # commands.append('python realworld_main.py --num_train_sepsis_pat_win 5 --num_test_pat_septic_win 1 --data_type {} --algo_group {} --num_sim {} --batch_size {} --num_steps {} --buffer_s {} --beta {} --lr {} --policy {} --noise_std {}'.format(data_type,algo_group,num_sim,batch_size,num_steps,buffer_s,beta,lr,policy, noise_std))
                             commands.append(
                                 f'python realworld_main.py '
                                 f'--num_train_sepsis_pat_win 5 '
@@ -274,8 +269,6 @@ def create_commands(data_type='sepsis', algo_group='ApproxNeuraLCB_cp', num_sim=
                                 f'--group {group}'
                             )
                         else:
-                            # commands.append('python realworld_main.py --data_type {} --algo_group {} --num_sim {} --batch_size {} --num_steps {} --buffer_s {} --beta {} --lr {} --policy {} --noise_std {}'.format(data_type,algo_group,num_sim,batch_size,num_steps,buffer_s,beta,lr,policy, noise_std))
-                    
                             commands.append(
                                 f'python realworld_main.py '
                                 f'--data_type {data_type} '
@@ -295,7 +288,6 @@ def create_commands(data_type='sepsis', algo_group='ApproxNeuraLCB_cp', num_sim=
             for batch_size,num_steps,buffer_s in train_mode_space:
                 for noise_std in noise_std_space:
                     if test:
-                        # commands.append('python realworld_main.py --num_train_sepsis_pat_win 5 --num_test_pat_septic_win 1 --data_type {} --algo_group {} --num_sim {} --batch_size {} --num_steps {} --buffer_s {} --lr {} --policy {} --noise_std {}'.format(data_type,algo_group,num_sim,batch_size,num_steps,buffer_s,lr,policy, noise_std))
                         commands.append(
                             f'python realworld_main.py '
                             f'--num_train_sepsis_pat_win 5 '
@@ -312,7 +304,6 @@ def create_commands(data_type='sepsis', algo_group='ApproxNeuraLCB_cp', num_sim=
                             f'--group {group}'
                         )
                     else:
-                        # commands.append('python realworld_main.py --data_type {} --algo_group {} --num_sim {} --batch_size {} --num_steps {} --buffer_s {} --lr {} --policy {} --noise_std {}'.format(data_type,algo_group,num_sim,batch_size,num_steps,buffer_s,lr,policy, noise_std))
                         commands.append(
                             f'python realworld_main.py '
                             f'--data_type {data_type} '

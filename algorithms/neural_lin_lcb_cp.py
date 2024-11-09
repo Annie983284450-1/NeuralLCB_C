@@ -211,6 +211,76 @@ class ApproxNeuralLinLCBV2_cp(BanditAlgorithm):
 
         self.nn.reset(seed) 
 
+    def sample_action1(self, contexts,opt_vals, opt_actions, res_dir, algo_prefix, pat_id):
+        cs = self.hparams.chunk_size
+        num_chunks = math.ceil(contexts.shape[0] / cs)
+        acts = []
+        for i in range(num_chunks):
+            ctxs = contexts[i * cs: (i+1) * cs,:] 
+            lcb = []
+            for a in range(self.hparams.num_actions):
+                actions = jnp.ones(shape=(ctxs.shape[0],)) * a 
+
+                g = self.nn.grad_out(self.nn.params, ctxs, actions) / jnp.sqrt(self.nn.m) # (None, p)
+
+                gAg = jnp.sum(jnp.square(g) / self.diag_Lambda[a][:], axis=-1)                
+                cnf = jnp.sqrt(gAg) # (num_samples,)
+
+                if len(self.Ensemble_pred_interval_centers) == 0:
+                    # Original calculation for `f` (using `y_hat` and `diag_Lambda` for exploration-exploitation)
+                    f = jnp.sum(jnp.multiply(g, self.y_hat[a][:]) / self.diag_Lambda[a][:], axis=-1)
+                else:
+                    # Modify `f` using the conformal prediction interval as an additional confidence adjustment
+                    conformal_center = self.Ensemble_pred_interval_centers[i * cs: (i+1) * cs]
+                    f_conformal = jnp.array(conformal_center)
+                    # Combining conformal center with original `f` to maintain uncertainty control
+                    f = f_conformal + (jnp.sum(jnp.multiply(g, self.y_hat[a][:]) / self.diag_Lambda[a][:], axis=-1) - f_conformal) * 0.5
+
+                # f = jnp.sum(jnp.multiply(g, self.y_hat[a][:]) / self.diag_Lambda[a][:], axis=-1)
+
+                lcb_a = f.ravel() - self.hparams.beta * cnf.ravel()  # (num_samples,)
+                lcb.append(lcb_a.reshape(-1,1)) 
+            lcb = jnp.hstack(lcb) 
+            acts.append( jnp.argmax(lcb, axis=1)) 
+        sampled_test_actions = jnp.hstack(acts)
+        
+
+        # computing preidcition intervals
+        X_train = self.data.contexts
+        # selected actions for training
+        actions = self.data.actions.ravel().astype(int)
+        # rewards for training
+        Y_train = self.data.rewards[np.arange(len(actions)), actions].reshape(-1, 1)
+        X_predict = contexts
+        test_actions = sampled_test_actions.ravel().astype(int)
+        Y_predict = opt_vals
+        filename = self.res_dir
+        nn_model = self.nn
+       
+        self.prediction_interval_model = prediction_interval(
+                        nn_model,  
+                        X_train, 
+                        X_predict, 
+                        Y_train, 
+                        Y_predict, 
+                        actions, 
+                        test_actions,
+                        filename,
+                        self.name,
+                        self.B)
+        self.Ensemble_pred_interval_centers = self.prediction_interval_model.fit_bootstrap_models_online(B=self.B, miss_test_idx=[])
+        # print(f'self.Ensemble_prediction_interval_centers:{self.Ensemble_pred_interval_centers}')
+        alphacp_ls = np.linspace(0.05,0.25,5)
+        for alphacp in alphacp_ls:
+            PI_dfs, results = self.prediction_interval_model.run_experiments(alpha=alphacp, stride=1,methods=['Ensemble'],res_dir=res_dir, \
+                                                                             algo_prefix=algo_prefix, patient_id  = pat_id)       
+       
+        
+        # return jnp.hstack(acts)
+        return sampled_test_actions
+    
+
+
     def sample_action(self, contexts,opt_vals, opt_actions, res_dir, algo_prefix):
         cs = self.hparams.chunk_size
         num_chunks = math.ceil(contexts.shape[0] / cs)
@@ -278,8 +348,6 @@ class ApproxNeuralLinLCBV2_cp(BanditAlgorithm):
         # return jnp.hstack(acts)
         return sampled_test_actions
     
-
-
     def update_buffer(self, contexts, actions, rewards): 
         self.data.add(contexts, actions, rewards)
 
@@ -368,7 +436,10 @@ class ApproxNeuralLinLCBJointModel_cp(BanditAlgorithm):
         self.diag_Lambda = jnp.ones(self.nn.num_params) * self.hparams.lambd0  
         self.nn.reset(seed) 
 
-    def sample_action(self, contexts, opt_vals, opt_actions, res_dir, algo_prefix):
+
+
+
+    def sample_action1(self, contexts, opt_vals, opt_actions, res_dir, algo_prefix,pat_id):
         cs = self.hparams.chunk_size
         num_chunks = math.ceil(contexts.shape[0] / cs)
         acts = []
@@ -395,6 +466,78 @@ class ApproxNeuralLinLCBJointModel_cp(BanditAlgorithm):
                     f_conformal = jnp.array(conformal_center)
                     # Combining conformal center with original `f` to maintain uncertainty control
                     f = f_conformal + (jnp.sum(jnp.multiply(g, self.y_hat) / self.diag_Lambda, axis=-1) - f_conformal) * 0.5
+
+
+
+                lcb_a = f.ravel() - self.hparams.beta * cnf.ravel()  # (num_samples,)
+                lcb.append(lcb_a.reshape(-1,1)) 
+            lcb = jnp.hstack(lcb) 
+            acts.append( jnp.argmax(lcb, axis=1)) 
+        # return jnp.hstack(acts)
+        sampled_test_actions = jnp.hstack(acts)
+        
+
+        # computing preidcition intervals
+        X_train = self.data.contexts
+        # selected actions for training
+        actions = self.data.actions.ravel().astype(int)
+        # rewards for training
+        Y_train = self.data.rewards[np.arange(len(actions)), actions].reshape(-1, 1)
+        X_predict = contexts
+        test_actions = sampled_test_actions.ravel().astype(int)
+        Y_predict = opt_vals
+        filename = self.res_dir
+        nn_model = self.nn
+       
+        self.prediction_interval_model = prediction_interval(
+                        nn_model,  
+                        X_train, 
+                        X_predict, 
+                        Y_train, 
+                        Y_predict, 
+                        actions, 
+                        test_actions,
+                        filename,
+                        self.name,
+                        self.B)
+        self.Ensemble_pred_interval_centers = self.prediction_interval_model.fit_bootstrap_models_online(B=self.B, miss_test_idx=[])
+        # print(f'self.Ensemble_prediction_interval_centers:{self.Ensemble_pred_interval_centers}')
+        alphacp_ls = np.linspace(0.05,0.25,5)
+        for alphacp in alphacp_ls:
+            PI_dfs, results = self.prediction_interval_model.run_experiments(alpha=alphacp, stride=1,methods=['Ensemble'],\
+                                                                             res_dir=res_dir, algo_prefix=algo_prefix,patient_id  = pat_id)       
+    
+        # return jnp.hstack(acts)
+        return sampled_test_actions
+
+
+    def sample_action(self, contexts, opt_vals, opt_actions, res_dir, algo_prefix, cpr=0.5):
+        cs = self.hparams.chunk_size
+        num_chunks = math.ceil(contexts.shape[0] / cs)
+        acts = []
+        for i in range(num_chunks):
+            ctxs = contexts[i * cs: (i+1) * cs,:] 
+            lcb = []
+            for a in range(self.hparams.num_actions):
+                actions = jnp.ones(shape=(ctxs.shape[0],)) * a 
+
+                g = self.nn.grad_out(self.nn.params, ctxs, actions) / jnp.sqrt(self.nn.m) # (None, p)
+
+                gAg = jnp.sum(jnp.square(g) / self.diag_Lambda, axis=-1)                
+                cnf = jnp.sqrt(gAg) # (num_samples,)
+
+                # f = jnp.sum(jnp.multiply(g, self.y_hat) / self.diag_Lambda, axis=-1)
+
+                if len(self.Ensemble_pred_interval_centers) == 0:
+                    # Original calculation for `f` (using `y_hat` and `diag_Lambda` for exploration-exploitation)
+                    f = jnp.sum(jnp.multiply(g, self.y_hat) / self.diag_Lambda, axis=-1)
+
+                else:
+                    # Modify `f` using the conformal prediction interval as an additional confidence adjustment
+                    conformal_center = self.Ensemble_pred_interval_centers[i * cs: (i+1) * cs]
+                    f_conformal = jnp.array(conformal_center)
+                    # Combining conformal center with original `f` to maintain uncertainty control
+                    f = f_conformal + (jnp.sum(jnp.multiply(g, self.y_hat) / self.diag_Lambda, axis=-1) - f_conformal) *  cpr
 
 
 

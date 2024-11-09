@@ -153,6 +153,93 @@ class ApproxNeuraLCB_cp(BanditAlgorithm):
         return sampled_test_actions
     
  
+    def sample_action1(self, test_contexts, opt_vals, opt_actions,res_dir, algo_prefix, pat_id):
+        # flags.DEFINE_integer('chunk_size', 500, 'Chunk size')
+        # flags.DEFINE_integer('batch_size', 32, 'Batch size')
+ 
+        cs = test_contexts.shape[0]
+        num_chunks =1
+        acts = []
+        for i in range(num_chunks):
+            ctxs = test_contexts[i * cs: (i+1) * cs,:] 
+            # for each chunk of context, store the lower confidence bound (lcb)
+            lcb = [] 
+            # Calculating Lower Confidence Bound (LCB) for Each Action
+            # difference between Neuralcb_cp, Neuralcb_cp does 
+            # The action-specific scaling of diag_Lambda in Snippet 2 provides a more tailored calculation for each action's uncertainty, 
+            # possibly leading to a more accurate representation of the uncertainty associated with each action. This could be beneficial when actions exhibit different variances.
+            for a in range(self.hparams.num_actions):
+                # num_actions= 2
+                # a = 0 or 1
+                # actions = 0 if a =0, else 1
+                actions = jnp.ones(shape=(ctxs.shape[0],)) * a 
+                # ************************Integration********************************
+                # Use conformal predicted rewards if available, otherwise use the network's prediction
+                if len(self.Ensemble_pred_interval_centers) == 0:
+                    # print(f'!!!! Prediction intervals not available at current stage!!! self.Ensemble_pred_interval_centers == None')
+                    f = self.nn.out(self.nn.params, ctxs, actions)  # Default to the neural network output
+                    # print(f'f.shape=={f.shape}')
+                    # print(f'Prediction datatype f=== {type(f)}')
+                else:
+                    # print(f'!!!!!! Prediction Intervals available!!!!')
+                    # print(f'&&&&& len(Ensemble_pred_interval_centers)  === {len(self.Ensemble_pred_interval_centers)}&&&&&')
+                    f = self.Ensemble_pred_interval_centers[i * cs: (i+1) * cs]
+                    # print(f'&&&&& len(f) === {len(f)}&&&&&')
+                    # print(f'PI centers datatype == {type(f)}')
+                    f = jnp.array(f)
+                    # print(f'PI centers datatype after converting== {type(f)}')
+                # f = self.nn.out(self.nn.params, ctxs, actions) #the predicted reward for action a in the given context ctxs.
+                g = self.nn.grad_out(self.nn.params, ctxs, actions) / jnp.sqrt(self.nn.m)
+                # g = self.nn.grad_out_cp(self.nn.params, ctxs, actions) / jnp.sqrt(self.nn.m)
+                # uncertainty of each action 
+                gAg = jnp.sum(jnp.square(g) / self.diag_Lambda[a][:], axis=-1)
+                # confidence
+                cnf = jnp.sqrt(gAg)
+                lcb_a = f.ravel() - self.hparams.beta * cnf.ravel()
+                lcb.append(lcb_a.reshape(-1,1)) 
+            lcb = jnp.hstack(lcb)
+            # lcb_a is used to decide which action to take by selecting the action with the highest LCB.
+            acts.append(jnp.argmax(lcb, axis=1)) 
+        sampled_test_actions = jnp.hstack(acts)
+        
+
+        # computing preidcition intervals
+        X_train = self.data.contexts
+        # selected actions for training
+        actions = self.data.actions.ravel().astype(int)
+        # rewards for training
+        Y_train = self.data.rewards[np.arange(len(actions)), actions].reshape(-1, 1)
+        X_predict = test_contexts
+        test_actions = sampled_test_actions.ravel().astype(int)
+        Y_predict = opt_vals
+        filename = self.res_dir
+        nn_model = self.nn
+       
+        self.prediction_interval_model = prediction_interval(
+                        nn_model,  
+                        X_train, 
+                        X_predict, 
+                        Y_train, 
+                        Y_predict, 
+                        actions, 
+                        test_actions,
+                        filename,
+                        self.name,
+                        self.B)
+        self.Ensemble_pred_interval_centers = self.prediction_interval_model.fit_bootstrap_models_online(B=self.B, miss_test_idx=[])
+        # print(f'self.Ensemble_prediction_interval_centers:{self.Ensemble_pred_interval_centers}')
+        alphacp_ls = np.linspace(0.05,0.25,5)
+        for alphacp in alphacp_ls:
+            PI_dfs, results = self.prediction_interval_model.run_experiments(alpha=alphacp, stride=1,methods=['Ensemble'],\
+                                                                             res_dir=res_dir, algo_prefix=algo_prefix, patient_id  = pat_id)       
+        
+        # return jnp.hstack(acts)
+        return sampled_test_actions
+    
+
+
+
+
     def update_buffer(self, c, a, r): 
         print(f'        !!!!!!!!!! Updating buffer !!!!!!!!!!')
         # print(f'!!!!!!!!!!data shapes before update_buffer() !!!!!!!!!!')

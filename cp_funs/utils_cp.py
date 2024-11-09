@@ -588,6 +588,11 @@ def one_dimen_transform(Y_train, Y_predict, d):
 
 # S==1 if you don't need to predict multiple steps ahead
 # return  Matrix, where each row is a UNIQUE slice of residuals with length stride.
+
+
+
+
+
 def strided_app(a, L, S):  # Window len = L, Stride len/stepsize = S
     nrows = ((a.size - L) // S) + 1
     # strides: Tuple of bytes to step in each dimension when traversing an array.

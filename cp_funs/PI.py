@@ -195,8 +195,10 @@ class prediction_interval():
 
         width_left = np.repeat(width_left, stride)  # This is because |width|=T1/stride.
         width_right = np.repeat(width_right, stride)  # This is because |width|=T1/stride.
-        print("size of width_left:", width_left.size)
- 
+        # print("size of width_left:", width_left.size)
+        print("Shape of out_sample_predict:", len(out_sample_predict))
+        print("Shape of width_left:", width_left.shape)
+
 
         # n1X2 data frame
         print(f'            out_sample_predict.shape:{out_sample_predict.shape}')
@@ -211,7 +213,7 @@ class prediction_interval():
 
 
 # main function
-    def run_experiments(self, alpha, stride,  methods=['Ensemble'],res_dir=None, algo_prefix= None, patient_id):
+    def run_experiments(self, alpha, stride,  methods=['Ensemble'],res_dir=None, algo_prefix= None, patient_id = None):
         """
         Run conformal prediction experiments.
         Args:
@@ -229,6 +231,7 @@ class prediction_interval():
             results = pd.DataFrame(columns=[ 'train_size', 'mean_coverage', 'avg_width', 'mean_lower', 'mean_upper'])
         for method in methods:
             if method == 'Ensemble':
+                
                 PI = self.compute_PIs_Ensemble_online(alpha, stride)
                 PI['method'] = method
             else:
@@ -261,15 +264,9 @@ class prediction_interval():
             new_row_all_avg = results
             if not isinstance(new_row_all_avg, pd.DataFrame):
                 new_row_all_avg = pd.DataFrame([new_row_all_avg])
-            # final_all_cpresults_avg_csv = res_dir+'/'+ algo_prefix+f'_PIs.csv'
-            # with open(final_result_path+f'/final_all_cpresults_avg_{self.algoname}_B={self.B}.csv', 'a') as f:
             final_all_cpresults_avg_csv = res_dir+'/'+ algo_prefix+'/'+algo_prefix+f'_PIs(alpha={alpha}).csv'
             with open(final_all_cpresults_avg_csv, 'a') as f:
                 new_row_all_avg.to_csv(f, header=f.tell()==0, index=False)
-
-            # print(f'~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-            # print(f'Conformal Prediction Results:\n {results}')
-            # print(f'~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
         return pd.concat(PIs, axis=1), results
 

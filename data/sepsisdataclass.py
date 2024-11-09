@@ -175,6 +175,8 @@ class SepsisData1(object):
 
         train_dataset = (contexts, actions, rewards )
         return train_dataset
+    
+
     def get_testset(self,sepsis_full_df,patient_id):
         sepsis_full_df = sepsis_full_df.drop(['HospAdmTime'], axis=1)
         test_df = sepsis_full_df[sepsis_full_df['pat_id']==patient_id]
@@ -205,7 +207,7 @@ class SepsisData1(object):
     def num_test_samples(self):
         return self.test_contexts.shape[0]
 
-
+ 
 
 # create a testing set with all the testing patients merged into one array
 class SepsisData(object):
@@ -251,10 +253,7 @@ class SepsisData(object):
             df = pd.read_csv(f'./data/SepsisData/fully_imputed_8windowed_max48_updated.csv')
             # Drop the column 'HospAdmTim' as per your requirement
             df = df.drop(['HospAdmTime'], axis=1)
-            # self.num_test_pat_septic_win =10
-            # self.num_train_sepsis_pat_win = 100
-            # Balanced training samples ratio (1:1): This can help the model learn to recognize septic cases better 
-            # but it may affect generalization, especially if the real-world incidence of sepsis is low.
+ 
             self.num_train_nosepsis_pat_win = self.num_train_sepsis_pat_win 
             # Maintain Real-World Distribution for testing dataset
             self.num_test_pat_noseptic_win = math.floor(self.num_test_pat_septic_win * 12)

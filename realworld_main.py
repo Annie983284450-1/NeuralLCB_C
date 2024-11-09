@@ -92,7 +92,7 @@ help_text: string describes the flag
 
 # flags.DEFINE_string('algo_group', 'approx-neural_cp', 'conformal prediction/neural')
 flags.DEFINE_string('algo_group', 'ApproxNeuraLCB_cp', 'conformal prediction/neural')
-flags.DEFINE_string('data_type', 'sepsis', 'Dataset to sample from')
+flags.DEFINE_string('data_type', 'sepsis1', 'Dataset to sample from')
 flags.DEFINE_string('policy', 'eps-greedy', 'Offline policy, eps-greedy/subset')
 flags.DEFINE_string('group', 'septic', 'Testing data group')
 
@@ -123,16 +123,7 @@ flags.DEFINE_integer('batch_size', 32, 'Batch size')
 flags.DEFINE_integer('num_steps', 100, 'Number of steps to train NN.') 
 # flags.DEFINE_integer('num_steps', 10, 'Number of steps to train NN.') 
 flags.DEFINE_integer('buffer_s', -1, 'Size in the train data buffer.')
-# let's test on mnistm cuz this is the only dataset available/opened
 
-    # dataclasses = {'mushroom':MushroomData, 'jester':JesterData, 'statlog':StatlogData, 'covertype':CoverTypeData, 'stock': StockData,
-    #         'adult': AdultData, 'census': CensusData, 'mnist': MnistData
-    # }
-
-# flags.DEFINE_string('data_type', 'mnist', 'Dataset to sample from')
-# flags.DEFINE_string('data_type', 'covertype', 'Dataset to sample from')
-
-# flags.DEFINE_string('policy', 'online', 'Offline policy, eps-greedy/subset')
 flags.DEFINE_float('eps', 0.1, 'Probability of selecting a random action in eps-greedy')
 flags.DEFINE_float('subset_r', 0.5, 'The ratio of the action spaces to be selected in offline data')
 flags.DEFINE_float('noise_std', 0.01, 'Noise std')
@@ -158,17 +149,12 @@ def main(unused_argv):
 
     # is_window = True
     # this might only corresponding to a few hundreds patients
-    if FLAGS.is_window:
+    # if FLAGS.is_window:
+    if FLAGS.data_type == 'sepsis':
 
- 
         num_contexts = FLAGS.num_train_sepsis_pat_win * FLAGS.win_size * 2
         num_test_contexts = FLAGS.num_test_pat_septic_win * FLAGS.win_size * 13
-    else:
-
-        # flags.DEFINE_integer('num_contexts', 500, 'Number of contexts for training.') 
-        # flags.DEFINE_integer('num_test_contexts', 100, 'Number of contexts for test.') 
-        num_contexts = 500
-        num_test_contexts = 300
+ 
     #=================
     # Data 
     #=================
@@ -183,10 +169,8 @@ def main(unused_argv):
 
         raise NotImplementedError('{} not implemented'.format(FLAGS.policy))
 
-# different datasets
-    dataclasses = {'mushroom':MushroomData, 'jester':JesterData, 'statlog':StatlogData, 'covertype':CoverTypeData, 'stock': StockData,
-            'adult': AdultData, 'census': CensusData, 'mnist': MnistData, 'sepsis': SepsisData, 'sepsis1': SepsisData1
-    }
+
+    dataclasses = {'sepsis': SepsisData, 'sepsis1': SepsisData1}
     
     if FLAGS.data_type in dataclasses:
         # so actually this is returning a class not a string
@@ -196,9 +180,7 @@ def main(unused_argv):
                         is_window = FLAGS.is_window,
                         num_train_sepsis_pat_win= FLAGS.num_train_sepsis_pat_win,
                         num_test_pat_septic_win= FLAGS.num_test_pat_septic_win, 
-                        # num_contexts=FLAGS.num_contexts, 
                         num_contexts=num_contexts, 
-                        # num_test_contexts=FLAGS.num_test_contexts,
                         num_test_contexts=num_test_contexts,
                         num_actions=2,
                         noise_std = FLAGS.noise_std,
@@ -206,7 +188,7 @@ def main(unused_argv):
                         eps = FLAGS.eps, 
                         subset_r = FLAGS.subset_r,
                         group = FLAGS.group) 
-        elif FLAGS.data_type == 'sepsis1': # process the dataset one by one
+        elif FLAGS.data_type == 'sepsis1': # process the pat one by one
             data = DataClass(
                 num_actions=2, 
                 noise_std=FLAGS.noise_std,
@@ -214,25 +196,14 @@ def main(unused_argv):
                 eps=FLAGS.eps, 
                 subset_r=FLAGS.subset_r 
             )
-
-        else:
-
-            data = DataClass(
-                   # num_contexts=FLAGS.num_contexts, 
-                     num_contexts=num_contexts, 
-                        # num_test_contexts=FLAGS.num_test_contexts,
-                        num_test_contexts= num_test_contexts,
-                        pi = FLAGS.policy, 
-                        eps = FLAGS.eps, 
-                        subset_r = FLAGS.subset_r) 
     else:
         raise NotImplementedError
-
-    dataset = data.reset_data()
-    context_dim = dataset[0].shape[1] 
-    print(f'context_dim: {context_dim}')
-  
-    context_dim = dataset[0].shape[1] 
+    
+    if FLAGS.data_type != 'sepsis1':
+        dataset = data.reset_data()
+        context_dim = dataset[0].shape[1] 
+    else:
+        context_dim = 13
     num_actions = data.num_actions 
    
 
@@ -264,20 +235,7 @@ def main(unused_argv):
         'data_type':FLAGS.data_type,
         'max_test_batch': FLAGS.batch_size,
         'B': FLAGS.B
-        # 'policy_prefix', policy_prefix
     })
-
-    # lin_hparams = edict(
-    #     {
-    #         'context_dim': hparams.context_dim, 
-    #         'num_actions': hparams.num_actions, 
-    #         'lambd0': hparams.lambd0, 
-    #         'beta': hparams.beta, 
-    #         'rbf_sigma': FLAGS.rbf_sigma, # 0.1, 1, 10
-    #         'max_num_sample': 1000 
-    #     }
-    # )
-
 
 
     data_prefix = '{}_d={}_a={}_pi={}_std={}_testfreq={}'\
@@ -389,37 +347,50 @@ def main(unused_argv):
                 FLAGS.num_sim, FLAGS.test_freq, FLAGS.verbose, FLAGS.debug, FLAGS.normalize, res_dir,algo_prefix,file_name,sim, FLAGS.B)
             np.savez(file_name, regrets=regrets, errs=errs)
             print(f'total time for contextual bandit runner: {time.time()-start} seconds')
+            
         elif FLAGS.data_type == 'sepsis1': # runner v3 will process only one patient each time
 
             #~~~~~~~~~~~~~~Testing set~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             ratio = 1
-            test_sepsis = np.load('./data/test_sepsis.npy')
-            test_nosepsis = np.load('./data/test_nosepsis.npy')
-            test_sepsis = test_sepsis[0: FLAGS.num_test_pat_septic]
-            test_nosepsis = test_nosepsis[0:FLAGS.num_test_pat_septic*ratio]
-            print(f'test_sepsis: {len(test_sepsis)}')
-            print(f'test_nosepsis: {len(test_nosepsis)}')
-            test_set_psv = np.concatenate((test_sepsis, test_nosepsis), axis=0) 
-            test_set = [filename.replace('.psv', '') for filename in test_set_psv]
+            # test_sepsis = np.load('./data/SepsisData/test_sepsis.npy')
+            # test_nosepsis = np.load('./data/SepsisData/test_nosepsis.npy')
+            test_sepsis = np.load('./data/SepsisData/test_sepsis_wins.npy')
+            test_nosepsis = np.load('./data/SepsisData/test_nosepsis_wins.npy')
+            # test_sepsis = test_sepsis[0: FLAGS.num_test_pat_septic]
+            # test_nosepsis = test_nosepsis[0:FLAGS.num_test_pat_septic*ratio]
+            test_sepsis = test_sepsis[0: FLAGS.num_test_pat_septic_win]
+            test_nosepsis = test_nosepsis[0:FLAGS.num_test_pat_septic_win*ratio]
+   
+            # test_set_psv = np.concatenate((test_sepsis, test_nosepsis), axis=0) 
+            # test_set = [filename.replace('.psv', '') for filename in test_set_psv]
+            test_set = np.concatenate((test_sepsis, test_nosepsis), axis=0) 
+
             np.random.seed(12345)  # Set a seed for reproducibility
             np.random.shuffle(test_set)
-            test_sepsis = [filename.replace('.psv', '') for filename in test_sepsis]
-            test_nosepsis = [filename.replace('.psv', '') for filename in test_nosepsis]
+            # test_sepsis = [filename.replace('.psv', '') for filename in test_sepsis]
+            # test_nosepsis = [filename.replace('.psv', '') for filename in test_nosepsis]
             #~~~~~~~~~~~~~~Training set~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-            train_sepsis = np.load('./data/train_sepsis.npy')
-            train_nosepsis = np.load('./data/train_nosepsis.npy')
-            train_sepsis = train_sepsis[0:FLAGS.num_train_pat_septic]
-            train_nosepsis = train_nosepsis[0:FLAGS.num_train_pat_septic]
-            print(f'train_sepsis: {len(train_sepsis)}')
-            print(f'train_nosepsis: {len(train_nosepsis)}')
-            train_set_psv = np.concatenate((train_sepsis, train_nosepsis), axis=0)
-            train_patients_ids  = [filename.replace('.psv', '') for filename in train_set_psv]
+
+
+
+
+            # train_sepsis = np.load('./data/SepsisData/train_sepsis.npy')
+            # train_nosepsis = np.load('./data/SepsisData/train_nosepsis.npy')
+            train_sepsis = np.load('./data/SepsisData/train_sepsis_wins.npy')
+            train_nosepsis = np.load('./data/SepsisData/train_nosepsis_wins.npy')
+            # train_sepsis = train_sepsis[0:FLAGS.num_train_pat_septic]
+            # train_nosepsis = train_nosepsis[0:FLAGS.num_train_pat_septic]
+            train_sepsis = train_sepsis[0:FLAGS.num_train_sepsis_pat_win]
+            train_nosepsis = train_nosepsis[0:FLAGS.num_train_sepsis_pat_win]
+ 
+            # train_set_psv = np.concatenate((train_sepsis, train_nosepsis), axis=0)
+            # train_patients_ids  = [filename.replace('.psv', '') for filename in train_set_psv]
+            train_patients_ids =  np.concatenate((train_sepsis, train_nosepsis), axis=0)
             np.random.seed(12345)  # Set a seed for reproducibility
             np.random.shuffle(train_patients_ids)
-            sepsis_full_df = './data/SepsisData/fully_imputed.csv'
-            # train_dataset = (contexts, actions, rewards )
-            # train_dataset = data.get_trainset(sepsis_full_df,train_patients_ids)
-            # test_dataset = data.get_testset(sepsis_full_df, patient_id)
+            # sepsis_full_df = pd.read_csv('./data/SepsisData/fully_imputed.csv')
+            sepsis_full_df = pd.read_csv('./data/SepsisData/fully_imputed_8windowed_max48_updated.csv')
+         
             regrets, errs = contextual_bandit_runner_v3(algos, data,  sepsis_full_df, train_patients_ids,test_set,\
                 FLAGS.num_sim, FLAGS.test_freq, FLAGS.verbose, FLAGS.debug, FLAGS.normalize, res_dir,algo_prefix,file_name,sim, FLAGS.B)
             np.savez(file_name, regrets=regrets, errs=errs)
@@ -430,7 +401,8 @@ def main(unused_argv):
 
 
 
-# thissetup is only executed only if the script is run directly from the command line, not when imported as a module in another python project scrpit.
+# thissetup is only executed only if the script is run directly from the command line,
+# not when imported as a module in another python project scrpit.
 # app() ensures that all the command-line arguments are parsed
 if __name__ == '__main__': 
     app.run(main)

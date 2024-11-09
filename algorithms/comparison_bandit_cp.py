@@ -61,7 +61,7 @@ class ExactNeuraLCBV2_cp(BanditAlgorithm):
         print(f'self.data.rewards.shape:{self.data.rewards}')
 
 
-    def sample_action(self, contexts,  opt_vals, opt_actions):
+    def sample_action(self, contexts,  opt_vals, opt_actions, res_dir, algo_prefix):
         """
         Args:
             context: (None, self.hparams.context_dim)
@@ -118,11 +118,16 @@ class ExactNeuraLCBV2_cp(BanditAlgorithm):
                         actions, 
                         test_actions,
                         filename,
-                        self.name, 
+                        self.name,
                         self.B)
         self.Ensemble_pred_interval_centers = self.prediction_interval_model.fit_bootstrap_models_online(B=self.B, miss_test_idx=[])
         # print(f'self.Ensemble_prediction_interval_centers:{self.Ensemble_pred_interval_centers}')
-        PI_dfs, results = self.prediction_interval_model.run_experiments(alpha=0.05, stride=8,methods=['Ensemble'])       
+        alphacp_ls = np.linspace(0.05,0.25,5)
+        for alphacp in alphacp_ls:
+            PI_dfs, results = self.prediction_interval_model.run_experiments(alpha=alphacp, stride=8,methods=['Ensemble'],res_dir=res_dir, algo_prefix=algo_prefix)       
+
+
+
         return sampled_test_actions
     def update_buffer(self, contexts, actions, rewards): 
         self.data.add(contexts, actions, rewards)
@@ -278,6 +283,66 @@ class NeuralGreedyV2_cp(BanditAlgorithm):
     
         return sampled_test_actions
 
+        
+    def sample_action1(self, contexts, opt_vals, opt_actions, res_dir, algo_prefix,pat_id):
+        preds = []
+        for a in range(self.hparams.num_actions):
+            actions = jnp.ones(shape=(contexts.shape[0],)) * a 
+            # ====== added by Annie 2024 Oct.04
+            if len(self.Ensemble_pred_interval_centers) == 0:
+                f = self.nn.out(self.nn.params, contexts, actions)  # Default to the neural network output
+            else:
+                f = self.Ensemble_pred_interval_centers
+                f = jnp.array(f)
+            # ====== added by Annie 2024 Oct.04
+
+            # f = self.nn.out(self.nn.params, contexts, actions) # (num_samples, 1)
+            preds.append(f) 
+        '''
+        === debug log ====
+        jnp.hstack flattens the array along the horizontal axis, resulting in a one-dimensional array. This is why you end up with preds.shape == (1040,) instead of the expected two dimensions.
+        Since you have 520 contexts and are making predictions for 2 actions, jnp.hstack concatenates them into a single flat array instead of keeping them as separate rows and columns.
+        Solution:
+        To fix this, you should use jnp.column_stack (or jnp.stack) instead of jnp.hstack. jnp.column_stack will ensure that preds has two dimensions: one for the number of contexts and another for the number of actions.
+        '''
+        # preds = jnp.hstack(preds) 
+        # Use column_stack to ensure that each action's predictions are in separate columns
+        preds = jnp.column_stack(preds)
+        # print(f"preds.shape: {preds.shape}")
+        sampled_test_actions = jnp.argmax(preds, axis=1)
+
+
+        X_train = self.data.contexts
+        # selected actions for training
+        actions = self.data.actions.ravel().astype(int)
+        # rewards for training
+        Y_train = self.data.rewards[np.arange(len(actions)), actions].reshape(-1, 1)
+        X_predict = contexts
+        test_actions = sampled_test_actions.ravel().astype(int)
+        Y_predict = opt_vals
+        filename = self.res_dir
+        nn_model = self.nn
+        
+       
+        self.prediction_interval_model = prediction_interval(
+                        nn_model,  
+                        X_train, 
+                        X_predict, 
+                        Y_train, 
+                        Y_predict, 
+                        actions, 
+                        test_actions,
+                        filename,
+                        self.name,
+                        self.B)
+        self.Ensemble_pred_interval_centers = self.prediction_interval_model.fit_bootstrap_models_online(B=self.B, miss_test_idx=[])
+        # print(f'self.Ensemble_prediction_interval_centers:{self.Ensemble_pred_interval_centers}')
+        alphacp_ls = np.linspace(0.05,0.25,5)
+        for alphacp in alphacp_ls:
+            PI_dfs, results = self.prediction_interval_model.run_experiments(alpha=alphacp, stride=1,methods=['Ensemble'],res_dir=res_dir,\
+                                                                              algo_prefix=algo_prefix, patient_id  = pat_id)       
+    
+        return sampled_test_actions
     def update_buffer(self, contexts, actions, rewards): 
         self.data.add(contexts, actions, rewards)
 
