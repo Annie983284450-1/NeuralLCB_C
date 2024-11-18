@@ -25,7 +25,7 @@ from cp_funs.PI import prediction_interval
 
 class ExactNeuraLCBV2_cp(BanditAlgorithm):
     """NeuraLCB using exact confidence matrix and NeuralBanditModelV2. """
-    def __init__(self, hparams,res_dir,B,  update_freq=1, name='ExactNeuraLCBV2_cp'):
+    def __init__(self, hparams, res_dir, B, update_freq=1, name='ExactNeuraLCBV2_cp'):
         self.name = name 
         self.B = B
         self.hparams = hparams 

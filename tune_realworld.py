@@ -15,7 +15,7 @@ parser = argparse.ArgumentParser()
  
 # parser.add_argument('--task', type=str, default='run_exps', choices=['run_exps','collect_results'])
 parser.add_argument('--task', type=str, default='run_exps', choices=['run_exps'])
-parser.add_argument('--data_types', nargs='+', type=str, default=['sepsis1'])
+parser.add_argument('--data_types', nargs='+', type=str, default=['sepsis'])
 parser.add_argument('--algo_groups', nargs='+', type=str, default=['ApproxNeuraLCB_cp'])
 parser.add_argument('--policies', nargs='+', type=str, default=['eps-greedy'])
 parser.add_argument('--num_sim', type=int, default=1)
@@ -25,7 +25,10 @@ parser.add_argument('--gpus', nargs='+', type=int, default=[0], help='gpus indic
  
 parser.add_argument('--mode', type=str, default=None, help='hyper mode')
 parser.add_argument('--G', type=str, default='septic', help='data group')
-parser.add_argument('--test', type=int, default=0, help='data group')
+parser.add_argument('--test', type=int, default=0, help='if test?')
+parser.add_argument('--test_freq', type=int, default=100, help='test_freq')
+
+
 
 
 args = parser.parse_args()
@@ -166,13 +169,13 @@ def get_gpu_utilization(gpu_idx):
 #             p.wait()
 
  
-def create_commands(data_type='sepsis', algo_group='ApproxNeuraLCB_cp', num_sim=1, policy='eps-greedy',hyper_mode = None, group = 'septic', test = False):
+def create_commands(data_type='sepsis', algo_group='ApproxNeuraLCB_cp', num_sim=1, policy='eps-greedy',hyper_mode = None, group = 'septic', test = False, test_freq = 100):
     # test = False
     # test = True
     
     # hyper_mode = 'A2:beta_noise005_tune'
     # group = 'septic'
-
+     
 
     if hyper_mode == 'full':
         # Grid search space: used for grid search in the paper
@@ -182,71 +185,96 @@ def create_commands(data_type='sepsis', algo_group='ApproxNeuraLCB_cp', num_sim=
         beta_space = [0.01, 0.05, 1, 5,10]
         rbfsigma_space = [1] #[0.1, 1,10]
         noise_std_space = [0.05, 0.1]
+        cpr = 0.1
     elif hyper_mode == 'best':
         # The best searc sapce inferred fro prior experiments 
         lr_space = [1e-4]
         train_mode_space = [(1,1,1)]
         beta_space = [1]
         rbfsigma_space = [10] #10 for mnist, 0.1 for mushroom 
+        cpr = 0.1
     elif hyper_mode == 'S1':  
         lr_space = [1e-3]
         train_mode_space = [(32,100,-1)]
         beta_space = [0.05]
         rbfsigma_space = [1] #[0.1, 1,10]
         noise_std_space = [0.1]
+        cpr = 0.1
     elif hyper_mode == 'S2':  
         lr_space = [1e-3]
         train_mode_space = [(32,100,-1)]
         beta_space = [0.01]
         rbfsigma_space = [1] #[0.1, 1,10]
         noise_std_space = [0.1]
+        cpr = 0.1
     elif hyper_mode == 'S3':  
         lr_space = [1e-3]
         train_mode_space = [(32,100,-1)]
         beta_space = [5]
         rbfsigma_space = [1] #[0.1, 1,10]
         noise_std_space = [0.1]
+        cpr = 0.1
     elif hyper_mode == 'S4':  
         lr_space = [1e-3]
         train_mode_space = [(32,100,-1)]
         beta_space = [10]
         rbfsigma_space = [1] #[0.1, 1,10]
         noise_std_space = [0.1]
+        cpr = 0.1
     elif hyper_mode == 'S5':   
         lr_space = [1e-3]
         train_mode_space = [(32,100,-1)]
         beta_space = [1]
         rbfsigma_space = [1] #[0.1, 1,10]
         noise_std_space = [0.1]
+        cpr = 0.1
     elif hyper_mode == 'S6':   
         lr_space = [1e-4]
         train_mode_space = [(32,100,-1)]
         beta_space = [1]
         rbfsigma_space = [1] #[0.1, 1,10]
         noise_std_space = [0.1]
+        cpr = 0.1
     elif hyper_mode == 'S7':   
         lr_space = [1e-4]
         train_mode_space = [(32,100,-1)]
         beta_space = [5]
         rbfsigma_space = [1] 
         noise_std_space = [0.1]
+        cpr = 0.1
     elif hyper_mode == 'S8':   
         lr_space = [1e-4]
         train_mode_space = [(32,100,-1)]
         beta_space = [0.5]
         rbfsigma_space = [1] 
         noise_std_space = [0.1]
+        cpr = 0.1
     elif hyper_mode == 'S9':   
         lr_space = [1e-4]
         train_mode_space = [(32,100,-1)]
         beta_space = [10]
         rbfsigma_space = [1] 
         noise_std_space = [0.1]
+        cpr = 0.1
+    elif hyper_mode == 'S9':   
+        lr_space = [1e-4]
+        train_mode_space = [(32,100,-1)]
+        beta_space = [10]
+        rbfsigma_space = [1] 
+        noise_std_space = [0.1]
+        cpr = 0.1
+    elif hyper_mode == 'S10':   
+        lr_space = [1e-3]
+        train_mode_space = [(50,100,-1)]
+        beta_space = [0.05]
+        rbfsigma_space = [1] 
+        noise_std_space = [0.1]
+        cpr = 0.1
     else:
         sys.exit('Wrong Hyper mode!! Inpuy hyper mode!!')
     commands = []
     algo_group_ = algo_group.split('_')
-    if algo_group_[0] in ['ApproxNeuraLCB','ApproxNeuralLinLCBV2', 'ApproxNeuralLinLCBJointModel','ApproxNeuraLCBV2']:
+    if algo_group_[0] in ['ApproxNeuraLCB' ,'ApproxNeuraLCBV2']:
         for lr in lr_space:
             for batch_size,num_steps,buffer_s in train_mode_space:
                 for beta in beta_space:
@@ -266,7 +294,8 @@ def create_commands(data_type='sepsis', algo_group='ApproxNeuraLCB_cp', num_sim=
                                 f'--lr {lr} '
                                 f'--policy {policy} '
                                 f'--noise_std {noise_std} '
-                                f'--group {group}'
+                                f'--group {group} '
+                                f'--test_freq {test_freq}'
                             )
                         else:
                             commands.append(
@@ -281,7 +310,49 @@ def create_commands(data_type='sepsis', algo_group='ApproxNeuraLCB_cp', num_sim=
                                 f'--lr {lr} '
                                 f'--policy {policy} '
                                 f'--noise_std {noise_std} '
-                                f'--group {group}'
+                                f'--group {group} '
+                                f'--test_freq {test_freq}'
+                            )
+    if algo_group_[0] in ['ApproxNeuralLinLCBV2', 'ApproxNeuralLinLCBJointModel']:
+        for lr in lr_space:
+            for batch_size,num_steps,buffer_s in train_mode_space:
+                for beta in beta_space:
+                    for noise_std in noise_std_space:
+                        if test == 1:
+                            commands.append(
+                                f'python realworld_main.py '
+                                f'--num_train_sepsis_pat_win 5 '
+                                f'--num_test_pat_septic_win 1 '
+                                f'--data_type {data_type} '
+                                f'--algo_group {algo_group} '
+                                f'--num_sim {num_sim} '
+                                f'--batch_size {batch_size} '
+                                f'--num_steps {num_steps} '
+                                f'--buffer_s {buffer_s} '
+                                f'--beta {beta} '
+                                f'--lr {lr} '
+                                f'--policy {policy} '
+                                f'--noise_std {noise_std} '
+                                f'--group {group} '
+                                f'--cpr {cpr} '
+                                f'--test_freq {test_freq}'
+
+                            )
+                        else:
+                            commands.append(
+                                f'python realworld_main.py '
+                                f'--data_type {data_type} '
+                                f'--algo_group {algo_group} '
+                                f'--num_sim {num_sim} '
+                                f'--batch_size {batch_size} '
+                                f'--num_steps {num_steps} '
+                                f'--buffer_s {buffer_s} '
+                                f'--beta {beta} '
+                                f'--lr {lr} '
+                                f'--policy {policy} '
+                                f'--noise_std {noise_std} '
+                                f'--group {group} '
+                                f'--test_freq {test_freq}'
                             )
     elif algo_group == 'NeuralGreedyV2_cp' or 'NeuralGreedyV2': # 'NeuralGreedyV2_cp' does not have beta
         for lr in lr_space:
@@ -301,7 +372,8 @@ def create_commands(data_type='sepsis', algo_group='ApproxNeuraLCB_cp', num_sim=
                             f'--lr {lr} '
                             f'--policy {policy} '
                             f'--noise_std {noise_std} '
-                            f'--group {group}'
+                            f'--group {group} '
+                            f'--test_freq {test_freq}'
                         )
                     else:
                         commands.append(
@@ -315,7 +387,8 @@ def create_commands(data_type='sepsis', algo_group='ApproxNeuraLCB_cp', num_sim=
                             f'--lr {lr} '
                             f'--policy {policy} '
                             f'--noise_std {noise_std} '
-                            f'--group {group}'
+                            f'--group {group} '
+                            f'--test_freq {test_freq}'
                         )
     else:
         raise NotImplementedError
@@ -327,7 +400,7 @@ def run_exps():
     for data_type in args.data_types:
         for algo_group in args.algo_groups:
             for policy in args.policies:
-                commands += create_commands(data_type, algo_group, args.num_sim, policy, args.mode,args.G, args.test)
+                commands += create_commands(data_type, algo_group, args.num_sim, policy, args.mode,args.G, args.test, args.test_freq)
     random.shuffle(commands)
     multi_gpu_launcher(commands, args.gpus, args.models_per_gpu)
 

@@ -17,7 +17,7 @@ from core.contextual_bandit import contextual_bandit_runner, contextual_bandit_r
 
 from algorithms.neural_offline_bandit_cp import ApproxNeuraLCB_cp 
 from algorithms.comparison_bandit_cp import ExactNeuraLCBV2_cp, NeuralGreedyV2_cp, NeuraLCB_cp
-from algorithms.neural_lin_lcb_cp import ApproxNeuralLinLCBV2_cp, ApproxNeuralLinLCBJointModel_cp,ExactNeuralLinLCBV2_cp
+from algorithms.neural_lin_lcb_cp import ApproxNeuralLinLCBV2_cp, ApproxNeuralLinLCBJointModel_cp,ExactNeuralLinLCBV2_cp, ApproxNeuralLinLCBV2_cp_diag, ApproxNeuralLinLCBV2_cp_yhat
  
 from algorithms.neural_offline_bandit import ExactNeuraLCBV2, NeuralGreedyV2, ApproxNeuraLCBV2
 from algorithms.lin_lcb import LinLCB 
@@ -92,7 +92,7 @@ help_text: string describes the flag
 
 # flags.DEFINE_string('algo_group', 'approx-neural_cp', 'conformal prediction/neural')
 flags.DEFINE_string('algo_group', 'ApproxNeuraLCB_cp', 'conformal prediction/neural')
-flags.DEFINE_string('data_type', 'sepsis1', 'Dataset to sample from')
+flags.DEFINE_string('data_type', 'sepsis', 'Dataset to sample from')
 flags.DEFINE_string('policy', 'eps-greedy', 'Offline policy, eps-greedy/subset')
 flags.DEFINE_string('group', 'septic', 'Testing data group')
 
@@ -114,14 +114,10 @@ flags.DEFINE_integer('B', 10, 'number of bootstraps')
 flags.DEFINE_integer('update_freq', 1, 'Update frequency')
 flags.DEFINE_integer('freq_summary', 10, 'Summary frequency')
 flags.DEFINE_integer('test_freq', 100, 'Test frequency')
-# flags.DEFINE_integer('num_sim', 10, 'Number of simulations')
 flags.DEFINE_integer('num_sim', 1, 'Number of simulations')
 flags.DEFINE_integer('chunk_size', 500, 'Chunk size')
-# flags.DEFINE_integer('chunk_size', 5, 'Chunk size')
 flags.DEFINE_integer('batch_size', 32, 'Batch size')
-# flags.DEFINE_integer('batch_size', 4, 'Batch size')
 flags.DEFINE_integer('num_steps', 100, 'Number of steps to train NN.') 
-# flags.DEFINE_integer('num_steps', 10, 'Number of steps to train NN.') 
 flags.DEFINE_integer('buffer_s', -1, 'Size in the train data buffer.')
 
 flags.DEFINE_float('eps', 0.1, 'Probability of selecting a random action in eps-greedy')
@@ -133,6 +129,7 @@ flags.DEFINE_float('beta', 0.1, 'confidence paramter') # [0.01, 0.05, 0.1, 0.5, 
 flags.DEFINE_float('lr', 1e-3, 'learning rate') 
 flags.DEFINE_float('lambd0', 0.1, 'minimum eigenvalue') 
 flags.DEFINE_float('lambd', 1e-4, 'regularization parameter')
+flags.DEFINE_float('cpr', 0.1, '(1-cpr) of conformal predictions')
 
 
 flags.DEFINE_bool('is_window', True, 'to use the window sized data or not?') 
@@ -150,7 +147,7 @@ def main(unused_argv):
     # is_window = True
     # this might only corresponding to a few hundreds patients
     # if FLAGS.is_window:
-    if FLAGS.data_type == 'sepsis':
+    if FLAGS.data_type == 'sepsis' or FLAGS.data_type == 'sepsis2':
 
         num_contexts = FLAGS.num_train_sepsis_pat_win * FLAGS.win_size * 2
         num_test_contexts = FLAGS.num_test_pat_septic_win * FLAGS.win_size * 13
@@ -170,12 +167,12 @@ def main(unused_argv):
         raise NotImplementedError('{} not implemented'.format(FLAGS.policy))
 
 
-    dataclasses = {'sepsis': SepsisData, 'sepsis1': SepsisData1}
+    dataclasses = {'sepsis': SepsisData, 'sepsis1': SepsisData1, 'sepsis2': SepsisData2, 'jh': JHData}
     
     if FLAGS.data_type in dataclasses:
         # so actually this is returning a class not a string
         DataClass = dataclasses[FLAGS.data_type]
-        if FLAGS.data_type == 'sepsis':
+        if FLAGS.data_type == 'sepsis' or FLAGS.data_type == 'sepsis2':
             data = DataClass(                
                         is_window = FLAGS.is_window,
                         num_train_sepsis_pat_win= FLAGS.num_train_sepsis_pat_win,
@@ -194,8 +191,19 @@ def main(unused_argv):
                 noise_std=FLAGS.noise_std,
                 pi=FLAGS.policy, 
                 eps=FLAGS.eps, 
-                subset_r=FLAGS.subset_r 
+                subset_r=FLAGS.subset_r,
+                group = FLAGS.group
             )
+        elif FLAGS.data_type == 'jh': # process the pat one by one
+            data = DataClass(
+                num_actions=2, 
+                noise_std=FLAGS.noise_std,
+                pi=FLAGS.policy, 
+                eps=FLAGS.eps, 
+                subset_r=FLAGS.subset_r,
+                group = FLAGS.group
+            )
+   
     else:
         raise NotImplementedError
     
@@ -265,11 +273,8 @@ def main(unused_argv):
 
     ALGO_MAP_cp = {
         'NeuralGreedyV2_cp': NeuralGreedyV2_cp,
-        'ApproxNeuralLinLCBV2_cp': ApproxNeuralLinLCBV2_cp,
-        'ApproxNeuralLinLCBJointModel_cp': ApproxNeuralLinLCBJointModel_cp,
         'ApproxNeuraLCB_cp': ApproxNeuraLCB_cp, # finished already
-        'ExactNeuraLCBV2_cp': ExactNeuraLCBV2_cp, # run if we have time
-        'ExactNeuralLinLCBV2_cp': ExactNeuralLinLCBV2_cp  # run if we have time   
+        'ExactNeuraLCBV2_cp': ExactNeuraLCBV2_cp # run if we have time
     }
 
     ALGO_MAP = {
@@ -280,7 +285,14 @@ def main(unused_argv):
         'ExactNeuralLinLCBV2': ExactNeuralLinLCBV2,  # run if we have time
         'ApproxNeuraLCBV2': ApproxNeuraLCBV2
     }
-
+    ALGO_MAP_lincp = {
+        
+        'ApproxNeuralLinLCBV2_cp': ApproxNeuralLinLCBV2_cp,
+        'ApproxNeuralLinLCBV2_cp_yhat': ApproxNeuralLinLCBV2_cp_yhat,
+        'ApproxNeuralLinLCBV2_cp_diag': ApproxNeuralLinLCBV2_cp_diag,
+        'ApproxNeuralLinLCBJointModel_cp': ApproxNeuralLinLCBJointModel_cp, 
+        'ExactNeuralLinLCBV2_cp': ExactNeuralLinLCBV2_cp # run if we have time
+    }
     if FLAGS.algo_group in ALGO_MAP_cp:
         # raise ValueError(f"Unknown algo_group: {FLAGS.algo_group}")
         print(f'@@@@@@@@@~~~~~~~~~~~~~~~ Algorithm Testing ==== {FLAGS.algo_group}~~~~~~~~~~~~~~~@@@@@@@@@')
@@ -290,7 +302,7 @@ def main(unused_argv):
 
         # Create the algorithm instance
         algos = [
-            algo_class(hparams, res_dir=FLAGS.res_dir, B = FLAGS.B, update_freq=FLAGS.update_freq)
+            algo_class(hparams, res_dir=res_dir, B = FLAGS.B, update_freq=FLAGS.update_freq)
         ]
         # Create the prefix string using f-string
         algo_prefix = (
@@ -299,11 +311,40 @@ def main(unused_argv):
             f"_lr={hparams.lr}_beta={hparams.beta}_lambda={hparams.lambd}_lambda0={hparams.lambd0}"
             f"_B={hparams.B}"
             f"_G={FLAGS.group}"
+     
         )
+        
         # nohup_output = res_dir+f'/trainwin_{FLAGS.num_train_sepsis_pat_win}test_win_{FLAGS.num_test_pat_septic_win}_{FLAGS.algo_group}_B={FLAGS.B}_log.txt'
         if not os.path.exists(os.path.join(res_dir, algo_prefix)):
             os.makedirs(os.path.join(res_dir, algo_prefix), exist_ok=True)
         nohup_output = os.path.join(res_dir, algo_prefix) + '/'+algo_prefix+'.log' 
+    elif FLAGS.algo_group in ALGO_MAP_lincp:
+        # raise ValueError(f"Unknown algo_group: {FLAGS.algo_group}")
+        print(f'@@@@@@@@@~~~~~~~~~~~~~~~ Algorithm Testing ==== {FLAGS.algo_group}~~~~~~~~~~~~~~~@@@@@@@@@')
+    
+        # Get the algorithm class
+        algo_class = ALGO_MAP_lincp[FLAGS.algo_group]
+
+        # Create the algorithm instance
+        algos = [
+            algo_class(hparams, res_dir=res_dir, B = FLAGS.B, update_freq=FLAGS.update_freq)
+        ]
+        # Create the prefix string using f-string
+        algo_prefix = (
+            f"{FLAGS.algo_group}-gridsearch_epochs={hparams.num_steps}_m={min(hparams.layer_sizes)}"
+            f"_layern={hparams.layer_n}_buffer={hparams.buffer_s}_bs={hparams.batch_size}"
+            f"_lr={hparams.lr}_beta={hparams.beta}_lambda={hparams.lambd}_lambda0={hparams.lambd0}"
+            f"_B={hparams.B}"
+            f"_G={FLAGS.group}"
+            f"_cpr={FLAGS.cpr}"
+        )
+        
+        # nohup_output = res_dir+f'/trainwin_{FLAGS.num_train_sepsis_pat_win}test_win_{FLAGS.num_test_pat_septic_win}_{FLAGS.algo_group}_B={FLAGS.B}_log.txt'
+        if not os.path.exists(os.path.join(res_dir, algo_prefix)):
+            os.makedirs(os.path.join(res_dir, algo_prefix), exist_ok=True)
+        nohup_output = os.path.join(res_dir, algo_prefix) + '/'+algo_prefix+'.log' 
+
+
     elif FLAGS.algo_group in ALGO_MAP:
         print(f'@@@@@@@@@~~~~~~~~~~~~~~~ Algorithm Testing ==== {FLAGS.algo_group}~~~~~~~~~~~~~~~@@@@@@@@@')
         # Get the algorithm class
@@ -342,9 +383,9 @@ def main(unused_argv):
         #==============================
         start  =  time.time()
         # regrets, errs = contextual_bandit_runner(algos, data, FLAGS.num_sim, FLAGS.update_freq, FLAGS.test_freq, FLAGS.verbose, FLAGS.debug, FLAGS.normalize, file_name, res_dir)
-        if FLAGS.data_type == 'sepsis':
+        if FLAGS.data_type == 'sepsis' or FLAGS.data_type == 'sepsis2':
             regrets, errs = contextual_bandit_runner_v2(algos, data, \
-                FLAGS.num_sim, FLAGS.test_freq, FLAGS.verbose, FLAGS.debug, FLAGS.normalize, res_dir,algo_prefix,file_name,sim, FLAGS.B)
+                FLAGS.num_sim, FLAGS.test_freq, FLAGS.verbose, FLAGS.debug, FLAGS.normalize, res_dir,algo_prefix,file_name,sim, FLAGS.B, FLAGS.cpr)
             np.savez(file_name, regrets=regrets, errs=errs)
             print(f'total time for contextual bandit runner: {time.time()-start} seconds')
             
@@ -398,9 +439,6 @@ def main(unused_argv):
             
     sys.stdout = original_stdout
     print(f'Total Excution time: {time.time()-start_runner}')
-
-
-
 # thissetup is only executed only if the script is run directly from the command line,
 # not when imported as a module in another python project scrpit.
 # app() ensures that all the command-line arguments are parsed

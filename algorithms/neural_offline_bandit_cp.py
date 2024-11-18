@@ -236,10 +236,6 @@ class ApproxNeuraLCB_cp(BanditAlgorithm):
         # return jnp.hstack(acts)
         return sampled_test_actions
     
-
-
-
-
     def update_buffer(self, c, a, r): 
         print(f'        !!!!!!!!!! Updating buffer !!!!!!!!!!')
         # print(f'!!!!!!!!!!data shapes before update_buffer() !!!!!!!!!!')

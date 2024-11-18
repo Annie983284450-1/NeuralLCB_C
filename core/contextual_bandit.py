@@ -222,7 +222,7 @@ def contextual_bandit_runner_v3(algos, data,  sepsis_full_df, train_patients_ids
 
 
 def contextual_bandit_runner_v2(algos, data, \
-            num_sim, test_freq, verbose, debug, normalize, res_dir = None ,algo_prefix = None, file_name=None, sim=None, B=10):
+            num_sim, test_freq, verbose, debug, normalize, res_dir = None ,algo_prefix = None, file_name=None, sim=None, B=10, cpr = 0.5):
     """Run an offline contextual bandit problem on a set of algorithms in the same dataset. 
 
     Args:
@@ -297,14 +297,16 @@ def contextual_bandit_runner_v2(algos, data, \
                                 algo.name, test_subopt, action_acc))
                     else: 
                         t1 = time.time()
-                        cp_experts = ['ApproxNeuraLCB_cp', 'ExactNeuraLCBV2_cp', 'NeuralGreedyV2_cp', 'NeuraLCB_cp',\
-                                       'ApproxNeuralLinLCBV2_cp','ExactNeuralLinLCBV2_cp', 'ApproxNeuralLinLCBJointModel_cp']
+                        cp_experts = ['ApproxNeuraLCB_cp', 'ExactNeuraLCBV2_cp', 'NeuralGreedyV2_cp','NeuralGreedyV2_cp']
+                        cp_lin_experts = [  'ApproxNeuralLinLCBV2_cp','ExactNeuralLinLCBV2_cp', 'ApproxNeuralLinLCBJointModel_cp']
                         # predicted actions using NeuraLCB and conformal predicsion
                         # if algo.name == 'ApproxNeuraLCB_cp':
                         nocp_experts = ['ApproxNeuraLCBV2', 'ExactNeuraLCBV2', 'NeuralGreedyV2','ApproxNeuralLinLCBJointModel','ApproxNeuralLinLCBV2']
                         if algo.name in cp_experts:
                             # print(f'test_contexts.shape == {cmab.test_contexts.shape}')
                             test_actions = algo.sample_action(cmab.test_contexts, opt_vals, opt_actions, res_dir, algo_prefix ) 
+                        elif algo.name in cp_lin_experts:
+                            test_actions = algo.sample_action(cmab.test_contexts, opt_vals, opt_actions, res_dir, algo_prefix, cpr) 
                         elif algo.name in nocp_experts:
                             test_actions = algo.sample_action(cmab.test_contexts)
                         else:
@@ -335,7 +337,10 @@ def contextual_bandit_runner_v2(algos, data, \
                                 sel_stats = action_stats(test_actions.ravel(), cmab.num_actions) 
                                 opt_stats = action_stats(opt_actions.ravel(), cmab.num_actions)
                                 print('     opt_rate: {} | pred_rate: {}'.format(opt_stats, sel_stats))
-                                algo.monitor(c, a, r)           
+                                if algo.name in cp_lin_experts:
+                                    algo.monitor(c, a, r, cpr) 
+                                else:
+                                    algo.monitor(c, a, r)           
                     subopts[j].append(test_subopt) 
                     act_errs[j].append(1 - action_acc) 
                     # regrets_results = pd.DataFrame(columns=[ 'algo_name', 'train_size','regrets',    'act_errs',    'sel_stats', 'opt_stats'])
