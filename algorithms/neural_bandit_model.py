@@ -545,15 +545,10 @@ class NeuralBanditModelV2(NeuralBanditModel):
             actions: An array of actions, (None,)
             rewards: An array of rewards for the chosen actions, (None,)
         """
-        # print(f'#######Before Running loss_impure_fn in NeuralBanditModelV2...........')
-        # print("Predictions shape:", preds.shape)
-        # print("Rewards shape:", rewards.shape)
+  
 
         preds = self.out(params, contexts, actions) 
-        # print(f'#######Running loss_impure_fn in NeuralBanditModelV2...........')
-        # print("Predictions shape:", preds.shape)
-        # print("Rewards shape:", rewards.shape)
-        # sys.exit()
+
         debugging = False
         # debugging = True
         if debugging == False:

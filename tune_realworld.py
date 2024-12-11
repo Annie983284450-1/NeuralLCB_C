@@ -144,39 +144,14 @@ def get_gpu_utilization(gpu_idx):
         print(f"Error querying GPU {gpu_idx}: {e}")
         return 100  # Assume full utilization if query fails
     
-    
-# def multi_gpu_launcher_linux_mac(commands,gpus,models_per_gpu):
-#     """
-#     Launch commands on the local machine, using all GPUs in parallel.
-#     """
-#     procs = [None]*len(gpus)*models_per_gpu
-
-#     while len(commands) > 0:
-#         for i,proc in enumerate(procs):
-#             gpu_idx = gpus[i % len(gpus)]
-#             if (proc is None) or (proc.poll() is not None):
-#                 # Nothing is running on this index; launch a command.
-#                 cmd = commands.pop(0)
-#                 new_proc = subprocess.Popen(
-#                     f'CUDA_VISIBLE_DEVICES={gpu_idx} {cmd}', shell=True)
-#                 procs[i] = new_proc
-#                 break
-#         time.sleep(1)
-
-#     # Wait for the last few tasks to finish before returning
-#     for p in procs:
-#         if p is not None:
-#             p.wait()
-
+  
  
 def create_commands(data_type='sepsis', algo_group='ApproxNeuraLCB_cp', num_sim=1, policy='eps-greedy',hyper_mode = None, group = 'septic', test = False, test_freq = 100):
     # test = False
     # test = True
-    
+
     # hyper_mode = 'A2:beta_noise005_tune'
     # group = 'septic'
-     
-
     if hyper_mode == 'full':
         # Grid search space: used for grid search in the paper
         lr_space = [1e-4,1e-3]
@@ -193,83 +168,175 @@ def create_commands(data_type='sepsis', algo_group='ApproxNeuraLCB_cp', num_sim=
         beta_space = [1]
         rbfsigma_space = [10] #10 for mnist, 0.1 for mushroom 
         cpr = 0.1
-    elif hyper_mode == 'S1':  
-        lr_space = [1e-3]
-        train_mode_space = [(32,100,-1)]
-        beta_space = [0.05]
-        rbfsigma_space = [1] #[0.1, 1,10]
-        noise_std_space = [0.1]
-        cpr = 0.1
-    elif hyper_mode == 'S2':  
-        lr_space = [1e-3]
+    elif hyper_mode == 'X0':
+        lr_space = [0.0001]
         train_mode_space = [(32,100,-1)]
         beta_space = [0.01]
-        rbfsigma_space = [1] #[0.1, 1,10]
         noise_std_space = [0.1]
-        cpr = 0.1
-    elif hyper_mode == 'S3':  
-        lr_space = [1e-3]
+        cpr = 0.5
+    elif hyper_mode == 'X1':
+        lr_space = [0.0001]
         train_mode_space = [(32,100,-1)]
-        beta_space = [5]
-        rbfsigma_space = [1] #[0.1, 1,10]
+        beta_space = [0.01]
         noise_std_space = [0.1]
         cpr = 0.1
-    elif hyper_mode == 'S4':  
-        lr_space = [1e-3]
+    elif hyper_mode == 'X2':
+        lr_space = [0.0001]
         train_mode_space = [(32,100,-1)]
-        beta_space = [10]
-        rbfsigma_space = [1] #[0.1, 1,10]
+        beta_space = [0.1]
         noise_std_space = [0.1]
-        cpr = 0.1
-    elif hyper_mode == 'S5':   
-        lr_space = [1e-3]
+        cpr = 0.5
+    elif hyper_mode == 'X3':
+        lr_space = [0.0001]
         train_mode_space = [(32,100,-1)]
-        beta_space = [1]
-        rbfsigma_space = [1] #[0.1, 1,10]
+        beta_space = [0.1]
         noise_std_space = [0.1]
         cpr = 0.1
-    elif hyper_mode == 'S6':   
-        lr_space = [1e-4]
+    elif hyper_mode == 'X4':
+        lr_space = [0.0001]
         train_mode_space = [(32,100,-1)]
-        beta_space = [1]
-        rbfsigma_space = [1] #[0.1, 1,10]
+        beta_space = [0.05]
         noise_std_space = [0.1]
-        cpr = 0.1
-    elif hyper_mode == 'S7':   
-        lr_space = [1e-4]
+        cpr = 0.5
+    elif hyper_mode == 'X5':
+        lr_space = [0.0001]
         train_mode_space = [(32,100,-1)]
-        beta_space = [5]
-        rbfsigma_space = [1] 
+        beta_space = [0.05]
         noise_std_space = [0.1]
         cpr = 0.1
-    elif hyper_mode == 'S8':   
-        lr_space = [1e-4]
+    elif hyper_mode == 'X6':
+        lr_space = [0.0001]
         train_mode_space = [(32,100,-1)]
         beta_space = [0.5]
-        rbfsigma_space = [1] 
         noise_std_space = [0.1]
-        cpr = 0.1
-    elif hyper_mode == 'S9':   
-        lr_space = [1e-4]
+        cpr = 0.5
+    elif hyper_mode == 'X7':
+        lr_space = [0.0001]
         train_mode_space = [(32,100,-1)]
-        beta_space = [10]
-        rbfsigma_space = [1] 
+        beta_space = [0.5]
         noise_std_space = [0.1]
         cpr = 0.1
-    elif hyper_mode == 'S9':   
-        lr_space = [1e-4]
+    elif hyper_mode == 'X8':
+        lr_space = [0.0001]
         train_mode_space = [(32,100,-1)]
-        beta_space = [10]
-        rbfsigma_space = [1] 
+        beta_space = [1.0]
+        noise_std_space = [0.1]
+        cpr = 0.5
+    elif hyper_mode == 'X9':
+        lr_space = [0.0001]
+        train_mode_space = [(32,100,-1)]
+        beta_space = [1.0]
         noise_std_space = [0.1]
         cpr = 0.1
-    elif hyper_mode == 'S10':   
-        lr_space = [1e-3]
-        train_mode_space = [(50,100,-1)]
+    elif hyper_mode == 'X10':
+        lr_space = [0.0001]
+        train_mode_space = [(32,100,-1)]
+        beta_space = [5.0]
+        noise_std_space = [0.1]
+        cpr = 0.5
+    elif hyper_mode == 'X11':
+        lr_space = [0.0001]
+        train_mode_space = [(32,100,-1)]
+        beta_space = [5.0]
+        noise_std_space = [0.1]
+        cpr = 0.1
+    elif hyper_mode == 'X12':
+        lr_space = [0.0001]
+        train_mode_space = [(32,100,-1)]
+        beta_space = [10.0]
+        noise_std_space = [0.1]
+        cpr = 0.5
+    elif hyper_mode == 'X13':
+        lr_space = [0.0001]
+        train_mode_space = [(32,100,-1)]
+        beta_space = [10.0]
+        noise_std_space = [0.1]
+        cpr = 0.1
+    elif hyper_mode == 'X14':
+        lr_space = [0.001]
+        train_mode_space = [(32,100,-1)]
+        beta_space = [0.01]
+        noise_std_space = [0.1]
+        cpr = 0.5
+    elif hyper_mode == 'X15':
+        lr_space = [0.001]
+        train_mode_space = [(32,100,-1)]
+        beta_space = [0.01]
+        noise_std_space = [0.1]
+        cpr = 0.1
+    elif hyper_mode == 'X16':
+        lr_space = [0.001]
+        train_mode_space = [(32,100,-1)]
+        beta_space = [0.1]
+        noise_std_space = [0.1]
+        cpr = 0.5
+    elif hyper_mode == 'X17':
+        lr_space = [0.001]
+        train_mode_space = [(32,100,-1)]
+        beta_space = [0.1]
+        noise_std_space = [0.1]
+        cpr = 0.1
+    elif hyper_mode == 'X18':
+        lr_space = [0.001]
+        train_mode_space = [(32,100,-1)]
         beta_space = [0.05]
-        rbfsigma_space = [1] 
+        noise_std_space = [0.1]
+        cpr = 0.5
+    elif hyper_mode == 'X19':
+        lr_space = [0.001]
+        train_mode_space = [(32,100,-1)]
+        beta_space = [0.05]
         noise_std_space = [0.1]
         cpr = 0.1
+    elif hyper_mode == 'X20':
+        lr_space = [0.001]
+        train_mode_space = [(32,100,-1)]
+        beta_space = [0.5]
+        noise_std_space = [0.1]
+        cpr = 0.5
+    elif hyper_mode == 'X21':
+        lr_space = [0.001]
+        train_mode_space = [(32,100,-1)]
+        beta_space = [0.5]
+        noise_std_space = [0.1]
+        cpr = 0.1
+    elif hyper_mode == 'X22':
+        lr_space = [0.001]
+        train_mode_space = [(32,100,-1)]
+        beta_space = [1.0]
+        noise_std_space = [0.1]
+        cpr = 0.5
+    elif hyper_mode == 'X23':
+        lr_space = [0.001]
+        train_mode_space = [(32,100,-1)]
+        beta_space = [1.0]
+        noise_std_space = [0.1]
+        cpr = 0.1
+    elif hyper_mode == 'X24':
+        lr_space = [0.001]
+        train_mode_space = [(32,100,-1)]
+        beta_space = [5.0]
+        noise_std_space = [0.1]
+        cpr = 0.5
+    elif hyper_mode == 'X25':
+        lr_space = [0.001]
+        train_mode_space = [(32,100,-1)]
+        beta_space = [5.0]
+        noise_std_space = [0.1]
+        cpr = 0.1
+    elif hyper_mode == 'X26':
+        lr_space = [0.001]
+        train_mode_space = [(32,100,-1)]
+        beta_space = [10.0]
+        noise_std_space = [0.1]
+        cpr = 0.5
+    elif hyper_mode == 'X27':
+        lr_space = [0.001]
+        train_mode_space = [(32,100,-1)]
+        beta_space = [10.0]
+        noise_std_space = [0.1]
+        cpr = 0.1
+
     else:
         sys.exit('Wrong Hyper mode!! Inpuy hyper mode!!')
     commands = []
@@ -352,6 +419,7 @@ def create_commands(data_type='sepsis', algo_group='ApproxNeuraLCB_cp', num_sim=
                                 f'--policy {policy} '
                                 f'--noise_std {noise_std} '
                                 f'--group {group} '
+                                f'--cpr {cpr} '
                                 f'--test_freq {test_freq}'
                             )
     elif algo_group == 'NeuralGreedyV2_cp' or 'NeuralGreedyV2': # 'NeuralGreedyV2_cp' does not have beta
